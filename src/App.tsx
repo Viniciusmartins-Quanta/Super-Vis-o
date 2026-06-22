@@ -9,6 +9,7 @@ import DashboardFilters from "./components/DashboardFilters";
 import WorkCard from "./components/WorkCard";
 import WorkModal from "./components/WorkModal";
 import TimelineLogs from "./components/TimelineLogs";
+import WorkDetail from "./components/WorkDetail";
 
 // Icons from Lucide
 import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database } from "lucide-react";
@@ -126,6 +127,7 @@ export default function App() {
   // Form Modals Toggles
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<Obra | null>(null);
+  const [selectedWorkId, setSelectedWorkId] = useState<string | null>(null);
 
   /**
    * Loads state from localStorage or Supabase directly. Used when the backend server is unavailable.
@@ -365,7 +367,9 @@ export default function App() {
     newProgress: number,
     notes: string,
     updaterName: string,
-    updaterRole: string
+    updaterRole: string,
+    coverImage?: string,
+    progressImages?: string[]
   ) => {
     if (useDirectSupabaseMode) {
       const updatedWorks = state.works.map((w) => {
@@ -388,7 +392,9 @@ export default function App() {
         timestamp: new Date().toISOString(),
         oldProgress,
         newProgress,
-        notes
+        notes,
+        coverImage,
+        progressImages
       };
 
       const newState: DatabaseState = {
@@ -408,7 +414,9 @@ export default function App() {
           progress: newProgress,
           updateNotes: notes,
           updaterName,
-          updaterRole
+          updaterRole,
+          coverImage,
+          progressImages
         })
       });
       if (!res.ok) throw new Error("Erro ao lançar medição.");
@@ -417,6 +425,39 @@ export default function App() {
     } catch (err) {
       console.error(err);
       setErrorHeader("Erro ao enviar boletim de medição física.");
+    }
+  };
+
+  // Update notes of a specific log entry
+  const handleUpdateLogNotes = async (logId: string, notes: string) => {
+    if (useDirectSupabaseMode) {
+      const updatedLogs = state.logs.map((l) => {
+        if (l.id === logId) {
+          return { ...l, notes };
+        }
+        return l;
+      });
+
+      const newState: DatabaseState = {
+        ...state,
+        logs: updatedLogs
+      };
+      await saveStateDirect(newState);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/logs/${logId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes })
+      });
+      if (!res.ok) throw new Error("Erro ao atualizar boletim de medição.");
+      await loadState();
+      setErrorHeader("");
+    } catch (err) {
+      console.error(err);
+      setErrorHeader("Erro ao salvar alteração do boletim de medição.");
     }
   };
 
@@ -596,15 +637,15 @@ export default function App() {
       
       {/* Top Application Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs" id="applet-header">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-amber-500 rounded-xl text-slate-900 shadow-sm animate-pulse-slow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start md:items-center gap-3">
+            <div className="p-2 bg-amber-500 rounded-xl text-slate-900 shadow-sm animate-pulse-slow flex-shrink-0">
               <Construction className="w-6 h-6" />
             </div>
             <div>
-              <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-600 block leading-none">SIS-DER/PR</span>
-              <h1 className="text-sm sm:text-base font-bold text-slate-800 leading-tight">
-                Supervisão de Contratos de Obras
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-600 block leading-none">CODEMAR CT-026/2025</span>
+              <h1 className="text-xs sm:text-sm md:text-base font-bold text-slate-800 leading-tight">
+                Assessoramento, Gerenciamento, Fiscalização Técnica, Supervisão e Controle de Qualidade de Obras
               </h1>
             </div>
           </div>
@@ -680,6 +721,22 @@ export default function App() {
         <main className="flex-grow flex flex-col items-center justify-center p-8 text-slate-500">
           <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mb-3" />
           <p className="text-sm font-semibold">Carregando painel de supervisão...</p>
+        </main>
+      ) : selectedWorkId && state.works.find((w) => w.id === selectedWorkId) ? (
+        <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 flex flex-col items-stretch">
+          <WorkDetail
+            work={state.works.find((w) => w.id === selectedWorkId)!}
+            allLogs={state.logs}
+            activeUser={activeUser}
+            onBack={() => setSelectedWorkId(null)}
+            onUpdateWork={handleSaveWork}
+            onEditClick={(w) => {
+              setEditingWork(w);
+              setIsModalOpen(true);
+            }}
+            onLaunchMeasurement={handleLaunchMeasurement}
+            onUpdateLogNotes={handleUpdateLogNotes}
+          />
         </main>
       ) : (
         /* Main application Workspace */
@@ -826,6 +883,7 @@ ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`}
                         setIsModalOpen(true);
                       }}
                       onDeleteClick={handleDeleteWork}
+                      onViewDetail={(w) => setSelectedWorkId(w.id)}
                     />
                   ))}
                 </div>

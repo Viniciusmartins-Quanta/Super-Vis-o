@@ -10,6 +10,7 @@ import {
   Sliders,
   CheckCircle,
   FileCheck,
+  FileText,
   Edit3,
   Trash2,
   ChevronRight,
@@ -30,6 +31,7 @@ interface WorkCardProps {
   ) => Promise<void>;
   onEditClick: (work: Obra) => void;
   onDeleteClick: (workId: string) => Promise<void>;
+  onViewDetail: (work: Obra) => void;
 }
 
 export default function WorkCard({
@@ -37,7 +39,8 @@ export default function WorkCard({
   activeUser,
   onLaunchMeasurement,
   onEditClick,
-  onDeleteClick
+  onDeleteClick,
+  onViewDetail
 }: WorkCardProps) {
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -57,8 +60,13 @@ export default function WorkCard({
           <span className="inline-block text-[10px] uppercase font-mono bg-slate-100 text-slate-600 border border-slate-200 font-semibold px-2 py-0.5 rounded">
             {work.contractNumber || "Sem número de Contrato"}
           </span>
-          <h3 className="text-base md:text-lg font-bold text-slate-900 tracking-tight leading-snug font-sans hover:text-amber-600 transition">
-            {work.name}
+          <h3 
+            onClick={() => onViewDetail(work)}
+            className="text-base md:text-lg font-bold text-slate-900 tracking-tight leading-snug font-sans hover:text-amber-600 transition cursor-pointer flex items-center gap-1 group"
+            title="Acessar página de detalhes do contrato"
+          >
+            <span>{work.name}</span>
+            <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-amber-500 transition-transform group-hover:translate-x-0.5 flex-shrink-0" />
           </h3>
         </div>
 
@@ -89,32 +97,108 @@ export default function WorkCard({
         </div>
       </div>
 
-      {/* Timeline Dates Container */}
+      {/* Contract Parameters section for municipal terms */}
+      {(work.biddingNumber || work.adminProcess || work.termDaysVigencia || work.termDaysExecucao) && (
+        <div className="grid grid-cols-2 gap-2.5 text-[11px] bg-slate-50/50 rounded-xl p-3 border border-slate-100">
+          {work.biddingNumber && (
+            <div>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide block">Concorrência</span>
+              <span className="font-semibold text-slate-700 truncate block">{work.biddingNumber}</span>
+            </div>
+          )}
+          {work.adminProcess && (
+            <div>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide block">Proc. Administrativo</span>
+              <span className="font-semibold text-slate-700 truncate block">{work.adminProcess}</span>
+            </div>
+          )}
+          {work.termDaysVigencia && (
+            <div>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide block">Prazo Vigência</span>
+              <span className="font-semibold text-slate-700 truncate block">{work.termDaysVigencia}</span>
+            </div>
+          )}
+          {work.termDaysExecucao && (
+            <div>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wide block">Prazo Execução</span>
+              <span className="font-semibold text-slate-700 truncate block">{work.termDaysExecucao}</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Timeline Dates Container with rich fields */}
       <div className="border-t border-b border-slate-100 py-3.5 space-y-2.5 text-xs text-slate-600">
-        <div className="flex justify-between items-center bg-transparent">
-          <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-            <Calendar className="w-3.5 h-3.5" /> Data de Início:
-          </span>
-          <span className="font-semibold text-slate-700 font-mono">
-            {formatDate(work.startDate)}
-          </span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-            <Calendar className="w-3.5 h-3.5" /> Prazo de Execução:
-          </span>
-          <span className="font-semibold text-slate-700 font-mono">
-            {formatDate(work.deadlineDate)}
-          </span>
-        </div>
-        <div className="flex justify-between items-center">
-          <span className="flex items-center gap-1.5 text-slate-400 font-medium text-ellipsis">
-            <FileCheck className="w-3.5 h-3.5" /> Contrato Vigente até:
-          </span>
-          <span className="font-semibold text-amber-700 font-mono bg-amber-50 rounded px-1.5 py-0.5 border border-amber-100/50">
-            {formatDate(work.activeContractDate)}
-          </span>
-        </div>
+        {work.signingDate && (
+          <div className="flex justify-between items-center">
+            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+              <Calendar className="w-3.5 h-3.5" /> Data Assinatura:
+            </span>
+            <span className="font-semibold text-slate-700 font-mono">
+              {formatDate(work.signingDate)}
+            </span>
+          </div>
+        )}
+        {work.publicationDateJom && (
+          <div className="flex justify-between items-center">
+            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+              <Calendar className="w-3.5 h-3.5" /> Publicação JOM:
+            </span>
+            <span className="font-semibold text-slate-700 font-mono">
+              {formatDate(work.publicationDateJom)}
+            </span>
+          </div>
+        )}
+        {work.physicalStartDate && (
+          <div className="flex justify-between items-center">
+            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+              <Calendar className="w-3.5 h-3.5" /> Início Físico:
+            </span>
+            <span className="font-semibold text-slate-700 font-mono">
+              {formatDate(work.physicalStartDate)}
+            </span>
+          </div>
+        )}
+        {work.startOrderDate && (
+          <div className="flex justify-between items-center">
+            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+              <Calendar className="w-3.5 h-3.5" /> Ordem de Início:
+            </span>
+            <span className="font-semibold text-slate-700 font-mono">
+              {formatDate(work.startOrderDate)}
+            </span>
+          </div>
+        )}
+
+        {/* Fallback metrics for initial database records that might not have custom dates */}
+        {!work.signingDate && (
+          <>
+            <div className="flex justify-between items-center bg-transparent">
+              <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+                <Calendar className="w-3.5 h-3.5" /> Data de Início:
+              </span>
+              <span className="font-semibold text-slate-700 font-mono">
+                {formatDate(work.startDate)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+                <Calendar className="w-3.5 h-3.5" /> Prazo de Execução:
+              </span>
+              <span className="font-semibold text-slate-700 font-mono">
+                {formatDate(work.deadlineDate)}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-1.5 text-slate-400 font-medium text-ellipsis">
+                <FileCheck className="w-3.5 h-3.5" /> Contrato Vigente até:
+              </span>
+              <span className="font-semibold text-amber-700 font-mono bg-amber-50 rounded px-1.5 py-0.5 border border-amber-100/50">
+                {formatDate(work.activeContractDate)}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Progress visual tracker block */}
@@ -175,36 +259,49 @@ export default function WorkCard({
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-between gap-1.5 pt-2">
+        <div className="flex flex-col gap-2.5 pt-2 border-t border-slate-100">
           <button
-            onClick={() => {
-              setIsActivityModalOpen(true);
-            }}
-            className="flex-grow flex items-center justify-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-2.5 px-3 rounded-xl text-xs transition duration-150 cursor-pointer"
-            id={`lance-btn-${work.id}`}
+            onClick={() => onViewDetail(work)}
+            className="w-full flex items-center justify-center gap-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold py-2 px-3 rounded-xl text-xs transition duration-150 cursor-pointer border border-slate-250 hover:border-slate-300"
+            id={`view-contract-btn-${work.id}`}
+            title="Acessar painel completo da obra"
           >
-            <PlusCircle className="w-3.5 h-3.5" />
-            <span>Lançar Atividades</span>
+            <FileText className="w-3.5 h-3.5 text-slate-500" />
+            <span>Visualizar Ficha do Contrato</span>
+            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
           </button>
 
-          <div className="flex gap-1">
+          <div className="flex items-center justify-between gap-1.5">
             <button
-              onClick={() => onEditClick(work)}
-              className="p-2 text-slate-500 hover:text-amber-500 bg-slate-100 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 rounded-xl transition duration-150 cursor-pointer"
-              title="Editar Obra"
-              id={`edit-btn-${work.id}`}
+              onClick={() => {
+                setIsActivityModalOpen(true);
+              }}
+              className="flex-grow flex items-center justify-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold py-2.5 px-3 rounded-xl text-xs transition duration-150 cursor-pointer"
+              id={`lance-btn-${work.id}`}
             >
-              <Edit3 className="w-3.5 h-3.5" />
+              <PlusCircle className="w-3.5 h-3.5" />
+              <span>Lançar Atividades</span>
             </button>
 
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="p-2 text-rose-500 hover:text-rose-700 bg-rose-50/50 hover:bg-rose-50 hover:border-rose-200 border border-slate-200 rounded-xl transition duration-150 cursor-pointer"
-              title="Remover Obra"
-              id={`delete-btn-${work.id}`}
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-            </button>
+            <div className="flex gap-1">
+              <button
+                onClick={() => onEditClick(work)}
+                className="p-2 text-slate-500 hover:text-amber-500 bg-slate-100 hover:bg-amber-50 border border-slate-200 hover:border-amber-200 rounded-xl transition duration-150 cursor-pointer"
+                title="Editar Obra"
+                id={`edit-btn-${work.id}`}
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="p-2 text-rose-500 hover:text-rose-700 bg-rose-50/50 hover:bg-rose-50 hover:border-rose-200 border border-slate-200 rounded-xl transition duration-150 cursor-pointer"
+                title="Remover Obra"
+                id={`delete-btn-${work.id}`}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
         </div>
       )}

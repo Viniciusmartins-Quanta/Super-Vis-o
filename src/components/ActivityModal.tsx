@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Obra, UserProfile } from "../types";
-import { X, Plus, Trash2, Save, HelpCircle, Calendar, Sparkles } from "lucide-react";
+import { X, Plus, Trash2, Save, HelpCircle, Calendar, Sparkles, Upload, Image as ImageIcon, Camera } from "lucide-react";
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -12,7 +12,9 @@ interface ActivityModalProps {
     newProgress: number,
     notes: string,
     updaterName: string,
-    updaterRole: string
+    updaterRole: string,
+    coverImage?: string,
+    progressImages?: string[]
   ) => Promise<void>;
 }
 
@@ -56,6 +58,10 @@ export default function ActivityModal({
     "Identificadas trincas superficiais na passarela..."
   ]);
 
+  // 12. FOTOS
+  const [coverImage, setCoverImage] = useState<string>("");
+  const [progressImages, setProgressImages] = useState<string[]>(["", "", "", ""]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [errText, setErrText] = useState("");
 
@@ -83,6 +89,40 @@ export default function ActivityModal({
     setter: React.Dispatch<React.SetStateAction<string[]>>
   ) => {
     setter((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setCoverImage(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleProgressSlotChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProgressImages((prev) => {
+          const copy = [...prev];
+          copy[index] = reader.result as string;
+          return copy;
+        });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemoveProgressSlot = (index: number) => {
+    setProgressImages((prev) => {
+      const copy = [...prev];
+      copy[index] = "";
+      return copy;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -124,12 +164,16 @@ ${nextWeekActivities.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "�
 ${importantNotes.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• Nenhum apontamento cadastrado"}
       `.trim();
 
+      const finalProgressImages = progressImages.filter(img => img !== "");
+
       await onSubmittingActivity(
         work.id,
         physicalProgress,
         formattedNotes,
         activeUser.name,
-        activeUser.role
+        activeUser.role,
+        coverImage || undefined,
+        finalProgressImages.length > 0 ? finalProgressImages : undefined
       );
 
       onClose();
@@ -416,6 +460,113 @@ ${importantNotes.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• N
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* ATTACH REPORT PHOTOS */}
+          <div className="border-t border-slate-100 pt-5 space-y-6">
+            <h4 className="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-1.5">
+              <Camera className="w-4 h-4 text-amber-500 animate-pulse-slow" />
+              <span>Anexar Fotos do Relatório Semanal</span>
+            </h4>
+
+            {/* 1. WEEK'S COVER PHOTO (FOTO DE CAPA DA SEMANA) */}
+            <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200/60 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <span className="block text-xs font-bold text-slate-750">
+                    Foto de Capa do Relatório Semanal
+                  </span>
+                  <span className="block text-[10px] text-slate-400 font-medium">
+                    Aparece centralizada na Ficha Técnica (página 2)
+                  </span>
+                </div>
+                <label className="relative inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-slate-50 border border-slate-250 py-1.5 px-3 rounded-lg shadow-3xs cursor-pointer select-none transition duration-150">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>Escolher Foto</span>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    onChange={handleCoverChange} 
+                    className="hidden" 
+                  />
+                </label>
+              </div>
+
+              {coverImage ? (
+                <div className="relative w-full max-w-xs h-36 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 shadow-3xs group">
+                  <img 
+                    src={coverImage} 
+                    alt="Foto de Capa" 
+                    className="w-full h-full object-cover" 
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setCoverImage("")}
+                    className="absolute top-1.5 right-1.5 p-1 bg-rose-600/90 text-white rounded-lg hover:bg-rose-600 transition shadow"
+                    title="Excluir capa"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <div className="h-16 border-2 border-dashed border-slate-200 rounded-lg flex items-center justify-center text-[10px] text-slate-450 font-bold bg-white/40">
+                  Frente de obra ou capa da semana não enviada
+                </div>
+              )}
+            </div>
+
+            {/* 2. 4 PROGRESS PHOTOS (4 FOTOS DA OBRA) */}
+            <div className="bg-slate-50/50 rounded-xl p-4 border border-slate-200/60 space-y-3">
+              <div>
+                <span className="block text-xs font-bold text-slate-750">
+                  Fotos de Acompanhamento da Semana (Máximo 4)
+                </span>
+                <span className="block text-[10px] text-slate-400 font-medium">
+                  Serão dispostas no Registro Fotográfico (página 5) em formato grid 2x2
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[0, 1, 2, 3].map((slotIdx) => (
+                  <div key={slotIdx} className="space-y-1.5">
+                    <span className="block text-[9px] font-bold text-slate-450 uppercase tracking-wide font-mono text-center">
+                      Foto {slotIdx + 1}
+                    </span>
+                    {progressImages[slotIdx] ? (
+                      <div className="relative h-24 bg-slate-100 border border-slate-200 rounded-lg overflow-hidden shadow-3xs group">
+                        <img 
+                          src={progressImages[slotIdx]} 
+                          alt={`Foto da obra ${slotIdx + 1}`} 
+                          className="w-full h-full object-cover" 
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveProgressSlot(slotIdx)}
+                          className="absolute top-1 right-1 p-1 bg-rose-600/95 text-white rounded-md hover:bg-rose-600 transition shadow"
+                          title="Remover foto"
+                        >
+                          <Trash2 className="w-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="flex flex-col items-center justify-center h-24 border-2 border-dashed border-slate-200 hover:border-amber-400 bg-white hover:bg-amber-50/10 rounded-lg cursor-pointer transition duration-150 relative">
+                        <div className="flex flex-col items-center gap-1 text-center p-2">
+                          <ImageIcon className="w-4 h-4 text-slate-350" />
+                          <span className="text-[9px] font-bold text-slate-400">Anexar</span>
+                        </div>
+                        <input 
+                          type="file" 
+                          accept="image/*" 
+                          onChange={(e) => handleProgressSlotChange(slotIdx, e)} 
+                          className="hidden" 
+                        />
+                      </label>
+                    )}
                   </div>
                 ))}
               </div>

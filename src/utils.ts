@@ -21,7 +21,7 @@ export function formatPercent(value: number): string {
 export function getStatusLabel(status: string): string {
   switch (status) {
     case "planejamento":
-      return "Planejamento";
+      return "Licitando";
     case "em_andamento":
       return "Em Andamento";
     case "paralisada":

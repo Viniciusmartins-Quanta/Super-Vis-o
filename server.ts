@@ -19,6 +19,16 @@ interface Obra {
   contractorName: string;
   biddedValue: number;
   status: "planejamento" | "em_andamento" | "paralisada" | "concluida";
+  biddingNumber?: string;
+  adminProcess?: string;
+  termDaysVigencia?: string;
+  termDaysExecucao?: string;
+  signingDate?: string;
+  publicationDateJom?: string;
+  physicalStartDate?: string;
+  startOrderDate?: string;
+  additives?: ContractAdditive[];
+  timelineImage?: string;
 }
 
 interface UpdateLog {
@@ -31,6 +41,8 @@ interface UpdateLog {
   oldProgress: number;
   newProgress: number;
   notes: string;
+  coverImage?: string;
+  progressImages?: string[];
 }
 
 interface ContractAdditive {
@@ -263,7 +275,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: "50mb" }));
+  app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.use(supabaseSessionMiddleware);
 
   // API - Get entire state (Contract, Works, Logs)
@@ -328,7 +341,16 @@ async function startServer() {
       progress: Number(progress) || 0,
       contractorName,
       biddedValue: Number(biddedValue),
-      status: status || "planejamento"
+      status: status || "planejamento",
+      biddingNumber: req.body.biddingNumber,
+      adminProcess: req.body.adminProcess,
+      termDaysVigencia: req.body.termDaysVigencia,
+      termDaysExecucao: req.body.termDaysExecucao,
+      signingDate: req.body.signingDate,
+      publicationDateJom: req.body.publicationDateJom,
+      physicalStartDate: req.body.physicalStartDate,
+      startOrderDate: req.body.startOrderDate,
+      additives: req.body.additives || [],
     };
 
     data.works.push(newObra);
@@ -390,7 +412,17 @@ async function startServer() {
       progress: nextProgress,
       contractorName: contractorName || oldObra.contractorName,
       biddedValue: biddedValue !== undefined ? Number(biddedValue) : oldObra.biddedValue,
-      status: status || oldObra.status
+      status: status || oldObra.status,
+      biddingNumber: req.body.biddingNumber !== undefined ? req.body.biddingNumber : oldObra.biddingNumber,
+      adminProcess: req.body.adminProcess !== undefined ? req.body.adminProcess : oldObra.adminProcess,
+      termDaysVigencia: req.body.termDaysVigencia !== undefined ? req.body.termDaysVigencia : oldObra.termDaysVigencia,
+      termDaysExecucao: req.body.termDaysExecucao !== undefined ? req.body.termDaysExecucao : oldObra.termDaysExecucao,
+      signingDate: req.body.signingDate !== undefined ? req.body.signingDate : oldObra.signingDate,
+      publicationDateJom: req.body.publicationDateJom !== undefined ? req.body.publicationDateJom : oldObra.publicationDateJom,
+      physicalStartDate: req.body.physicalStartDate !== undefined ? req.body.physicalStartDate : oldObra.physicalStartDate,
+      startOrderDate: req.body.startOrderDate !== undefined ? req.body.startOrderDate : oldObra.startOrderDate,
+      additives: req.body.additives !== undefined ? req.body.additives : oldObra.additives,
+      timelineImage: req.body.timelineImage !== undefined ? req.body.timelineImage : oldObra.timelineImage,
     };
 
     data.works[obraIndex] = updatedObra;
@@ -410,13 +442,33 @@ async function startServer() {
       timestamp: new Date().toISOString(),
       oldProgress: originalProgress,
       newProgress: nextProgress,
-      notes: noteText
+      notes: noteText,
+      coverImage: req.body.coverImage || undefined,
+      progressImages: req.body.progressImages || undefined
     };
     data.logs.unshift(newLog);
 
     const { supabaseStatus: _, ...cleanData } = data;
     await saveDatabaseState(cleanData);
     res.json({ message: "Obra atualizada com sucesso.", obra: updatedObra });
+  });
+
+  // API - Update specific update log notes
+  app.put("/api/logs/:id", async (req, res) => {
+    const { id } = req.params;
+    const { notes } = req.body;
+
+    const data = await getDatabaseState();
+    const logIndex = data.logs.findIndex((l) => l.id === id);
+    if (logIndex === -1) {
+      return res.status(404).json({ error: "Lançamento não encontrado." });
+    }
+
+    data.logs[logIndex].notes = notes;
+
+    const { supabaseStatus: _, ...cleanData } = data;
+    await saveDatabaseState(cleanData);
+    res.json({ message: "Lançamento atualizado com sucesso.", log: data.logs[logIndex] });
   });
 
   // API - Delete standard work

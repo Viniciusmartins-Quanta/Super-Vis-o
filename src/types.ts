@@ -2,13 +2,25 @@ export interface Obra {
   id: string;
   name: string;
   contractNumber: string;
-  startDate: string;
-  deadlineDate: string;
-  activeContractDate: string;
+  startDate: string; // Keep as required, can match physicalStartDate or fallback
+  deadlineDate: string; // Keep as required, can match execution deadline or fallback
+  activeContractDate: string; // Keep as required, can match activeContractDate or fallback
   progress: number;
   contractorName: string;
   biddedValue: number;
   status: "planejamento" | "em_andamento" | "paralisada" | "concluida";
+  
+  // New specific fields requested in form example
+  biddingNumber?: string;
+  adminProcess?: string;
+  termDaysVigencia?: string;
+  termDaysExecucao?: string;
+  signingDate?: string;
+  publicationDateJom?: string;
+  physicalStartDate?: string;
+  startOrderDate?: string;
+  additives?: ContractAdditive[];
+  timelineImage?: string; // Image for construction chronology
 }
 
 export interface UpdateLog {
@@ -21,6 +33,8 @@ export interface UpdateLog {
   oldProgress: number;
   newProgress: number;
   notes: string;
+  coverImage?: string; // Image for page 2 cover of the week
+  progressImages?: string[]; // Array of 4 images for page 5 weekly photos
 }
 
 export interface ContractAdditive {
@@ -31,6 +45,10 @@ export interface ContractAdditive {
   days?: number;
   description: string;
   signatureDate: string;
+  newVigenciaDate?: string;
+  newExecucaoDate?: string;
+  daysVigencia?: number;
+  daysExecucao?: number;
 }
 
 export interface DatabaseState {

@@ -29,10 +29,10 @@ export default function DashboardFilters({
 
   const statuses = [
     { value: "all", label: "Todas as Obras" },
-    { value: "planejamento", label: "Planejamento" },
+    { value: "planejamento", label: "Licitando" },
     { value: "em_andamento", label: "Em Andamento" },
     { value: "paralisada", label: "Paralisada" },
-    { value: "concluida", label: "Concluídas" }
+    { value: "concluida", label: "Concluída" }
   ];
 
   return (
