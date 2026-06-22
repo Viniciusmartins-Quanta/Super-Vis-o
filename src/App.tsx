@@ -255,13 +255,17 @@ export default function App() {
             {state.supabaseStatus && (
               <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] uppercase font-mono tracking-wider font-extrabold border transition ${
                 state.supabaseStatus.connected && state.supabaseStatus.tableExists
-                  ? "bg-teal-50 text-teal-700 border-teal-200"
-                  : "bg-amber-50 text-amber-700 border-amber-200"
+                  ? state.supabaseStatus.rlsEnabled
+                    ? "bg-amber-100 text-amber-800 border-amber-300 animate-pulse"
+                    : "bg-teal-50 text-teal-700 border-teal-200"
+                  : "bg-rose-50 text-rose-700 border-rose-200"
               }`} title={state.supabaseStatus.error || "Supabase sincronizado com sucesso"}>
                 <Cloud className="w-3.5 h-3.5" />
                 <span>
                   {state.supabaseStatus.connected && state.supabaseStatus.tableExists
-                    ? "Supabase OK"
+                    ? state.supabaseStatus.rlsEnabled
+                      ? "Supabase RLS Blq"
+                      : "Supabase OK"
                     : "Supabase Local"}
                 </span>
               </div>
@@ -335,19 +339,27 @@ export default function App() {
           />
 
           {/* Supabase Status and Table Creation Guidance */}
-          {state.supabaseStatus && (!state.supabaseStatus.tableExists || !state.supabaseStatus.connected) && (
+          {state.supabaseStatus && (!state.supabaseStatus.tableExists || state.supabaseStatus.rlsEnabled || !state.supabaseStatus.connected) && (
             <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-5 space-y-4 shadow-xs text-slate-800" id="supabase-guidance">
               <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-500 text-white rounded-xl mt-0.5 shadow-xs">
+                <div className="p-2 bg-amber-500 text-slate-900 rounded-xl mt-0.5 shadow-xs">
                   <Database className="w-5 h-5 text-slate-900" />
                 </div>
                 <div className="space-y-1">
-                  <h3 className="font-extrabold text-slate-900 text-sm">Supabase Conectado! Crie a tabela para ativar a nuvem</h3>
-                  <p className="text-xs text-slate-650 leading-relaxed">
-                    Sua conexão com o Supabase foi estabelecida com sucesso. Contudo, a tabela <code className="bg-amber-100 font-mono text-amber-900 px-1.5 py-0.5 rounded text-[11px] font-semibold">contract_state</code> ainda não foi criada no banco de dados.
+                  <h3 className="font-extrabold text-slate-900 text-sm">
+                    {state.supabaseStatus.rlsEnabled 
+                      ? "Ajuste pendente: Desativação do RLS no Supabase" 
+                      : "Supabase Conectado! Crie a tabela para ativar a nuvem"}
+                  </h3>
+                  <p className="text-xs text-slate-655 leading-relaxed">
+                    {state.supabaseStatus.rlsEnabled 
+                      ? "A sincronização com o Supabase foi interrompida porque o recurso RLS (Row Level Security) está ativo no banco e bloqueou as gravações anônimas."
+                      : "Sua conexão com o Supabase foi estabelecida com sucesso. Contudo, a tabela contract_state ainda não foi criada no banco de dados."}
                   </p>
-                  <p className="text-xs text-slate-650 leading-relaxed">
-                    Para habilitar o salvamento em nuvem e a sincronização em tempo real de cards, obras, aditivos e logs no Supabase, execute o script SQL abaixo no <strong>SQL Editor</strong> do seu painel do Supabase:
+                  <p className="text-xs text-slate-655 leading-relaxed font-semibold">
+                    {state.supabaseStatus.rlsEnabled 
+                      ? "Para resolver isso e habilitar a gravação instantânea de dados, execute o comando abaixo no painel SQL Editor do Supabase:"
+                      : "Para habilitar o salvamento em nuvem e a sincronização em tempo real de cards, obras, aditivos e logs no Supabase, execute o script SQL abaixo no SQL Editor do seu painel do Supabase:"}
                   </p>
                 </div>
               </div>
@@ -357,14 +369,17 @@ export default function App() {
                   <span>Script de Inicialização SQL</span>
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(`CREATE TABLE contract_state (
+                      const sql = state.supabaseStatus?.rlsEnabled 
+                        ? "ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;"
+                        : `CREATE TABLE contract_state (
   id text PRIMARY KEY,
   data jsonb NOT NULL,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
 -- Desativar RLS para permitir leitura e gravação anônima via chave pública
-ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`);
+ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`;
+                      navigator.clipboard.writeText(sql);
                       alert("Script SQL copiado com sucesso!");
                     }}
                     className="hover:text-white transition flex items-center gap-1 cursor-pointer bg-slate-800 px-2 py-1 rounded font-sans leading-none font-bold text-[10px] text-slate-200"
@@ -372,8 +387,10 @@ ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`);
                     Copiar Código
                   </button>
                 </div>
-                <pre className="p-4 overflow-x-auto text-[11.5px] font-mono text-slate-300 leading-relaxed">
-                  {`CREATE TABLE contract_state (
+                <pre className="p-4 overflow-x-auto text-[11.5px] font-mono text-slate-300 leading-relaxed font-semibold">
+                  {state.supabaseStatus.rlsEnabled 
+                    ? "ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;"
+                    : `CREATE TABLE contract_state (
   id text PRIMARY KEY,
   data jsonb NOT NULL,
   updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -383,8 +400,8 @@ ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`);
 ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`}
                 </pre>
               </div>
-              <div className="text-[11px] text-amber-700 font-medium">
-                Nota: O sistema está atualmente usando o <strong>armazenamento local (database.json)</strong> de forma 100% funcional. Todos os seus salvamentos, criações e exclusões estão sendo mantidos com sucesso! Assim que criar a tabela no Supabase, a sincronização em nuvem se tornará ativa automaticamente sem perda de dados!
+              <div className="text-[11px] text-amber-700 font-medium leading-normal">
+                Nota: O sistema está atualmente usando o <strong>armazenamento local (database.json)</strong> de forma 100% funcional. Todos os seus salvamentos, criações e exclusões estão sendo mantidos com sucesso! Assim que resolver as permissões de tabela no Supabase, a sincronização em nuvem se tornará ativa automaticamente!
               </div>
             </div>
           )}

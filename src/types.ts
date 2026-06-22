@@ -45,6 +45,7 @@ export interface DatabaseState {
   supabaseStatus?: {
     connected: boolean;
     tableExists: boolean;
+    rlsEnabled?: boolean;
     error: string;
   };
 }

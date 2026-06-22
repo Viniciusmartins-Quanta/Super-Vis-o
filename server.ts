@@ -151,6 +151,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const supabaseStatus = {
   connected: false,
   tableExists: false,
+  rlsEnabled: false,
   error: "Não inicializado"
 };
 
@@ -186,30 +187,34 @@ async function getDatabaseState(): Promise<Database & { supabaseStatus?: typeof 
 
     if (error) {
       console.warn("Erro ao ler do Supabase:", error.message);
+      const isMissingTable = error.code === "PGRST205" || error.message.includes("Could not find the table");
+      
       supabaseStatus.connected = true;
-      supabaseStatus.tableExists = false;
+      supabaseStatus.tableExists = !isMissingTable;
+      supabaseStatus.rlsEnabled = false;
       supabaseStatus.error = error.message;
       return { ...readDbLocal(), supabaseStatus };
     }
+
+    supabaseStatus.connected = true;
+    supabaseStatus.tableExists = true;
+    supabaseStatus.rlsEnabled = false;
+    supabaseStatus.error = "";
 
     if (!data) {
       console.log("Tabela do Supabase encontrada mas vazia. Inicializando com dados locais...");
       const localData = readDbLocal();
       await saveDatabaseState(localData);
-      supabaseStatus.connected = true;
-      supabaseStatus.tableExists = true;
-      supabaseStatus.error = "";
       return { ...localData, supabaseStatus };
     }
 
-    supabaseStatus.connected = true;
-    supabaseStatus.tableExists = true;
-    supabaseStatus.error = "";
     return { ...(data.data as Database), supabaseStatus };
   } catch (err: any) {
     console.warn("Exception ao conectar com Supabase:", err.message);
+    const isRls = err.message.includes("violates row-level security") || err.message.includes("42501");
     supabaseStatus.connected = false;
-    supabaseStatus.tableExists = false;
+    supabaseStatus.tableExists = !err.message.includes("PGRST205");
+    supabaseStatus.rlsEnabled = isRls;
     supabaseStatus.error = err.message;
     return { ...readDbLocal(), supabaseStatus };
   }
@@ -226,16 +231,29 @@ async function saveDatabaseState(data: Database): Promise<void> {
 
     if (error) {
       console.warn("Erro ao persistir no Supabase:", error.message);
-      supabaseStatus.tableExists = false;
+      const isRls = error.code === "42501" || error.message.includes("violates row-level security");
+      
+      supabaseStatus.connected = true;
+      if (isRls) {
+        supabaseStatus.tableExists = true;
+        supabaseStatus.rlsEnabled = true;
+      } else {
+        const isMissingTable = error.code === "PGRST205" || error.message.includes("Could not find the table");
+        supabaseStatus.tableExists = !isMissingTable;
+        supabaseStatus.rlsEnabled = false;
+      }
       supabaseStatus.error = error.message;
     } else {
       supabaseStatus.connected = true;
       supabaseStatus.tableExists = true;
+      supabaseStatus.rlsEnabled = false;
       supabaseStatus.error = "";
     }
   } catch (err: any) {
     console.warn("Exception ao salvar no Supabase:", err.message);
+    const isRls = err.message.includes("violates row-level security") || err.message.includes("42501");
     supabaseStatus.connected = false;
+    supabaseStatus.rlsEnabled = isRls;
     supabaseStatus.error = err.message;
   }
 }
