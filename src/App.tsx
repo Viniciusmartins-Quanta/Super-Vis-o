@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Obra, UpdateLog, DatabaseState, UserProfile, USER_PROFILES, ContractAdditive } from "./types";
 import { formatDate } from "./utils";
+import { supabase } from "./supabase";
 
 // Custom visual components
 import ContractOverview from "./components/ContractOverview";
@@ -11,6 +12,94 @@ import TimelineLogs from "./components/TimelineLogs";
 
 // Icons from Lucide
 import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database } from "lucide-react";
+
+const DEFAULT_FALLBACK_STATE: DatabaseState = {
+  contractName: "Contrato de Supervisão nº 085/2025 - DER/PR",
+  supervisorCompany: "Quanta Consultoria e Engenharia",
+  contractValue: 3450000,
+  contractStartDate: "2025-01-15",
+  contractEndDate: "2027-01-15",
+  contractAdditives: [
+    {
+      id: "add-1",
+      number: "Aditivo 01/2025",
+      type: "financeiro",
+      value: 450000,
+      description: "Acréscimo para serviços extraordinários de sondagem rotativa.",
+      signatureDate: "2025-04-10"
+    },
+    {
+      id: "add-2",
+      number: "Aditivo 02/2025",
+      type: "prazo",
+      days: 180,
+      description: "Prorrogação de prazo devido a atraso na liberação de licenças ambientais.",
+      signatureDate: "2025-05-22"
+    }
+  ],
+  works: [
+    {
+      id: "obra-1",
+      name: "Duplicação da Rodovia BR-277",
+      contractNumber: "CTR-DER-104/2024",
+      startDate: "2024-03-10",
+      deadlineDate: "2026-09-30",
+      activeContractDate: "2026-12-31",
+      progress: 65,
+      contractorName: "Egesa Engenharia S.A.",
+      biddedValue: 45800000,
+      status: "em_andamento"
+    },
+    {
+      id: "obra-2",
+      name: "Construção de Ponte Estaiada sobre o Rio Iguaçu",
+      contractNumber: "CTR-DER-203/2024",
+      startDate: "2024-05-15",
+      deadlineDate: "2026-07-30",
+      activeContractDate: "2026-10-31",
+      progress: 88,
+      contractorName: "Queiroz Galvão S.A.",
+      biddedValue: 28500000,
+      status: "em_andamento"
+    },
+    {
+      id: "obra-3",
+      name: "Restauração de Intercalares e Pavimentação PR-412",
+      contractNumber: "CTR-DER-011/2025",
+      startDate: "2025-01-20",
+      deadlineDate: "2025-12-20",
+      activeContractDate: "2026-03-31",
+      progress: 25,
+      contractorName: "Castilho Engenharia",
+      biddedValue: 12400000,
+      status: "em_andamento"
+    }
+  ],
+  logs: [
+    {
+      id: "log-1",
+      workId: "obra-1",
+      workName: "Duplicação da Rodovia BR-277",
+      userName: "Supervisão",
+      userRole: "Supervisor",
+      timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+      oldProgress: 60,
+      newProgress: 65,
+      notes: "Homologação do asfalto CBUQ no subtrecho km 18 e conclusão da drenagem lateral."
+    },
+    {
+      id: "log-2",
+      workId: "obra-2",
+      workName: "Construção de Ponte Estaiada sobre o Rio Iguaçu",
+      userName: "Supervisão",
+      userRole: "Supervisor",
+      timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
+      oldProgress: 85,
+      newProgress: 88,
+      notes: "Acompanhamento da concretagem do pilar central e avanço das aduelas metálicas."
+    }
+  ]
+};
 
 export default function App() {
   // Database state
@@ -24,6 +113,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [errorHeader, setErrorHeader] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [useDirectSupabaseMode, setUseDirectSupabaseMode] = useState(false);
 
   // Active user profile context for field signatures
   const [activeUser, setActiveUser] = useState<UserProfile>(USER_PROFILES[0]);
@@ -37,6 +127,143 @@ export default function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<Obra | null>(null);
 
+  /**
+   * Loads state from localStorage or Supabase directly. Used when the backend server is unavailable.
+   */
+  const loadDirectSupabaseState = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("contract_state")
+        .select("data")
+        .eq("id", "current_state")
+        .maybeSingle();
+
+      if (error) {
+        console.warn("Direct connection to Supabase failed:", error.message);
+        const isMissingTable = error.code === "PGRST205" || error.message.includes("Could not find the table");
+        const isRls = error.code === "42501" || error.message.includes("violates row-level security");
+
+        // Load from localStorage if available
+        const localCached = localStorage.getItem("contract_state_local");
+        const restoredState = localCached ? JSON.parse(localCached) : DEFAULT_FALLBACK_STATE;
+
+        setState({
+          ...restoredState,
+          supabaseStatus: {
+            connected: true,
+            tableExists: !isMissingTable,
+            rlsEnabled: isRls,
+            error: error.message
+          }
+        });
+        setErrorHeader("");
+        return;
+      }
+
+      setErrorHeader("");
+      
+      if (!data) {
+        console.log("Supabase table is empty. Initializing data from client fallback...");
+        const localCached = localStorage.getItem("contract_state_local");
+        const initialData = localCached ? JSON.parse(localCached) : DEFAULT_FALLBACK_STATE;
+
+        const { error: insertError } = await supabase
+          .from("contract_state")
+          .upsert({ id: "current_state", data: initialData, updated_at: new Date().toISOString() });
+
+        setState({
+          ...initialData,
+          supabaseStatus: {
+            connected: true,
+            tableExists: true,
+            rlsEnabled: !!insertError,
+            error: insertError ? insertError.message : ""
+          }
+        });
+        localStorage.setItem("contract_state_local", JSON.stringify(initialData));
+      } else {
+        localStorage.setItem("contract_state_local", JSON.stringify(data.data));
+        setState({
+          ...(data.data as DatabaseState),
+          supabaseStatus: {
+            connected: true,
+            tableExists: true,
+            rlsEnabled: false,
+            error: ""
+          }
+        });
+      }
+    } catch (err: any) {
+      console.warn("Exception in direct Supabase connection:", err.message);
+      const isRls = err.message.includes("violates row-level security") || err.message.includes("42501");
+      const localCached = localStorage.getItem("contract_state_local");
+      const restoredState = localCached ? JSON.parse(localCached) : DEFAULT_FALLBACK_STATE;
+
+      setState({
+        ...restoredState,
+        supabaseStatus: {
+          connected: false,
+          tableExists: !err.message.includes("PGRST205"),
+          rlsEnabled: isRls,
+          error: err.message
+        }
+      });
+      setErrorHeader("");
+    }
+  };
+
+  /**
+   * Helper that upserts data to client-side localStorage and tries direct Supabase transfer.
+   */
+  const saveStateDirect = async (updatedState: DatabaseState) => {
+    setState(updatedState);
+    localStorage.setItem("contract_state_local", JSON.stringify(updatedState));
+
+    try {
+      const { error } = await supabase
+        .from("contract_state")
+        .upsert({ id: "current_state", data: updatedState, updated_at: new Date().toISOString() });
+
+      if (error) {
+        console.warn("Direct save to Supabase error:", error.message);
+        const isRls = error.code === "42501" || error.message.includes("violates row-level security");
+        const isMissingTable = error.code === "PGRST205" || error.message.includes("Could not find the table");
+        
+        setState(prev => ({
+          ...prev,
+          supabaseStatus: {
+            connected: true,
+            tableExists: !isMissingTable,
+            rlsEnabled: isRls,
+            error: error.message
+          }
+        }));
+      } else {
+        setState(prev => ({
+          ...prev,
+          supabaseStatus: {
+            connected: true,
+            tableExists: true,
+            rlsEnabled: false,
+            error: ""
+          }
+        }));
+      }
+    } catch (err: any) {
+      console.warn("Direct save to Supabase exception:", err.message);
+      const isRls = err.message.includes("violates row-level security") || err.message.includes("42501");
+      setState(prev => ({
+        ...prev,
+        supabaseStatus: {
+          connected: false,
+          tableExists: true,
+          rlsEnabled: isRls,
+          error: err.message
+        }
+      }));
+    }
+  };
+
   // Load contract details from server with robust retry mechanism
   const loadState = async (showLoadingIndicator = false) => {
     if (showLoadingIndicator) setLoading(true);
@@ -44,7 +271,7 @@ export default function App() {
     
     let success = false;
     let data: DatabaseState | null = null;
-    let attempts = 3;
+    let attempts = 2; // Keep attempts short to fallback faster
     let lastError: any = null;
 
     while (attempts > 0 && !success) {
@@ -57,8 +284,7 @@ export default function App() {
         lastError = err;
         attempts--;
         if (attempts > 0) {
-          // Wait 1 second before retrying
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       }
     }
@@ -66,9 +292,11 @@ export default function App() {
     if (success && data) {
       setState(data);
       setErrorHeader("");
+      setUseDirectSupabaseMode(false);
     } else {
-      console.error("Erro de sincronização de rede após tentativas:", lastError);
-      setErrorHeader("Erro de conexão ao servidor para salvar ou sincronizar os dados.");
+      console.warn("Backend API not responding/offline. Falling back to direct client-side Supabase/LocalStorage connection.");
+      setUseDirectSupabaseMode(true);
+      await loadDirectSupabaseState();
     }
 
     if (showLoadingIndicator) setLoading(false);
@@ -79,7 +307,7 @@ export default function App() {
   useEffect(() => {
     loadState(true);
 
-    // Dynamic background polling every 8 seconds to synchronize across distinct users!
+    // Dynamic background polling to keep multiple users in sync!
     const pollInterval = setInterval(() => {
       loadState(false);
     }, 8000);
@@ -87,7 +315,7 @@ export default function App() {
     return () => clearInterval(pollInterval);
   }, []);
 
-  // Update overall Contract Settings (Contract Name, supervisor name, value, dates, additives)
+  // Update overall Contract Settings
   const handleUpdateSettings = async (
     contractName: string,
     supervisorCompany: string,
@@ -96,6 +324,20 @@ export default function App() {
     contractEndDate?: string,
     contractAdditives?: ContractAdditive[]
   ) => {
+    if (useDirectSupabaseMode) {
+      const newState: DatabaseState = {
+        ...state,
+        contractName,
+        supervisorCompany,
+        contractValue,
+        contractStartDate,
+        contractEndDate,
+        contractAdditives
+      };
+      await saveStateDirect(newState);
+      return;
+    }
+
     try {
       const res = await fetch("/api/contract/settings", {
         method: "POST",
@@ -125,6 +367,39 @@ export default function App() {
     updaterName: string,
     updaterRole: string
   ) => {
+    if (useDirectSupabaseMode) {
+      const updatedWorks = state.works.map((w) => {
+        if (w.id === workId) {
+          return { ...w, progress: newProgress };
+        }
+        return w;
+      });
+
+      const matchedWork = state.works.find((w) => w.id === workId);
+      const oldProgress = matchedWork ? matchedWork.progress : 0;
+      const workName = matchedWork ? matchedWork.name : "Obra desconhecida";
+
+      const newLog: UpdateLog = {
+        id: `log-${Date.now()}`,
+        workId,
+        workName,
+        userName: updaterName,
+        userRole: updaterRole,
+        timestamp: new Date().toISOString(),
+        oldProgress,
+        newProgress,
+        notes
+      };
+
+      const newState: DatabaseState = {
+        ...state,
+        works: updatedWorks,
+        logs: [newLog, ...state.logs]
+      };
+      await saveStateDirect(newState);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/works/${workId}`, {
         method: "PUT",
@@ -147,6 +422,30 @@ export default function App() {
 
   // Delete a work entry
   const handleDeleteWork = async (workId: string) => {
+    if (useDirectSupabaseMode) {
+      const targetWork = state.works.find((w) => w.id === workId);
+      const updatedWorks = state.works.filter((w) => w.id !== workId);
+      const newLog: UpdateLog = {
+        id: `log-${Date.now()}`,
+        workId,
+        workName: targetWork?.name || "Obra desconhecida",
+        userName: activeUser.name,
+        userRole: activeUser.role,
+        timestamp: new Date().toISOString(),
+        oldProgress: targetWork?.progress || 0,
+        newProgress: 0,
+        notes: `Remoção do registro de obra/lote sob supervisão.`
+      };
+
+      const newState: DatabaseState = {
+        ...state,
+        works: updatedWorks,
+        logs: [newLog, ...state.logs]
+      };
+      await saveStateDirect(newState);
+      return;
+    }
+
     try {
       const res = await fetch(`/api/works/${workId}?deleterName=${encodeURIComponent(activeUser.name)}&deleterRole=${encodeURIComponent(activeUser.role)}`, {
         method: "DELETE"
@@ -162,6 +461,61 @@ export default function App() {
 
   // Add (create) or update a work
   const handleSaveWork = async (workData: Partial<Obra>) => {
+    if (useDirectSupabaseMode) {
+      const isEditing = !!workData.id;
+      let updatedWorks = [...state.works];
+      let oldProgress = 0;
+      let originalName = workData.name || "Nova Obra";
+
+      if (isEditing) {
+        const idx = updatedWorks.findIndex((w) => w.id === workData.id);
+        if (idx !== -1) {
+          oldProgress = updatedWorks[idx].progress;
+          originalName = updatedWorks[idx].name;
+          updatedWorks[idx] = { ...updatedWorks[idx], ...workData } as Obra;
+        }
+      } else {
+        const newId = `obra-${Date.now()}`;
+        const newObra: Obra = {
+          id: newId,
+          name: workData.name || "",
+          contractNumber: workData.contractNumber || "",
+          startDate: workData.startDate || "",
+          deadlineDate: workData.deadlineDate || "",
+          activeContractDate: workData.activeContractDate || "",
+          progress: workData.progress || 0,
+          contractorName: workData.contractorName || "",
+          biddedValue: workData.biddedValue || 0,
+          status: workData.status || "planejamento"
+        };
+        updatedWorks.push(newObra);
+      }
+
+      const actionNotes = isEditing 
+        ? `Atualização das configurações/parâmetros do registro: ${workData.name || ""}.`
+        : `Cadastro inicial do lote/obra supervisionada: ${workData.name || ""}.`;
+
+      const newLog: UpdateLog = {
+        id: `log-${Date.now()}`,
+        workId: workData.id || `obra-${Date.now()}`,
+        workName: originalName,
+        userName: activeUser.name,
+        userRole: activeUser.role,
+        timestamp: new Date().toISOString(),
+        oldProgress,
+        newProgress: workData.progress || 0,
+        notes: actionNotes
+      };
+
+      const newState: DatabaseState = {
+        ...state,
+        works: updatedWorks,
+        logs: [newLog, ...state.logs]
+      };
+      await saveStateDirect(newState);
+      return;
+    }
+
     const isEditing = !!workData.id;
     const url = isEditing ? `/api/works/${workData.id}` : "/api/works";
     const method = isEditing ? "PUT" : "POST";
@@ -187,6 +541,11 @@ export default function App() {
 
   // Restore DB values back to original curated state
   const handleResetData = async () => {
+    if (useDirectSupabaseMode) {
+      await saveStateDirect(DEFAULT_FALLBACK_STATE);
+      return;
+    }
+
     try {
       const res = await fetch("/api/contract/reset", { method: "POST" });
       if (!res.ok) throw new Error();
