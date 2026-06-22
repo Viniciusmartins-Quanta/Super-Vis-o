@@ -4,6 +4,7 @@ import fs from "fs";
 import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
+import { supabaseSessionMiddleware } from "./src/supabaseServer";
 
 dotenv.config();
 
@@ -263,6 +264,7 @@ async function startServer() {
   const PORT = 3000;
 
   app.use(express.json());
+  app.use(supabaseSessionMiddleware);
 
   // API - Get entire state (Contract, Works, Logs)
   app.get("/api/contract", async (req, res) => {
