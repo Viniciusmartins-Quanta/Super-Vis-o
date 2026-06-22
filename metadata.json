@@ -1,0 +1,6 @@
+{
+  "name": "Supervisão de Obras Públicas",
+  "description": "Gerenciador e dashboard para contratos de supervisão de obras públicas, com acompanhamento de progresso, medições físicas e histórico de atualizações.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

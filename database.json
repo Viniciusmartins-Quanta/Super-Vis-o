@@ -1,0 +1,87 @@
+{
+  "contractName": "Contrato de Supervisão nº 085/2025 - DER/PR",
+  "supervisorCompany": "Quanta Consultoria e Engenharia",
+  "contractValue": 3450000,
+  "contractStartDate": "2025-01-15",
+  "contractEndDate": "2027-01-15",
+  "contractAdditives": [
+    {
+      "id": "add-1",
+      "number": "Aditivo 01/2025",
+      "type": "financeiro",
+      "value": 450000,
+      "description": "Acréscimo para serviços extraordinários de sondagem rotativa.",
+      "signatureDate": "2025-04-10"
+    },
+    {
+      "id": "add-2",
+      "number": "Aditivo 02/2025",
+      "type": "prazo",
+      "days": 180,
+      "description": "Prorrogação de prazo devido a atraso na liberação de licenças ambientais.",
+      "signatureDate": "2025-05-22"
+    }
+  ],
+  "works": [
+    {
+      "id": "obra-1",
+      "name": "Duplicação da Rodovia BR-277",
+      "contractNumber": "CTR-DER-104/2024",
+      "startDate": "2024-03-10",
+      "deadlineDate": "2026-09-30",
+      "activeContractDate": "2026-12-31",
+      "progress": 65,
+      "contractorName": "Egesa Engenharia S.A.",
+      "biddedValue": 45800000,
+      "status": "em_andamento"
+    },
+    {
+      "id": "obra-2",
+      "name": "Construção de Ponte Estaiada sobre o Rio Iguaçu",
+      "contractNumber": "CTR-DER-203/2024",
+      "startDate": "2024-05-15",
+      "deadlineDate": "2026-07-30",
+      "activeContractDate": "2026-10-31",
+      "progress": 88,
+      "contractorName": "Queiroz Galvão S.A.",
+      "biddedValue": 28500000,
+      "status": "em_andamento"
+    },
+    {
+      "id": "obra-3",
+      "name": "Restauração de Intercalares e Pavimentação PR-412",
+      "contractNumber": "CTR-DER-011/2025",
+      "startDate": "2025-01-20",
+      "deadlineDate": "2025-12-20",
+      "activeContractDate": "2026-03-31",
+      "progress": 25,
+      "contractorName": "Castilho Engenharia",
+      "biddedValue": 12400000,
+      "status": "em_andamento"
+    }
+  ],
+  "logs": [
+    {
+      "id": "log-1",
+      "workId": "obra-1",
+      "workName": "Duplicação da Rodovia BR-277",
+      "userName": "Supervisão",
+      "userRole": "Supervisor",
+      "timestamp": "2026-06-19T14:51:14.272Z",
+      "oldProgress": 60,
+      "newProgress": 65,
+      "notes": "Homologação do asfalto CBUQ no subtrecho km 18 e conclusão da drenagem lateral."
+    },
+    {
+      "id": "log-2",
+      "workId": "obra-2",
+      "workName": "Construção de Ponte Estaiada sobre o Rio Iguaçu",
+      "userName": "Supervisão",
+      "userRole": "Supervisor",
+      "timestamp": "2026-06-19T17:51:14.272Z",
+      "oldProgress": 85,
+      "newProgress": 88,
+      "notes": "Acompanhamento da concretagem do pilar central e avanço das aduelas metálicas."
+    }
+  ]
+}
