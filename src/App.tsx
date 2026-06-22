@@ -477,8 +477,7 @@ ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`}
 
       {/* Persistent Applet Footer */}
       <footer className="bg-white border-t border-slate-200 mt-auto py-6" id="applet-footer">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <p>© {new Date().getFullYear()} SIS-Contrato DER. Sistema Integrado de Supervisão Civil.</p>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-end gap-4 text-xs text-slate-400">
           <div className="flex gap-4">
             <span className="font-mono bg-slate-50 px-2.5 py-1 rounded border border-slate-250">
               Dispositivo: Navegador/Híbrido Mobile
