@@ -614,7 +614,7 @@ export default function WorkDetail({
         overflow: visible !important;
       }
       .cover-page {
-        background-image: url('assets/Folha de Capa.png'), url('/assets/Folha de Capa.png'), url('assets/Folha_de_Capa.png'), url('assets/Folha%20de%20Capa.png'), url('Folha%20de%20Capa.png'), url('Folha_de_Capa.png');
+        background-image: url('/cover.jpg');
         background-size: 100% 100%;
         background-position: center;
         background-repeat: no-repeat;
