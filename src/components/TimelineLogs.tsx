@@ -80,7 +80,7 @@ export default function TimelineLogs({ logs }: TimelineLogsProps) {
                 </span>
 
                 {/* Right side notification card bubble */}
-                <div className="flex-grow bg-slate-50 border border-slate-150 rounded-xl p-3.5 space-y-2 hover:bg-slate-50/80 transition shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+                <div className="flex-grow bg-slate-50 border border-slate-150 rounded-xl p-3 space-y-1.5 hover:bg-slate-50/80 transition shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                     <span className="text-xs font-bold text-slate-800">
                       {log.userName}

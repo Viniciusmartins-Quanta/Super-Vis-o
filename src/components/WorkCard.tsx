@@ -128,7 +128,7 @@ export default function WorkCard({
       )}
 
       {/* Timeline Dates Container with rich fields */}
-      <div className="border-t border-b border-slate-100 py-3.5 space-y-2.5 text-xs text-slate-600">
+      <div className="border-t border-b border-slate-100 py-3 space-y-2 text-xs text-slate-600">
         {work.signingDate && (
           <div className="flex justify-between items-center">
             <span className="flex items-center gap-1.5 text-slate-400 font-medium">

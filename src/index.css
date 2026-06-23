@@ -9,9 +9,22 @@
 /* Base style improvements for scrollbars and smooth experience */
 body {
   font-family: var(--font-sans);
-  background-color: #f8fafc;
+  background-image: url('/cover.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: #0f172a;
   -webkit-font-smoothing: antialiased;
+}
+
+#applet-root {
+  background-image: url('/timbrado.jpg');
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom;
+  background-attachment: fixed;
+  background-blend-mode: overlay;
+  background-color: rgba(248, 250, 252, 0.9);
 }
 
 ::-webkit-scrollbar {

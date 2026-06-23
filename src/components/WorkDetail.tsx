@@ -673,7 +673,7 @@ export default function WorkDetail({
       }
       .black-grid-table td, .black-grid-table th {
         border: 1px solid #000000;
-        padding: 3.3px 8px;
+        padding: 2.6px 8px;
         color: #000000;
       }
     </style>
