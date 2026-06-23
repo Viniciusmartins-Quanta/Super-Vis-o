@@ -620,7 +620,7 @@ export default function WorkDetail({
         background-repeat: no-repeat;
       }
       .watermark-page {
-        background-image: url("assets/Marca d'água_2.png"), url("assets/Marca_dagua_2.png"), url("/assets/Marca d'água_2.png"), url("assets/Marca%20d%27%C3%A1gua_2.png"), url("Marca%20d%27%C3%A1gua_2.png"), url("Marca_dagua_2.png");
+        background-image: url('/timbrado.jpg');
         background-size: 100% 100%;
         background-position: center;
         background-repeat: no-repeat;
