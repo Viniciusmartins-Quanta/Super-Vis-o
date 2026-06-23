@@ -129,6 +129,11 @@ export default function ActivityModal({
     e.preventDefault();
     setErrText("");
 
+    if (!startDate || !endDate) {
+      setErrText("Por favor, preencha o Início e o Final da semana.");
+      return;
+    }
+
     if (physicalProgress < 0 || physicalProgress > 100) {
       setErrText("O avanço concluído deve estar entre 0% e 100%.");
       return;

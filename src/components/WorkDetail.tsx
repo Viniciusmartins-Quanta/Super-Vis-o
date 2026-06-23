@@ -51,6 +51,7 @@ interface WorkDetailProps {
     progressImages?: string[]
   ) => Promise<void>;
   onUpdateLogNotes?: (logId: string, notes: string) => Promise<void>;
+  onDeleteLog?: (logId: string) => Promise<void>;
 }
 
 export default function WorkDetail({
@@ -61,7 +62,8 @@ export default function WorkDetail({
   onUpdateWork,
   onEditClick,
   onLaunchMeasurement,
-  onUpdateLogNotes
+  onUpdateLogNotes,
+  onDeleteLog
 }: WorkDetailProps) {
   const [activeTab, setActiveTab] = useState<
     "ficha" | "aditivos" | "lancamentos" | "drive" | "revisoes" | "logs"
@@ -809,9 +811,15 @@ export default function WorkDetail({
         </div>
 
         <!-- Place for User inserted Chronology -->
-        <div class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-none text-slate-500 text-xs text-center">
+        ${work.timelineImage ? `
+          <div class="mt-4">
+            <img src="${work.timelineImage}" alt="Cronograma da Obra" class="max-w-full h-auto" />
+          </div>
+        ` : `
+          <div class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-none text-slate-500 text-xs text-center">
             Inserir cronologia da obra aqui.
-        </div>
+          </div>
+        `}
       </div>
       
       <div class="page-footer">3</div>
@@ -2093,11 +2101,26 @@ export default function WorkDetail({
                             <span className="font-extrabold text-xs pr-4">
                               Acompanhamento Semanal
                             </span>
-                            <span className={`font-mono text-xs font-black ${
-                              isActive ? "text-amber-400" : "text-sky-600"
-                            }`}>
-                              {log.newProgress}%
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className={`font-mono text-xs font-black ${
+                                isActive ? "text-amber-400" : "text-sky-600"
+                              }`}>
+                                {log.newProgress}%
+                              </span>
+                              {onDeleteLog && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (confirm("Deseja realmente excluir este relatório semanal?")) {
+                                      onDeleteLog(log.id);
+                                    }
+                                  }}
+                                  className={`p-1 rounded-full transition ${isActive ? "hover:bg-slate-700 text-slate-400 hover:text-red-500" : "hover:bg-slate-100 text-slate-400 hover:text-red-500"}`}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
                           </div>
                           
                           <span className={`text-[10px] ${

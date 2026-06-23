@@ -461,6 +461,31 @@ export default function App() {
     }
   };
 
+  const handleDeleteLog = async (logId: string) => {
+    if (useDirectSupabaseMode) {
+      const updatedLogs = state.logs.filter((l) => l.id !== logId);
+      const newState: DatabaseState = {
+        ...state,
+        logs: updatedLogs
+      };
+      await saveStateDirect(newState);
+      await loadState();
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/logs/${logId}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error("Erro ao excluir boletim.");
+      await loadState();
+      setErrorHeader("");
+    } catch (err) {
+      console.error(err);
+      setErrorHeader("Não foi possível excluir o boletim.");
+    }
+  };
+
   // Delete a work entry
   const handleDeleteWork = async (workId: string) => {
     if (useDirectSupabaseMode) {
@@ -736,6 +761,7 @@ export default function App() {
             }}
             onLaunchMeasurement={handleLaunchMeasurement}
             onUpdateLogNotes={handleUpdateLogNotes}
+            onDeleteLog={handleDeleteLog}
           />
         </main>
       ) : (

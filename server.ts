@@ -503,6 +503,19 @@ async function startServer() {
     res.json({ message: "Obra excluída com sucesso." });
   });
 
+  app.delete("/api/logs/:id", async (req, res) => {
+    const { id } = req.params;
+    const data = await getDatabaseState();
+    const logIndex = data.logs.findIndex((l) => l.id === id);
+    if (logIndex === -1) {
+      return res.status(404).json({ error: "Boletim não encontrado." });
+    }
+    data.logs.splice(logIndex, 1);
+    const { supabaseStatus: _, ...cleanData } = data;
+    await saveDatabaseState(cleanData);
+    res.json({ message: "Boletim excluído com sucesso." });
+  });
+
   // Serve static assets and routing in production or proxy to Vite in dev
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
