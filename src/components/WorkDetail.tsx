@@ -615,13 +615,13 @@ export default function WorkDetail({
       }
       .cover-page {
         background-image: url('/cover.jpg');
-        background-size: 100% 100%;
+        background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
       }
       .watermark-page {
         background-image: url('/timbrado.jpg');
-        background-size: 100% 100%;
+        background-size: cover;
         background-position: center;
         background-repeat: no-repeat;
       }
