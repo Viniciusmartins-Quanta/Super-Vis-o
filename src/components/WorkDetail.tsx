@@ -625,6 +625,15 @@ export default function WorkDetail({
         background-position: center;
         background-repeat: no-repeat;
       }
+      .page-footer {
+        position: absolute;
+        bottom: 10mm;
+        left: 10mm;
+        font-size: 9px;
+        font-family: 'JetBrains Mono', monospace;
+        color: #94a3b8;
+        font-weight: bold;
+      }
       @media print {
         body {
           background-color: white;
@@ -669,25 +678,15 @@ export default function WorkDetail({
 </head>
 <body>
 
-  <!-- Sticky top action bar for high-craft browser interaction -->
-  <div class="no-print bg-slate-900 border-b border-slate-950 text-white py-3 px-6 flex justify-end items-center shadow-md sticky top-0 z-50 w-full font-sans">
-    <div class="flex items-center gap-2 print:hidden">
-      <button onclick="window.close()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer">Fechar</button>
-      <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-6 py-2.5 rounded-xl shadow-lg transition flex items-center gap-1 cursor-pointer">
-        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
-        <span>Imprimir / Salvar PDF</span>
-      </button>
-    </div>
-  </div>
 
   <!-- PAGE 1: COVER CARD (CAPA) -->
   <div class="page cover-page border border-slate-100 relative">
     <div class="absolute inset-0 z-0">
       <img src="/cover.jpg" class="w-full h-full object-cover" alt="Capa" />
     </div>
-    <div class="page-content relative z-10">
+    <div class="page-content relative z-10 flex flex-col justify-end h-full">
       <!-- Report titles formatted EXACTLY to instructions: Arial 26, Arial 16, Calibri 12 Orange, Calibri 16 -->
-      <div class="mb-[20mm] select-none text-left" style="padding-top: 20mm;">
+      <div class="mb-[30mm] select-none text-left">
         <h1 style="font-family: Arial, sans-serif; font-size: 26pt; font-weight: bold; color: black; line-height: 1.25; margin: 0 0 6mm 0; text-transform: uppercase;">
           RELATÓRIO SEMANAL DE<br/>
           GERENCIAMENTO E FISCALIZAÇÃO<br/>
@@ -708,9 +707,7 @@ export default function WorkDetail({
       </div>
 
       <!-- PAGE FOOTER -->
-      <div class="flex justify-start items-center select-none pt-4 mt-auto">
-        <span class="text-[9px] font-mono text-slate-400 font-bold">1</span>
-      </div>
+      <div class="page-footer">1</div>
     </div>
   </div>
 
@@ -796,9 +793,7 @@ export default function WorkDetail({
         </table>
       </div>
       
-      <div class="flex justify-end items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
-        <span>2</span>
-      </div>
+      <div class="page-footer">2</div>
     </div>
   </div>
 
@@ -819,9 +814,7 @@ export default function WorkDetail({
         </div>
       </div>
       
-      <div class="flex justify-end items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
-        <span>3</span>
-      </div>
+      <div class="page-footer">3</div>
     </div>
   </div>
 
