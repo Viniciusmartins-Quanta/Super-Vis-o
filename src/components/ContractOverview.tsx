@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { formatCurrency, formatPercent, formatDate } from "../utils";
-import { Obra, ContractAdditive } from "../types";
+import { Obra, ContractAdditive, UpdateLog } from "../types";
 import {
   FileCheck,
   Building2,
@@ -14,8 +14,10 @@ import {
   Trash2,
   Layers,
   Clock,
-  Coins
+  Coins,
+  FileText
 } from "lucide-react";
+import WeeklyReportModal from "./WeeklyReportModal";
 
 interface ContractOverviewProps {
   contractName: string;
@@ -25,6 +27,7 @@ interface ContractOverviewProps {
   contractEndDate?: string;
   contractAdditives?: ContractAdditive[];
   works: Obra[];
+  logs: UpdateLog[];
   onUpdateSettings: (
     name: string,
     company: string,
@@ -33,6 +36,9 @@ interface ContractOverviewProps {
     endDate?: string,
     additives?: ContractAdditive[]
   ) => Promise<void>;
+  reportWeek: string;
+  setReportWeek: (week: string) => void;
+  onGenerateReport: () => void;
 }
 
 export default function ContractOverview({
@@ -43,9 +49,14 @@ export default function ContractOverview({
   contractEndDate = "2027-01-15",
   contractAdditives = [],
   works,
-  onUpdateSettings
+  logs = [],
+  onUpdateSettings,
+  reportWeek,
+  setReportWeek,
+  onGenerateReport
 }: ContractOverviewProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [tempName, setTempName] = useState(contractName);
   const [tempCompany, setTempCompany] = useState(supervisorCompany);
   const [tempValue, setTempValue] = useState<number>(contractValue);
@@ -498,14 +509,15 @@ export default function ContractOverview({
       </div>
 
       {/* Contract Additive Board Overview Section (Lists all detailed additives on home page card) */}
-      {contractAdditives && contractAdditives.length > 0 && (
-        <div className="bg-slate-950 px-6 py-4.5 border-t border-slate-850 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-amber-500" />
-              Quadro de Termos Aditivos de Supervisão ({contractAdditives.length})
-            </span>
-          </div>
+      <div className="bg-slate-950 px-6 py-4.5 border-t border-slate-850 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
+            <Layers className="w-4 h-4 text-amber-500" />
+            Quadro de Termos Aditivos de Supervisão ({contractAdditives.length})
+          </span>
+        </div>
+        
+        {contractAdditives && contractAdditives.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {contractAdditives.map((add) => {
               const typeLabels: Record<string, string> = {
@@ -549,8 +561,31 @@ export default function ContractOverview({
               );
             })}
           </div>
+        ) : (
+          <div className="bg-slate-900/50 rounded-xl p-6 text-center text-xs text-slate-500 border border-slate-850">
+            Nenhum termo aditivo de prazo ou financeiro cadastrado para este contrato.
+          </div>
+        )}
+
+        <div className="flex justify-end pt-3 border-t border-slate-900 mt-2">
+          <button
+            onClick={() => setIsReportModalOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-md"
+          >
+            <FileText className="w-4 h-4" />
+            <span>Gerar Relatório Consolidado</span>
+          </button>
         </div>
-      )}
+      </div>
+      
+      <WeeklyReportModal 
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        onGenerate={onGenerateReport}
+        reportWeek={reportWeek}
+        setReportWeek={setReportWeek}
+        logs={logs}
+      />
     </section>
   );
 }

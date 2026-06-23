@@ -498,64 +498,8 @@ export default function WorkDetail({
           }
         }).join("");
       }).join("");
-    } else {
-      // Exactly pre-populated fallback additives matching example
-      additivesTableRows = `
-        <tr>
-          <td rowspan="4" style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif;">
-            1º ADITIVO
-          </td>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Data assinatura: <span style="font-weight: bold;">20/06/2024</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Data publicação JOM: <span style="font-weight: bold;">03/07/2024</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Prazo Aditivado: <span style="font-weight: bold;">10 (dez) meses</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">20/04/2025</span></td>
-        </tr>
-
-        <tr>
-          <td rowspan="5" style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; font-family: Arial, sans-serif;">
-            2º ADITIVO
-          </td>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Data assinatura: <span style="font-weight: bold;">21/04/2025</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Data publicação JOM: <span style="font-weight: bold;">02/07/2025</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Prazo Aditivado: <span style="font-weight: bold;">10 (dez) meses</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">20/02/2026</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">20/02/2026</span></td>
-        </tr>
-
-        <tr>
-          <td rowspan="5" style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; font-family: Arial, sans-serif;">
-            3º ADITIVO
-          </td>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Data assinatura: <span style="font-weight: bold;">20/02/2026</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Data publicação JOM: <span style="font-weight: bold;">21/05/2026</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Prazo Aditivado: <span style="font-weight: bold;">6 (seis) meses</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">21/08/2026</span></td>
-        </tr>
-        <tr>
-          <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">21/08/2026</span></td>
-        </tr>
-      `;
     }
+
 
     // Build whole HTML payload structure
     const pdfHtml = `
@@ -982,6 +926,14 @@ export default function WorkDetail({
       <span>5</span>
     </div>
   </div>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    });
+  </script>
 
 </body>
 </html>
@@ -2107,6 +2059,20 @@ export default function WorkDetail({
                               }`}>
                                 {log.newProgress}%
                               </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleExportPDF(log);
+                                }}
+                                className={`p-1 rounded-full transition ${
+                                  isActive
+                                    ? "hover:bg-slate-700 text-slate-350 hover:text-amber-400"
+                                    : "hover:bg-slate-100 text-slate-400 hover:text-sky-600"
+                                }`}
+                                title="Gerar PDF do Boletim"
+                              >
+                                <FileText className="w-3 h-3" />
+                              </button>
                               {onDeleteLog && (
                                 <button
                                   onClick={(e) => {
@@ -2151,22 +2117,39 @@ export default function WorkDetail({
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         onClick={() => {
-                          setEditNotesText(activeLog.notes);
                           setIsEditingReport(true);
+                          setEditNotesText(activeLog.notes);
                         }}
-                        className="bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 px-3 py-1.5 rounded-xl text-xs font-bold transition duration-150 flex items-center gap-1.5 cursor-pointer"
+                        className="bg-slate-100 hover:bg-slate-200 text-slate-750 font-bold text-xs px-3 py-1.5 rounded-lg transition flex items-center gap-1 cursor-pointer"
+                        type="button"
                       >
-                        <Edit3 className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Editar Report</span>
+                        <Edit3 className="w-3 h-3" />
+                        <span>Editar</span>
                       </button>
-                      
                       <button
                         onClick={() => handleExportPDF(activeLog)}
-                        className="bg-amber-50 hover:bg-amber-100/85 border border-amber-200 text-amber-800 px-3 py-1.5 rounded-xl text-xs font-extrabold transition duration-150 flex items-center gap-1.5 cursor-pointer"
+                        className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs px-3 py-1.5 rounded-lg shadow-2xs transition flex items-center gap-1.5 cursor-pointer"
+                        type="button"
                       >
-                        <Download className="w-3.5 h-3.5 text-amber-600" />
-                        <span>Exportar PDF da Semana</span>
+                        <FileText className="w-3 h-3" />
+                        <span>Exportar PDF</span>
                       </button>
+
+                  {parsed.isStandardReport && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 mt-4 text-emerald-900">
+                        <h5 className="font-bold flex items-center gap-2 mb-2 text-sm">
+                            <CheckCircle className="w-4 h-4" />
+                            Quadro de Acompanhamento Semanal
+                        </h5>
+                        <p className="text-xs mb-1">
+                            <strong>Progresso da semana:</strong> {activeLog.newProgress}%
+                        </p>
+                        <p className="text-xs">
+                            <strong>Situação do aditivo:</strong> {parsed.sitacaoAditivo}
+                        </p>
+                    </div>
+                  )}
+                      
                     </div>
                   </div>
 
