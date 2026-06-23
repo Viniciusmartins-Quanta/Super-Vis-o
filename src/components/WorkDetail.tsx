@@ -582,11 +582,15 @@ export default function WorkDetail({
       }
       body {
         margin: 0;
-        padding: 0;
+        padding: 20px 0;
         background-color: #cbd5e1;
         font-family: 'Inter', sans-serif;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
       }
       .page {
         width: 210mm;
@@ -597,7 +601,7 @@ export default function WorkDetail({
         overflow: hidden;
         position: relative;
         background-color: white;
-        margin: 20px auto;
+        margin: 0;
         box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
         display: flex;
         flex-direction: column;
@@ -658,7 +662,7 @@ export default function WorkDetail({
       }
       .black-grid-table td, .black-grid-table th {
         border: 1px solid #000000;
-        padding: 5.5px 8px;
+        padding: 3.3px 8px;
         color: #000000;
       }
     </style>
@@ -666,15 +670,8 @@ export default function WorkDetail({
 <body>
 
   <!-- Sticky top action bar for high-craft browser interaction -->
-  <div class="no-print bg-slate-900 border-b border-slate-950 text-white py-3 px-6 flex justify-between items-center shadow-md sticky top-0 z-50 w-full font-sans">
-    <div class="flex items-center gap-3">
-      <div class="bg-amber-500 text-slate-950 p-1.5 rounded-lg font-black text-xs">PDF</div>
-      <div>
-        <h1 class="text-xs font-black uppercase tracking-wider text-amber-500">Visualização de Impressão do Relatório</h1>
-        <p class="text-[10px] text-slate-400">Pressione Ctrl+P ou clique no botão para salvar o relatório semanal oficial</p>
-      </div>
-    </div>
-    <div class="flex items-center gap-2">
+  <div class="no-print bg-slate-900 border-b border-slate-950 text-white py-3 px-6 flex justify-end items-center shadow-md sticky top-0 z-50 w-full font-sans">
+    <div class="flex items-center gap-2 print:hidden">
       <button onclick="window.close()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2 rounded-xl transition cursor-pointer">Fechar</button>
       <button onclick="window.print()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black px-6 py-2.5 rounded-xl shadow-lg transition flex items-center gap-1 cursor-pointer">
         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
@@ -684,14 +681,13 @@ export default function WorkDetail({
   </div>
 
   <!-- PAGE 1: COVER CARD (CAPA) -->
-  <div class="page cover-page border border-slate-100 relative p-0">
-    <!-- Full scale content padding overlay -->
-    <div class="absolute inset-0 flex flex-col justify-between p-[20mm] z-10" style="background-color: rgba(255, 255, 255, 0.05);">
-      <!-- Spacer for top topographic orange background layout -->
-      <div></div>
-      
+  <div class="page cover-page border border-slate-100 relative">
+    <div class="absolute inset-0 z-0">
+      <img src="/cover.jpg" class="w-full h-full object-cover" alt="Capa" />
+    </div>
+    <div class="page-content relative z-10">
       <!-- Report titles formatted EXACTLY to instructions: Arial 26, Arial 16, Calibri 12 Orange, Calibri 16 -->
-      <div class="mb-[20mm] select-none text-left" style="padding-top: 100mm;">
+      <div class="mb-[20mm] select-none text-left" style="padding-top: 20mm;">
         <h1 style="font-family: Arial, sans-serif; font-size: 26pt; font-weight: bold; color: black; line-height: 1.25; margin: 0 0 6mm 0; text-transform: uppercase;">
           RELATÓRIO SEMANAL DE<br/>
           GERENCIAMENTO E FISCALIZAÇÃO<br/>
@@ -712,9 +708,8 @@ export default function WorkDetail({
       </div>
 
       <!-- PAGE FOOTER -->
-      <div class="flex justify-between items-center select-none pt-4">
+      <div class="flex justify-start items-center select-none pt-4 mt-auto">
         <span class="text-[9px] font-mono text-slate-400 font-bold">1</span>
-        <div></div>
       </div>
     </div>
   </div>
@@ -722,35 +717,21 @@ export default function WorkDetail({
 
   <!-- PAGE 2: FICHA TÉCNICA CONTRATUAL (DETALHES DO CONTRATO) -->
   <div class="page watermark-page border border-slate-100">
-    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-      <span class="text-[8px] uppercase tracking-widest font-black text-slate-400 font-mono">RELATÓRIO SEMANAL DE GERENCIAMENTO E FISCALIZAÇÃO TÉCNICA DE OBRAS</span>
-      <!-- Space reserved so Quanta logo in watermark background shows cleanly -->
-      <div class="w-20 h-4 select-none"></div>
-    </div>
-    
-    <div class="flex-grow my-4 flex flex-col justify-between">
-      <div>
+    <div class="page-content">
+      <div class="flex-grow my-4 flex flex-col justify-start">
         <!-- Contract Title banner with background orange, black Arial 11pt bold text -->
-        <div style="background-color: #f97316; border: 1px solid #ea580c; border-radius: 8px; padding: 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
           <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">
             ${work.name}
           </h2>
         </div>
         
         <!-- Space for the cover photo of the week (using log.coverImage if loaded, else fallback blueprint design) -->
-        <div class="border border-slate-200 rounded-xl h-[100mm] flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs">
+        <div class="border border-black h-[70mm] flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm;">
           ${log.coverImage ? `
-            <img src="${log.coverImage}" class="w-full h-full object-cover" alt="Foto da Capa da Semana" />
+            <img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />
           ` : `
-            <svg class="absolute inset-0 w-full h-full opacity-[0.03] pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="print-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                  <path d="M 40 0 L 0 0 0 40" fill="none" stroke="black" stroke-width="1"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#print-grid)" />
-            </svg>
-            <div class="border border-slate-200 bg-white/90 shadow-sm rounded-xl px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4">
+            <div class="border border-slate-200 bg-white/90 shadow-sm rounded-none px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4">
               <span class="text-slate-405 text-3xl block">📷</span>
               <div>
                 <span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block">FOTO DE CAPA DA OBRA</span>
@@ -760,126 +741,93 @@ export default function WorkDetail({
             </div>
           `}
         </div>
-      </div>
 
-      <!-- Contract Parameter Table perfectly resembling example -->
-      <table class="black-grid-table" style="margin-top: 5px;">
-        <tbody>
-          <tr>
-            <td style="font-weight: bold; width: 45%;">Contrato N°:</td>
-            <td style="font-weight: bold;">${work.contractNumber}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Concorrência Pública:</td>
-            <td>${biddingNumber}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Proc. Administrativo:</td>
-            <td>${adminProcess}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Assinatura Contrato:</td>
-            <td>${signingDate}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Publicação no JOM:</td>
-            <td>${publicationDateJom}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Ordem de Início:</td>
-            <td>${startOrderDate}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Empresa Vencedora:</td>
-            <td style="text-transform: uppercase;">${work.contractorName}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Prazo Vigência:</td>
-            <td>${termDaysVigencia}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Prazo Execução:</td>
-            <td>${termDaysExecucao}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Início de Atividades:</td>
-            <td>${formatDate(work.startDate)}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Valor Total Inicial:</td>
-            <td style="font-weight: bold;">
-              ${formatCurrency(work.biddedValue)} <span style="font-size: 8pt; font-weight: normal; font-style: italic;">(${parsedValueExtenso})</span>
-            </td>
-          </tr>
-          ${additivesTableRows}
-        </tbody>
-      </table>
-    </div>
-    
-    <div class="flex justify-end items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
-      <span>PÁGINA 2</span>
+        <!-- Contract Parameter Table perfectly resembling example -->
+        <table class="black-grid-table" style="margin-top: 5px;">
+          <tbody>
+            <tr>
+              <td style="font-weight: bold; width: 45%;">Contrato N°:</td>
+              <td style="font-weight: bold;">${work.contractNumber}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Concorrência Pública:</td>
+              <td>${biddingNumber}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Proc. Administrativo:</td>
+              <td>${adminProcess}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Assinatura Contrato:</td>
+              <td>${signingDate}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Publicação no JOM:</td>
+              <td>${publicationDateJom}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Ordem de Início:</td>
+              <td>${startOrderDate}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Empresa Vencedora:</td>
+              <td style="text-transform: uppercase;">${work.contractorName}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Prazo Vigência:</td>
+              <td>${termDaysVigencia}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Prazo Execução:</td>
+              <td>${termDaysExecucao}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Início de Atividades:</td>
+              <td>${formatDate(work.startDate)}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Valor Total Inicial:</td>
+              <td style="font-weight: bold;">
+                ${formatCurrency(work.biddedValue)} <span style="font-size: 8pt; font-weight: normal; font-style: italic;">(${parsedValueExtenso})</span>
+              </td>
+            </tr>
+            ${additivesTableRows}
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="flex justify-end items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
+        <span>2</span>
+      </div>
     </div>
   </div>
 
 
   <!-- PAGE 3: CONTRATUAL TIMELINE & CHRONOLOGY CHRONOGRAM -->
   <div class="page watermark-page border border-slate-100">
-    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-      <span class="text-[8px] uppercase tracking-widest font-black text-slate-400 font-mono">RELATÓRIO SEMANAL DE GERENCIAMENTO E FISCALIZAÇÃO TÉCNICA DE OBRAS</span>
-      <div class="w-20 h-4 select-none"></div>
-    </div>
-    
-    <div class="flex-grow my-4 flex flex-col justify-between">
-      <div>
-        <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-l-2 border-orange-500 pl-2">
-          LINHA DO TEMPO CONTRATUAL E HISTÓRICO DE MARCOS
-        </h3>
-        <p class="text-[9.5px] text-slate-500 mt-1 max-w-xl leading-relaxed">
-          Evolução cronológica do contrato executivo principal e todos os termos de aditivo cadastrados pelo conselho de fiscalização.
-        </p>
-      </div>
+    <div class="page-content">
+      <div class="flex-grow my-4 flex flex-col justify-start">
+        <div>
+          <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-l-2 border-orange-500 pl-2">
+            CRONOLOGIA DA OBRA
+          </h3>
+        </div>
 
-      <!-- Horizontal vector timeline display engine -->
-      <div class="relative w-full h-[320px] bg-slate-50/45 border border-slate-200/60 rounded-2xl flex items-center justify-between px-6 overflow-x-auto my-2">
-        <!-- Horizontal Base Line -->
-        <div style="position: absolute; top: 154.5px; left: 32px; right: 32px; height: 1.5px; background-color: #0c4a6e; z-index: 10;"></div>
-        
-        <div class="flex-grow flex justify-between items-center w-full gap-4 relative">
-          <!-- Adjust vector lines on top/bottom points -->
-          ${milestonesHtml}
+        <!-- Place for User inserted Chronology -->
+        <div class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-none text-slate-500 text-xs text-center">
+            Inserir cronologia da obra aqui.
         </div>
       </div>
       
-      <!-- Space for the timeline/chronology image (curva S / cronograma de marcos) -->
-      <div class="border border-slate-200 rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center relative ${work.timelineImage ? 'h-[95mm]' : 'h-[30mm]'} my-2 p-1 shadow-2xs">
-        ${work.timelineImage ? `
-          <img src="${work.timelineImage}" class="w-full h-full object-contain rounded-lg" alt="Cronograma de Marcos Físicos" />
-        ` : `
-          <div class="text-center font-mono py-2">
-            <span class="text-slate-400 text-2xl block">📅</span>
-            <span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block mt-1">CRONOGRAMA FÍSICO / CURVA S DA OBRA</span>
-            <span class="text-[9px] text-slate-400 block mt-0.5 font-sans">Nenhuma imagem de marco de cronograma anexada na aba de aditivos.</span>
-          </div>
-        `}
+      <div class="flex justify-end items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
+        <span>3</span>
       </div>
-      
-      <div class="bg-indigo-50/20 border border-indigo-200/40 rounded-xl p-2.5 text-[9px] text-indigo-900 leading-relaxed font-medium">
-        <strong>Nota de fiscalização:</strong> Os marcos de regularidade contratual mapeados sob auditoria das publicações oficiais no diário do executivo municipal (JOM). Modificações físicas estão documentadas por cronograma gráfico anexo acima.
-      </div>
-    </div>
-    
-    <div class="flex justify-end items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
-      <span>PÁGINA 3</span>
     </div>
   </div>
 
 
-  <!-- PAGE 4: ATIVIDADES DA SEMANA (MEDICAO SEMANAL) - Uses expandable-page class to never truncate text -->
-  <div class="page watermark-page expandable-page border border-slate-100">
-    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-      <span class="text-[8px] uppercase tracking-widest font-black text-slate-400 font-mono">RELATÓRIO SEMANAL DE GERENCIAMENTO E FISCALIZAÇÃO TÉCNICA DE OBRAS</span>
-      <div class="w-20 h-4 select-none font-mono"></div>
-    </div>
+  <!-- PAGE 4: ATIVIDADES DA SEMANA (MEDICAO SEMANAL) -->
+  <div class="page watermark-page border border-slate-100">
     
     <div class="flex-grow my-4 flex flex-col justify-start">
       <table class="black-grid-table">
@@ -963,18 +911,14 @@ export default function WorkDetail({
       </table>
     </div>
     
-    <div class="flex justify-end items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1 pt-6 border-t border-slate-100/40">
-      <span>PÁGINA 4</span>
+    <div class="flex justify-start items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
+      <span>4</span>
     </div>
   </div>
 
 
   <!-- PAGE 5: REGISTRO FOTOGRÁFICO DE MARCOS (FOTOS DA OBRA) -->
   <div class="page watermark-page border border-slate-100">
-    <div class="flex justify-between items-center border-b border-slate-200 pb-3">
-      <span class="text-[8px] uppercase tracking-widest font-black text-slate-400 font-mono">RELATÓRIO SEMANAL DE GERENCIAMENTO E FISCALIZAÇÃO TÉCNICA DE OBRAS</span>
-      <div class="w-20 h-4 select-none"></div>
-    </div>
     
     <div class="flex-grow my-5 flex flex-col justify-start">
       <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">
@@ -982,7 +926,7 @@ export default function WorkDetail({
       </div>
       
       <!-- Thick 1.5px solid black border enclosing 4 photos beautifully -->
-      <div style="border: 1.5px solid #000000; padding: 14px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; flex-grow: 1; align-content: center;">
+      <div style="border: 0.3mm solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
         <!-- PHOTO 1 -->
         <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
           ${log.progressImages && log.progressImages[0] ? `
@@ -1033,8 +977,8 @@ export default function WorkDetail({
       </div>
     </div>
     
-    <div class="flex justify-end items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
-      <span>PÁGINA 5</span>
+    <div class="flex justify-start items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
+      <span>5</span>
     </div>
   </div>
 
