@@ -658,22 +658,22 @@ export default function App() {
     </div>
     <div class="page-content relative z-10 flex flex-col justify-end h-full">
       <div class="mb-[30mm] select-none text-left">
-        <h1 style="font-family: Arial, sans-serif; font-size: 24pt; font-weight: bold; color: black; line-height: 1.25; margin: 0 0 6mm 0; text-transform: uppercase;">
-          RELATÓRIO CONSOLIDADO SEMANAL DE<br/>
+        <h1 style="font-family: Arial, sans-serif; font-size: 26pt; font-weight: bold; color: black; line-height: 1.25; margin: 0 0 6mm 0; text-transform: uppercase;">
+          RELATÓRIO SEMANAL DE<br/>
           GERENCIAMENTO E FISCALIZAÇÃO<br/>
           TÉCNICA DE OBRAS
         </h1>
         
         <div style="font-family: Arial, sans-serif; font-size: 16pt; font-weight: bold; color: black; margin: 0 0 6mm 0;">
-          Período: ${periodFormatted}
+          ${periodFormatted}
         </div>
         
         <div style="font-family: 'Aptos Narrow', 'Aptos', sans-serif; font-size: 12pt; font-weight: bold; color: #f97316; margin: 0 0 5mm 0; text-transform: uppercase;">
-          ${state.contractName.toUpperCase()}
+          TERMO DE CONTRATO Nº 26/2025
         </div>
         
-        <p style="font-family: Calibri, sans-serif; font-size: 14pt; font-weight: bold; color: black; line-height: 1.35; max-width: 630px; margin: 0;">
-          Relatório semanal consolidado de fiscalização das obras ativas executadas sob supervisão técnica da empresa <strong>${state.supervisorCompany}</strong>.
+        <p style="font-family: Calibri, sans-serif; font-size: 16pt; font-weight: bold; color: black; line-height: 1.35; max-width: 630px; margin: 0;">
+          Empresa especializada em engenharia para realização de serviços técnicos de Assessoramento, Gerenciamento, Supervisão, Fiscalização Técnica e Controle Tecnológico das obras que serão desenvolvidas no município de Maricá/RJ, no âmbito da CODEMAR.
         </p>
       </div>
 
@@ -688,7 +688,7 @@ export default function App() {
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
-        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
           <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">
             FICHA TÉCNICA DO CONTRATO DE SUPERVISÃO
           </h2>
@@ -854,7 +854,7 @@ export default function App() {
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
-        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
           <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">
             ${work.name}
           </h2>
@@ -962,7 +962,7 @@ export default function App() {
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
-        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 10px; text-align: center; margin-bottom: 8px;">
+        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 6px 10px; text-align: center; margin-bottom: 8px;">
           <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">
             ATIVIDADES DE FISCALIZAÇÃO — ${work.name}
           </h2>
@@ -1124,7 +1124,7 @@ export default function App() {
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
-        <div style="background-color: #e2e8f0; border: 0.3mm solid black; border-radius: 0px; padding: 10px; text-align: center; margin-bottom: 20px;">
+        <div style="background-color: #e2e8f0; border: 0.3mm solid black; border-radius: 0px; padding: 6px 10px; text-align: center; margin-bottom: 20px;">
           <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">
             OBRA: ${work.name}
           </h2>
@@ -1243,7 +1243,7 @@ export default function App() {
       }
       .black-grid-table td, .black-grid-table th {
         border: 1px solid #000000;
-        padding: 2.6px 8px;
+        padding: 2px 8px;
         color: #000000;
       }
     </style>

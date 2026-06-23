@@ -617,7 +617,7 @@ export default function WorkDetail({
       }
       .black-grid-table td, .black-grid-table th {
         border: 1px solid #000000;
-        padding: 2.6px 8px;
+        padding: 2px 8px;
         color: #000000;
       }
     </style>
@@ -663,7 +663,7 @@ export default function WorkDetail({
     <div class="page-content">
       <div class="flex-grow my-4 flex flex-col justify-start">
         <!-- Contract Title banner with background orange, black Arial 11pt bold text -->
-        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
           <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">
             ${work.name}
           </h2>
@@ -1286,24 +1286,7 @@ export default function WorkDetail({
           </div>
         </div>
 
-        {/* Action Excel / PDF Buttons */}
-        <div className="flex gap-2.5 self-stretch md:self-auto justify-end sm:w-full md:w-auto">
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-705 border border-slate-200 rounded-xl text-xs font-bold transition shadow-2xs cursor-pointer"
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
-            <span>Excel Ficha</span>
-          </button>
 
-          <button
-            onClick={handleDownloadPDF}
-            className="flex items-center gap-1.5 px-4.5 py-2.5 bg-orange-600 hover:bg-orange-500 text-white rounded-xl text-xs font-extrabold transition shadow-xs cursor-pointer"
-          >
-            <Download className="w-4 h-4" />
-            <span>Download PDF Pronto</span>
-          </button>
-        </div>
       </div>
 
       {/* 2. Navigation Tab Menu */}
@@ -1347,31 +1330,7 @@ export default function WorkDetail({
           </span>
         </button>
 
-        <button
-          onClick={() => setActiveTab("drive")}
-          className={`px-4.5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
-            activeTab === "drive"
-              ? "border-amber-500 text-slate-900 font-black"
-              : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          <HardDrive className="w-3.5 h-3.5 text-blue-500" />
-          <span>Google Drive Nuvem</span>
-        </button>
 
-        <button
-          onClick={() => setActiveTab("revisoes")}
-          className={`px-4.5 py-3 text-xs font-extrabold transition-all border-b-2 cursor-pointer flex items-center gap-1.5 ${
-            activeTab === "revisoes"
-              ? "border-amber-500 text-slate-900 font-black"
-              : "border-transparent text-slate-500 hover:text-slate-800"
-          }`}
-        >
-          <span>Histórico de Revisões</span>
-          <span className="text-[10px] px-1.5 py-px bg-slate-100 rounded text-slate-600 font-mono font-bold">
-            0
-          </span>
-        </button>
 
         <button
           onClick={() => setActiveTab("logs")}
@@ -1462,7 +1421,7 @@ export default function WorkDetail({
               <div className="flex items-center gap-2">
                 <Briefcase className="w-5 h-5 text-slate-700" />
                 <h3 className="text-sm font-extrabold text-slate-900 uppercase tracking-wide">
-                  Dados do Expediente de Engenharia
+                  DADOS DA OBRA
                 </h3>
               </div>
               <button
@@ -1477,9 +1436,21 @@ export default function WorkDetail({
             <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-6 text-xs text-slate-600">
               <div className="space-y-4">
                 <div className="flex justify-between md:grid md:grid-cols-3 border-b border-slate-100 pb-2.5">
-                  <span className="text-slate-450 font-bold col-span-1">Processo Administrativo:</span>
+                  <span className="text-slate-450 font-bold col-span-1">Processo Administrativo Nº:</span>
                   <span className="text-slate-800 font-bold col-span-2 text-right md:text-left">
                     {work.adminProcess || "Não informado"}
+                  </span>
+                </div>
+                <div className="flex justify-between md:grid md:grid-cols-3 border-b border-slate-100 pb-2.5">
+                  <span className="text-slate-450 font-bold col-span-1">Empresa Vencedora:</span>
+                  <span className="text-slate-800 font-bold col-span-2 text-right md:text-left">
+                    {work.contractorName || "Não informada"}
+                  </span>
+                </div>
+                <div className="flex justify-between md:grid md:grid-cols-3 border-b border-slate-100 pb-2.5">
+                  <span className="text-slate-450 font-bold col-span-1">Data de Assinatura:</span>
+                  <span className="text-slate-800 font-bold font-mono col-span-2 text-right md:text-left">
+                    {formatDate(work.signingDate)}
                   </span>
                 </div>
                 <div className="flex justify-between md:grid md:grid-cols-3 border-b border-slate-100 pb-2.5">
@@ -1498,6 +1469,12 @@ export default function WorkDetail({
 
               <div className="space-y-4">
                 <div className="flex justify-between md:grid md:grid-cols-3 border-b border-slate-100 pb-2.5">
+                  <span className="text-slate-450 font-bold col-span-1">Contrato Nº:</span>
+                  <span className="text-slate-800 font-bold col-span-2 text-right md:text-left">
+                    {work.contractNumber || "Não informado"}
+                  </span>
+                </div>
+                <div className="flex justify-between md:grid md:grid-cols-3 border-b border-slate-100 pb-2.5">
                   <span className="text-slate-450 font-bold col-span-1">Concorrência Pública:</span>
                   <span className="text-slate-800 font-bold col-span-2 text-right md:text-left">
                     {work.biddingNumber || "Não Informado"}
@@ -1513,6 +1490,12 @@ export default function WorkDetail({
                   <span className="text-slate-450 font-bold col-span-1">Prazo de Execução Atualizado:</span>
                   <span className="text-slate-800 font-bold col-span-2 text-right md:text-left">
                     {formatTimeExtension(work.termDaysExecucao || "12 meses", totalDaysExtended)}
+                  </span>
+                </div>
+                <div className="flex justify-between md:grid md:grid-cols-3 border-b border-slate-100 pb-2.5">
+                  <span className="text-slate-450 font-bold col-span-1">Prazo de Vigência do Contrato:</span>
+                  <span className="text-slate-800 font-bold col-span-2 text-right md:text-left">
+                    {formatTimeExtension(work.termDaysVigencia || "12 meses", totalVigenciaDaysExtended)}
                   </span>
                 </div>
               </div>
