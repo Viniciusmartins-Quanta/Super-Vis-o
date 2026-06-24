@@ -49,6 +49,7 @@ export interface ContractAdditive {
   newExecucaoDate?: string;
   daysVigencia?: number;
   daysExecucao?: number;
+  publicationDateJom?: string;
 }
 
 export interface DatabaseState {

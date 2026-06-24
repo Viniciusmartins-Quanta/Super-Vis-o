@@ -71,6 +71,7 @@ export default function WorkDetail({
 
   // Local state for additives form
   const [showAddAdditive, setShowAddAdditive] = useState(false);
+  const [editingAdditiveId, setEditingAdditiveId] = useState<string | null>(null);
   const [addNo, setAddNo] = useState("");
   const [addType, setAddType] = useState<"financeiro" | "prazo" | "misto">("financeiro");
   const [addValue, setAddValue] = useState("");
@@ -81,6 +82,7 @@ export default function WorkDetail({
   const [addNewExecucaoDate, setAddNewExecucaoDate] = useState("");
   const [addDesc, setAddDesc] = useState("");
   const [addDate, setAddDate] = useState("");
+  const [addPublicationDateJom, setAddPublicationDateJom] = useState("");
   const [isSavingAdditive, setIsSavingAdditive] = useState(false);
   const [additiveError, setAdditiveError] = useState("");
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
@@ -1029,13 +1031,51 @@ export default function WorkDetail({
     : false;
   const daysOverdue = work.activeContractDate ? calculateDaysPassed(work.activeContractDate) : 0;
 
-  // Action: Add new additive
+  const subtractDaysFromDate = (dateStr: string, daysToSub: number) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr + "T12:00:00");
+    if (isNaN(date.getTime())) return dateStr;
+    date.setDate(date.getDate() - daysToSub);
+    return date.toISOString().split("T")[0];
+  };
+
+  const handleEditAdditiveClick = (add: ContractAdditive) => {
+    setEditingAdditiveId(add.id);
+    setAddNo(add.number);
+    setAddType(add.type);
+    setAddValue(add.value ? add.value.toString() : "");
+    setAddDaysVigencia(add.daysVigencia ? add.daysVigencia.toString() : "");
+    setAddDaysExecucao(add.daysExecucao ? add.daysExecucao.toString() : "");
+    setAddNewVigenciaDate(add.newVigenciaDate || "");
+    setAddNewExecucaoDate(add.newExecucaoDate || "");
+    setAddDesc(add.description || "");
+    setAddDate(add.signatureDate || "");
+    setAddPublicationDateJom(add.publicationDateJom || "");
+    setShowAddAdditive(true);
+    document.getElementById("detail-aditivos-tab")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleCancelEditAdditive = () => {
+    setAddNo("");
+    setAddValue("");
+    setAddDays("");
+    setAddDaysVigencia("");
+    setAddDaysExecucao("");
+    setAddNewVigenciaDate("");
+    setAddNewExecucaoDate("");
+    setAddDesc("");
+    setAddDate("");
+    setAddPublicationDateJom("");
+    setEditingAdditiveId(null);
+    setShowAddAdditive(false);
+  };
+
+  // Action: Add / Edit additive
   const handleCreateAdditive = async (e: React.FormEvent) => {
     e.preventDefault();
     setAdditiveError("");
 
     if (!addNo.trim()) return setAdditiveError("Preencha o número do termo aditivo.");
-    if (!addDesc.trim()) return setAdditiveError("Preencha a descrição do termo aditivo.");
     if (!addDate) return setAdditiveError("Selecione a data de assinatura.");
 
     const valNum = Number(addValue);
@@ -1060,8 +1100,26 @@ export default function WorkDetail({
 
     setIsSavingAdditive(true);
     try {
-      const newAdd: ContractAdditive = {
-        id: `add-${Date.now()}`,
+      let updatedDeadline = work.deadlineDate;
+      let updatedActiveContractDate = work.activeContractDate;
+
+      // If editing, first subtract the old additive's days to revert back to base
+      if (editingAdditiveId) {
+        const oldAdd = currentAdditives.find(a => a.id === editingAdditiveId);
+        if (oldAdd && (oldAdd.type === "prazo" || oldAdd.type === "misto")) {
+          const subExec = oldAdd.daysExecucao ?? oldAdd.days ?? 0;
+          const subVig = oldAdd.daysVigencia ?? oldAdd.days ?? 0;
+          if (subExec > 0) {
+            updatedDeadline = subtractDaysFromDate(updatedDeadline, subExec);
+          }
+          if (subVig > 0) {
+            updatedActiveContractDate = subtractDaysFromDate(updatedActiveContractDate, subVig);
+          }
+        }
+      }
+
+      const additiveData: ContractAdditive = {
+        id: editingAdditiveId || `add-${Date.now()}`,
         number: addNo.trim(),
         type: addType,
         value: addType !== "prazo" ? valNum : undefined,
@@ -1071,22 +1129,27 @@ export default function WorkDetail({
         newVigenciaDate: (addType !== "financeiro" && addNewVigenciaDate) ? addNewVigenciaDate : undefined,
         newExecucaoDate: (addType !== "financeiro" && addNewExecucaoDate) ? addNewExecucaoDate : undefined,
         description: addDesc.trim(),
-        signatureDate: addDate
+        signatureDate: addDate,
+        publicationDateJom: addPublicationDateJom || undefined
       };
 
-      const updatedAdditives = [...currentAdditives, newAdd];
-      
       // Compute updated deadlines if deadline additive
-      let updatedDeadline = work.deadlineDate;
-      let updatedActiveContractDate = work.activeContractDate;
-
       if (addType === "prazo" || addType === "misto") {
         if (addNewExecucaoDate) {
-          updatedDeadline = addNewExecucaoDate;
+          const calcExecDate = addDaysToDate(updatedDeadline, daysExecNum);
+          updatedDeadline = calcExecDate || addNewExecucaoDate;
         }
         if (addNewVigenciaDate) {
-          updatedActiveContractDate = addNewVigenciaDate;
+          const calcVigDate = addDaysToDate(updatedActiveContractDate, daysVigNum);
+          updatedActiveContractDate = calcVigDate || addNewVigenciaDate;
         }
+      }
+
+      let updatedAdditives: ContractAdditive[];
+      if (editingAdditiveId) {
+        updatedAdditives = currentAdditives.map(a => a.id === editingAdditiveId ? additiveData : a);
+      } else {
+        updatedAdditives = [...currentAdditives, additiveData];
       }
 
       await onUpdateWork({
@@ -1106,10 +1169,12 @@ export default function WorkDetail({
       setAddNewExecucaoDate("");
       setAddDesc("");
       setAddDate("");
+      setAddPublicationDateJom("");
+      setEditingAdditiveId(null);
       setShowAddAdditive(false);
     } catch (err) {
       console.error(err);
-      setAdditiveError("Erro ao registrar aditivo virtualmente.");
+      setAdditiveError(editingAdditiveId ? "Erro ao salvar alterações do aditivo." : "Erro ao registrar aditivo virtualmente.");
     } finally {
       setIsSavingAdditive(false);
     }
@@ -1603,17 +1668,34 @@ export default function WorkDetail({
                           <Calendar className="w-3.5 h-3.5" />
                           Assinatura: {formatDate(add.signatureDate)}
                         </span>
+                        {add.publicationDateJom && (
+                          <span className="flex items-center gap-1 text-slate-400 font-semibold font-mono bg-blue-50/55 px-1.5 py-0.5 rounded border border-blue-100/50">
+                            <Calendar className="w-3.5 h-3.5 text-blue-500" />
+                            Publicação JOM: {formatDate(add.publicationDateJom)}
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Delete item button */}
-                    <button
-                      onClick={() => handleDeleteAdditive(add.id)}
-                      className="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 rounded-lg hover:border-rose-200 transition cursor-pointer md:opacity-0 group-hover:opacity-100"
-                      title="Excluir Aditivo"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex gap-1.5 self-start md:opacity-0 group-hover:opacity-100 transition">
+                      {/* Edit item button */}
+                      <button
+                        onClick={() => handleEditAdditiveClick(add)}
+                        className="p-2 bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-600 border border-slate-200 rounded-lg hover:border-amber-200 transition cursor-pointer"
+                        title="Editar Aditivo"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                      </button>
+
+                      {/* Delete item button */}
+                      <button
+                        onClick={() => handleDeleteAdditive(add.id)}
+                        className="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 rounded-lg hover:border-rose-200 transition cursor-pointer"
+                        title="Excluir Aditivo"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -1737,10 +1819,10 @@ export default function WorkDetail({
               >
                 <div>
                   <h3 className="text-xs font-bold text-slate-950 uppercase tracking-wider block">
-                    Inserir Termo Aditivo
+                    {editingAdditiveId ? "Editar Termo Aditivo" : "Inserir Termo Aditivo"}
                   </h3>
                   <p className="text-[11px] text-slate-400 mt-0.5 block">
-                    Atualiza cronograma e montante financeiro
+                    {editingAdditiveId ? "Atualize as informações do aditivo lançado" : "Atualiza cronograma e montante financeiro"}
                   </p>
                 </div>
 
@@ -1905,13 +1987,25 @@ export default function WorkDetail({
                   />
                 </div>
 
+                {/* Publication Date JOM */}
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
+                    Data de Publicação no JOM
+                  </label>
+                  <input
+                    type="date"
+                    value={addPublicationDateJom}
+                    onChange={(e) => setAddPublicationDateJom(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none transition shadow-2xs cursor-pointer"
+                  />
+                </div>
+
                 {/* Description */}
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                    Descrição de Motivo / Notas Técnicas
+                    Descrição de Motivo / Notas Técnicas (Opcional)
                   </label>
                   <textarea
-                    required
                     rows={3}
                     value={addDesc}
                     onChange={(e) => setAddDesc(e.target.value)}
@@ -1923,17 +2017,17 @@ export default function WorkDetail({
                 <div className="flex gap-2 justify-end pt-1">
                   <button
                     type="button"
-                    onClick={() => setShowAddAdditive(false)}
+                    onClick={handleCancelEditAdditive}
                     className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-lg text-[11px] transition cursor-pointer"
                   >
-                    Ocultar
+                    Ocultar / Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={isSavingAdditive}
                     className="px-4.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold rounded-lg text-[11px] transition cursor-pointer flex items-center gap-1 shadow-2xs"
                   >
-                    <span>Gravar Aditivo</span>
+                    <span>{editingAdditiveId ? "Salvar Alterações" : "Gravar Aditivo"}</span>
                   </button>
                 </div>
               </form>
