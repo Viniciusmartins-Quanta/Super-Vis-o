@@ -113,9 +113,15 @@ export default function WorkModal({
     };
 
     // Calculate dates for backward compatibility with timeline tracking
-    const computedStartDate = physicalStartDate || signingDate || new Date().toISOString().split("T")[0];
-    const computedDeadline = addMonths(physicalStartDate || signingDate || new Date().toISOString().split("T")[0], termDaysExecucao, 12);
-    const computedActiveContractDate = addMonths(signingDate || physicalStartDate || new Date().toISOString().split("T")[0], termDaysVigencia, 12);
+    const computedStartDate = physicalStartDate || startOrderDate || signingDate || new Date().toISOString().split("T")[0];
+    
+    // O prazo original da vigência é contado a partir da Ordem de Início de Obras lançada nos dados do contrato somado ao prazo de vigência do contrato.
+    const startVigenciaBase = startOrderDate || signingDate || physicalStartDate || new Date().toISOString().split("T")[0];
+    const computedActiveContractDate = addMonths(startVigenciaBase, termDaysVigencia, 12);
+
+    // O prazo original de execução é o prazo contado a partir da Ordem de Início de Obras lançada nos dados do contrato somado ao prazo de execução do contrato.
+    const startExecucaoBase = startOrderDate || physicalStartDate || signingDate || new Date().toISOString().split("T")[0];
+    const computedDeadline = addMonths(startExecucaoBase, termDaysExecucao, 12);
 
     setIsSaving(true);
     try {

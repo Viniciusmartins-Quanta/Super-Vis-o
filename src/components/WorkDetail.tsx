@@ -464,7 +464,7 @@ export default function WorkDetail({
         ];
         
         if (add.days) {
-          lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} dias</span>`);
+          lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} meses</span>`);
         } else if (add.type === "prazo" || add.type === "misto") {
           lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
         }
@@ -1004,9 +1004,9 @@ export default function WorkDetail({
   }, 0);
 
   // Helper to format days or months extended
-  const formatTimeExtension = (originalTerm: string, addedDays: number) => {
-    if (!addedDays) return originalTerm || "12 meses";
-    return `${originalTerm || "12 meses"} aditivados de +${addedDays} dias`;
+  const formatTimeExtension = (originalTerm: string, addedMonths: number) => {
+    if (!addedMonths) return originalTerm || "12 meses";
+    return `${originalTerm || "12 meses"} aditivados de +${addedMonths} meses`;
   };
 
   const addDaysToDate = (dateStr: string, daysToAdd: number) => {
@@ -1016,6 +1016,29 @@ export default function WorkDetail({
     date.setDate(date.getDate() + daysToAdd);
     return date.toISOString().split("T")[0];
   };
+
+  const addMonths = (dateStr: string, monthsStr: string, defaultMonths = 12): string => {
+    const baseDate = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
+    if (isNaN(baseDate.getTime())) return new Date().toISOString().split("T")[0];
+    const match = (monthsStr || "").match(/\d+/);
+    const parsedMonths = match ? parseInt(match[0], 10) : defaultMonths;
+    baseDate.setMonth(baseDate.getMonth() + parsedMonths);
+    return baseDate.toISOString().split("T")[0];
+  };
+
+  // Soma da vigência original com a data da ordem de início de obras, mais os meses aditivados
+  const startVigenciaBaseDate = work.startOrderDate || work.signingDate || work.startDate || "";
+  const baseVigenciaDateCalculated = addMonths(startVigenciaBaseDate, work.termDaysVigencia || "12 meses");
+  const totalCalculatedVigencia = totalVigenciaDaysExtended > 0
+    ? addMonths(baseVigenciaDateCalculated, totalVigenciaDaysExtended.toString())
+    : (work.activeContractDate || baseVigenciaDateCalculated);
+
+  // Soma da execução original com a data da ordem de início de obras, mais os meses aditivados de execução
+  const startExecucaoBaseDate = work.startOrderDate || work.startDate || "";
+  const baseExecucaoDateCalculated = addMonths(startExecucaoBaseDate, work.termDaysExecucao || "12 meses");
+  const totalCalculatedExecucao = totalDaysExtended > 0
+    ? addMonths(baseExecucaoDateCalculated, totalDaysExtended.toString())
+    : (work.deadlineDate || baseExecucaoDateCalculated);
 
   // Warning calculations
   const calculateDaysPassed = (dateStr: string) => {
@@ -1036,6 +1059,14 @@ export default function WorkDetail({
     const date = new Date(dateStr + "T12:00:00");
     if (isNaN(date.getTime())) return dateStr;
     date.setDate(date.getDate() - daysToSub);
+    return date.toISOString().split("T")[0];
+  };
+
+  const subtractMonthsFromDate = (dateStr: string, monthsToSub: number) => {
+    if (!dateStr) return "";
+    const date = new Date(dateStr + "T12:00:00");
+    if (isNaN(date.getTime())) return dateStr;
+    date.setMonth(date.getMonth() - monthsToSub);
     return date.toISOString().split("T")[0];
   };
 
@@ -1088,13 +1119,13 @@ export default function WorkDetail({
 
     if (addType === "prazo" || addType === "misto") {
       if (daysVigNum < 0) {
-        return setAdditiveError("Insira uma quantidade de dias válidos para prorrogação de Vigência.");
+        return setAdditiveError("Insira uma quantidade de meses válidos para prorrogação de Vigência.");
       }
       if (daysExecNum < 0) {
-        return setAdditiveError("Insira uma quantidade de dias válidos para prorrogação de Execução.");
+        return setAdditiveError("Insira uma quantidade de meses válidos para prorrogação de Execução.");
       }
       if (daysVigNum === 0 && daysExecNum === 0) {
-        return setAdditiveError("Insira pelo menos 1 dia de prorrogação para Vigência ou Execução.");
+        return setAdditiveError("Insira pelo menos 1 mês de prorrogação para Vigência ou Execução.");
       }
     }
 
@@ -1103,17 +1134,17 @@ export default function WorkDetail({
       let updatedDeadline = work.deadlineDate;
       let updatedActiveContractDate = work.activeContractDate;
 
-      // If editing, first subtract the old additive's days to revert back to base
+      // If editing, first subtract the old additive's months/days to revert back to base
       if (editingAdditiveId) {
         const oldAdd = currentAdditives.find(a => a.id === editingAdditiveId);
         if (oldAdd && (oldAdd.type === "prazo" || oldAdd.type === "misto")) {
           const subExec = oldAdd.daysExecucao ?? oldAdd.days ?? 0;
           const subVig = oldAdd.daysVigencia ?? oldAdd.days ?? 0;
           if (subExec > 0) {
-            updatedDeadline = subtractDaysFromDate(updatedDeadline, subExec);
+            updatedDeadline = subtractMonthsFromDate(updatedDeadline, subExec);
           }
           if (subVig > 0) {
-            updatedActiveContractDate = subtractDaysFromDate(updatedActiveContractDate, subVig);
+            updatedActiveContractDate = subtractMonthsFromDate(updatedActiveContractDate, subVig);
           }
         }
       }
@@ -1136,11 +1167,11 @@ export default function WorkDetail({
       // Compute updated deadlines if deadline additive
       if (addType === "prazo" || addType === "misto") {
         if (addNewExecucaoDate) {
-          const calcExecDate = addDaysToDate(updatedDeadline, daysExecNum);
+          const calcExecDate = addMonths(updatedDeadline, daysExecNum.toString());
           updatedDeadline = calcExecDate || addNewExecucaoDate;
         }
         if (addNewVigenciaDate) {
-          const calcVigDate = addDaysToDate(updatedActiveContractDate, daysVigNum);
+          const calcVigDate = addMonths(updatedActiveContractDate, daysVigNum.toString());
           updatedActiveContractDate = calcVigDate || addNewVigenciaDate;
         }
       }
@@ -1416,7 +1447,7 @@ export default function WorkDetail({
       {activeTab === "ficha" && (
         <div className="space-y-6" id="detail-ficha-technical-tab">
           {/* Top Cards row */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
             {/* Card 1: Progresso Físico Atual */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between min-h-[120px]">
               <div>
@@ -1457,17 +1488,17 @@ export default function WorkDetail({
               </div>
             </div>
 
-            {/* Card 3: Vigência Aditivada */}
+            {/* Card 3: Vigência Total */}
             <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between min-h-[120px]">
               <div>
                 <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
-                  Vigência Aditivada
+                  Vigência Total
                 </span>
                 <p className="text-xl font-bold text-slate-900 tracking-tight mt-1">
                   {formatTimeExtension(work.termDaysVigencia || "12 meses", totalVigenciaDaysExtended)}
                 </p>
                 <div className="text-[10px] text-slate-450 font-mono font-bold mt-1.5">
-                  Termo vigente: <span className="text-amber-600 font-semibold">{formatDate(work.activeContractDate)}</span>
+                  Prazo Vigente: <span className="text-amber-600 font-semibold">{formatDate(totalCalculatedVigencia)}</span>
                 </div>
               </div>
               <div className="absolute right-4 top-4 p-2 bg-amber-50 text-amber-600 rounded-xl shadow-2xs">
@@ -1476,6 +1507,28 @@ export default function WorkDetail({
               <div className="text-[11px] text-slate-450 font-semibold mt-4.5 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100 flex justify-between">
                 <span>Original inicial:</span>
                 <strong className="text-slate-600">{work.termDaysVigencia || "12 meses"}</strong>
+              </div>
+            </div>
+
+            {/* Card 4: Execução Total */}
+            <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs relative overflow-hidden flex flex-col justify-between min-h-[120px]">
+              <div>
+                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Execução Total
+                </span>
+                <p className="text-xl font-bold text-slate-900 tracking-tight mt-1">
+                  {formatTimeExtension(work.termDaysExecucao || "12 meses", totalDaysExtended)}
+                </p>
+                <div className="text-[10px] text-slate-450 font-mono font-bold mt-1.5">
+                  Prazo Vigente: <span className="text-amber-600 font-semibold">{formatDate(totalCalculatedExecucao)}</span>
+                </div>
+              </div>
+              <div className="absolute right-4 top-4 p-2 bg-indigo-50 text-indigo-600 rounded-xl shadow-2xs">
+                <TrendingUp className="w-5 h-5" />
+              </div>
+              <div className="text-[11px] text-slate-450 font-semibold mt-4.5 bg-slate-50 px-2 py-1.5 rounded-lg border border-slate-100 flex justify-between">
+                <span>Original inicial:</span>
+                <strong className="text-slate-600">{work.termDaysExecucao || "12 meses"}</strong>
               </div>
             </div>
           </div>
@@ -1635,7 +1688,7 @@ export default function WorkDetail({
                         {add.daysVigencia !== undefined && add.daysVigencia > 0 && (
                           <span className="flex items-center gap-1 font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
                             <Clock className="w-3.2 h-3.2 text-purple-500" />
-                            Vigência: +{add.daysVigencia} dias
+                            Vigência: +{add.daysVigencia} meses
                           </span>
                         )}
                         {add.newVigenciaDate && (
@@ -1648,7 +1701,7 @@ export default function WorkDetail({
                         {add.daysExecucao !== undefined && add.daysExecucao > 0 && (
                           <span className="flex items-center gap-1 font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
                             <Clock className="w-3.2 h-3.2 text-indigo-500" />
-                            Execução: +{add.daysExecucao} dias
+                            Execução: +{add.daysExecucao} meses
                           </span>
                         )}
                         {add.newExecucaoDate && (
@@ -1661,7 +1714,7 @@ export default function WorkDetail({
                         {add.daysVigencia === undefined && add.daysExecucao === undefined && add.days && (
                           <span className="flex items-center gap-1 font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
                             <Clock className="w-3.5 h-3.5" />
-                            Prorrogação: +{add.days} dias
+                            Prorrogação: +{add.days} meses
                           </span>
                         )}
                         <span className="flex items-center gap-1 text-slate-400 font-semibold font-mono">
@@ -1858,7 +1911,7 @@ export default function WorkDetail({
                     className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-700 font-bold focus:outline-none shadow-2xs cursor-pointer"
                   >
                     <option value="financeiro">Financeiro (Acréscimo R$)</option>
-                    <option value="prazo">Prazo de Execução (+ Dias)</option>
+                    <option value="prazo">Prazo de Execução (+ Meses)</option>
                     <option value="misto">Misto (Valor R$ + Prazo)</option>
                   </select>
                 </div>
@@ -1893,7 +1946,7 @@ export default function WorkDetail({
                     <div className="space-y-2">
                       <div className="space-y-1">
                         <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                          Prorrogação de Vigência (Dias)
+                          Prorrogação de Vigência (Meses)
                         </label>
                         <input
                           type="number"
@@ -1905,12 +1958,12 @@ export default function WorkDetail({
                             setAddDaysVigencia(val);
                             const d = parseInt(val, 10);
                             if (!isNaN(d) && d >= 0) {
-                              setAddNewVigenciaDate(addDaysToDate(work.activeContractDate, d));
+                              setAddNewVigenciaDate(addMonths(work.activeContractDate, d.toString()));
                             } else {
                               setAddNewVigenciaDate("");
                             }
                           }}
-                          placeholder="Ex: 90"
+                          placeholder="Ex: 3"
                           className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:font-mono transition shadow-2xs"
                         />
                       </div>
@@ -1934,7 +1987,7 @@ export default function WorkDetail({
                     <div className="space-y-2 border-t border-slate-200/50 pt-2.5 mt-2.5">
                       <div className="space-y-1">
                         <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                          Prorrogação de Execução (Dias)
+                          Prorrogação de Execução (Meses)
                         </label>
                         <input
                           type="number"
@@ -1946,12 +1999,12 @@ export default function WorkDetail({
                             setAddDaysExecucao(val);
                             const d = parseInt(val, 10);
                             if (!isNaN(d) && d >= 0) {
-                              setAddNewExecucaoDate(addDaysToDate(work.deadlineDate, d));
+                              setAddNewExecucaoDate(addMonths(work.deadlineDate, d.toString()));
                             } else {
                               setAddNewExecucaoDate("");
                             }
                           }}
-                          placeholder="Ex: 90"
+                          placeholder="Ex: 3"
                           className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:font-mono transition shadow-2xs"
                         />
                       </div>
