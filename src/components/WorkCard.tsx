@@ -16,12 +16,17 @@ import {
   ChevronRight,
   PlusCircle,
   AlertTriangle,
-  X
+  X,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 
 interface WorkCardProps {
   work: Obra;
   activeUser: UserProfile;
+  isReorderMode?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
   onLaunchMeasurement: (
     workId: string,
     newProgress: number,
@@ -37,6 +42,9 @@ interface WorkCardProps {
 export default function WorkCard({
   work,
   activeUser,
+  isReorderMode = false,
+  onMoveUp,
+  onMoveDown,
   onLaunchMeasurement,
   onEditClick,
   onDeleteClick,
@@ -54,6 +62,33 @@ export default function WorkCard({
       className="bg-white rounded-2xl border border-slate-200 hover:border-amber-400 p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4 relative overflow-hidden"
       id={`obra-card-${work.id}`}
     >
+      {isReorderMode && (
+        <div className="bg-amber-500/10 border border-amber-200 rounded-xl p-2.5 flex items-center justify-between gap-2 -mt-1 -mx-1 animate-fade-in mb-2">
+          <span className="text-[10px] uppercase font-bold text-slate-800 tracking-wider flex items-center gap-1.5">
+            <Sliders className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+            Posição: <span className="font-mono text-xs bg-white text-slate-800 px-1.5 py-0.5 rounded border border-slate-200">#{(work.order ?? 0) + 1}</span>
+          </span>
+          <div className="flex gap-1">
+            <button
+              onClick={onMoveUp}
+              className="p-1.5 bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg transition cursor-pointer shadow-3xs active:translate-y-[-1px] flex items-center gap-0.5 text-[10px] font-bold"
+              title="Mover para cima no relatório"
+            >
+              <ArrowUp className="w-3.5 h-3.5" />
+              <span>Subir</span>
+            </button>
+            <button
+              onClick={onMoveDown}
+              className="p-1.5 bg-white hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg transition cursor-pointer shadow-3xs active:translate-y-[1px] flex items-center gap-0.5 text-[10px] font-bold"
+              title="Mover para baixo no relatório"
+            >
+              <ArrowDown className="w-3.5 h-3.5" />
+              <span>Descer</span>
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Top Section: Contract Badge + Status Pill + Settings */}
       <div className="flex items-start justify-between gap-2">
         <div className="space-y-0.5">

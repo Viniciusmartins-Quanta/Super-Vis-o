@@ -128,6 +128,7 @@ export default function DashboardFilters({
             onChange={(e) => onSortByChange(e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700 font-medium focus:outline-none focus:bg-white focus:ring-1 focus:ring-amber-400"
           >
+            <option value="posicao">Sequência Personalizada (Relatório)</option>
             <option value="valorDe">Maior Valor Licitado</option>
             <option value="valorAt">Menor Valor Licitado</option>
             <option value="progressoDe">Maior Avanço Físico</option>

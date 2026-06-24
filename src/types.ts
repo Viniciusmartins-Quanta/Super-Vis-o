@@ -21,6 +21,7 @@ export interface Obra {
   startOrderDate?: string;
   additives?: ContractAdditive[];
   timelineImage?: string; // Image for construction chronology
+  order?: number;
 }
 
 export interface UpdateLog {

@@ -11,7 +11,7 @@ import WorkModal from "./components/WorkModal";
 import WorkDetail from "./components/WorkDetail";
 
 // Icons from Lucide
-import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database } from "lucide-react";
+import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database, Sliders, ArrowUp, ArrowDown } from "lucide-react";
 
 const DEFAULT_FALLBACK_STATE: DatabaseState = {
   contractName: "Contrato de Supervisão nº 085/2025 - DER/PR",
@@ -122,7 +122,8 @@ export default function App() {
   const [search, setSearch] = useState("");
   const [reportWeek, setReportWeek] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("valorDe");
+  const [sortBy, setSortBy] = useState("posicao");
+  const [isReorderMode, setIsReorderMode] = useState(false);
 
   // Form Modals Toggles
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -522,19 +523,21 @@ export default function App() {
     }
 
     // Filter active works that have at least one weekly report for the selected week
-    const activeWorks = state.works.filter(w => {
-      if (w.status !== 'em_andamento') return false;
-      const logsForWork = state.logs.filter(log => {
-        let logDate = new Date(log.timestamp);
-        const parsed = parsePeriodDates(log.notes);
-        if (parsed) {
-          logDate = parsed.start;
-        }
-        const logWeekStr = getISOWeekString(logDate);
-        return logWeekStr === reportWeek && log.workId === w.id;
-      });
-      return logsForWork.length > 0;
-    });
+    const activeWorks = state.works
+      .filter(w => {
+        if (w.status !== 'em_andamento') return false;
+        const logsForWork = state.logs.filter(log => {
+          let logDate = new Date(log.timestamp);
+          const parsed = parsePeriodDates(log.notes);
+          if (parsed) {
+            logDate = parsed.start;
+          }
+          const logWeekStr = getISOWeekString(logDate);
+          return logWeekStr === reportWeek && log.workId === w.id;
+        });
+        return logsForWork.length > 0;
+      })
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     if (activeWorks.length === 0) {
       alert("Nenhuma obra ativa com lançamentos registrados na semana em questão foi encontrada.");
@@ -1439,6 +1442,67 @@ export default function App() {
     }
   };
 
+  // Move a work up or down in sequence order
+  const handleMoveWork = async (workId: string, direction: "up" | "down") => {
+    // 1. Map existing works to include numerical orders sequentially
+    const sorted = [...state.works].map((w, index) => {
+      if (w.order === undefined) {
+        return { ...w, order: index };
+      }
+      return w;
+    }).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    const idx = sorted.findIndex(w => w.id === workId);
+    if (idx === -1) return;
+
+    if (direction === "up" && idx > 0) {
+      const temp = sorted[idx];
+      sorted[idx] = sorted[idx - 1];
+      sorted[idx - 1] = temp;
+    } else if (direction === "down" && idx < sorted.length - 1) {
+      const temp = sorted[idx];
+      sorted[idx] = sorted[idx + 1];
+      sorted[idx + 1] = temp;
+    }
+
+    const updatedWorks = sorted.map((w, i) => ({
+      ...w,
+      order: i
+    }));
+
+    if (useDirectSupabaseMode) {
+      const newState: DatabaseState = {
+        ...state,
+        works: updatedWorks
+      };
+      await saveStateDirect(newState);
+      return;
+    }
+
+    try {
+      const orderedIds = updatedWorks.map(w => w.id);
+      const res = await fetch("/api/works-reorder", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds })
+      });
+      if (!res.ok) throw new Error("Erro ao reordenar obras no servidor.");
+      await loadState();
+      setErrorHeader("");
+    } catch (err) {
+      console.error(err);
+      setErrorHeader("Não foi possível salvar a nova ordenação.");
+    }
+  };
+
+  const handleToggleReorderMode = () => {
+    const nextMode = !isReorderMode;
+    setIsReorderMode(nextMode);
+    if (nextMode) {
+      setSortBy("posicao");
+    }
+  };
+
   // Add (create) or update a work
   const handleSaveWork = async (workData: Partial<Obra>) => {
     if (useDirectSupabaseMode) {
@@ -1554,6 +1618,8 @@ export default function App() {
     })
     .sort((a, b) => {
       switch (sortBy) {
+        case "posicao":
+          return (a.order ?? 0) - (b.order ?? 0);
         case "valorDe":
           return b.biddedValue - a.biddedValue;
         case "valorAt":
@@ -1567,7 +1633,7 @@ export default function App() {
         case "nome":
           return a.name.localeCompare(b.name);
         default:
-          return 0;
+          return (a.order ?? 0) - (b.order ?? 0);
       }
     });
 
@@ -1784,13 +1850,25 @@ ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`}
             
             {/* Left Workspace: Works Cards Grid (takes 3 of 3 cols) */}
             <div className="lg:col-span-3 space-y-4">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-3xs">
                 <h2 className="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
                   <CheckSquare className="w-5 h-5 text-amber-500" />
                   Grade de Obras sob Supervisão
                 </h2>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                  <button
+                    onClick={handleToggleReorderMode}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                      isReorderMode
+                        ? "bg-amber-500 text-slate-900 border-amber-600 shadow-sm"
+                        : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
+                    }`}
+                    title="Habilitar botões para reorganizar a sequência das obras"
+                  >
+                    <Sliders className="w-3.5 h-3.5" />
+                    <span>{isReorderMode ? "Concluir Ordenação" : "Reorganizar Sequência"}</span>
+                  </button>
                   <span className="text-xs text-slate-500 font-medium">
                     Exibindo {filteredWorks.length} de {state.works.length} obras
                   </span>
@@ -1824,6 +1902,9 @@ ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`}
                       key={work.id}
                       work={work}
                       activeUser={activeUser}
+                      isReorderMode={isReorderMode}
+                      onMoveUp={() => handleMoveWork(work.id, "up")}
+                      onMoveDown={() => handleMoveWork(work.id, "down")}
                       onLaunchMeasurement={handleLaunchMeasurement}
                       onEditClick={(w) => {
                         setEditingWork(w);

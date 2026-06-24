@@ -29,6 +29,7 @@ interface Obra {
   startOrderDate?: string;
   additives?: ContractAdditive[];
   timelineImage?: string;
+  order?: number;
 }
 
 interface UpdateLog {
@@ -372,6 +373,27 @@ async function startServer() {
     const { supabaseStatus: _, ...cleanData } = data;
     await saveDatabaseState(cleanData);
     res.status(201).json({ message: "Obra adicionada com sucesso.", obra: newObra });
+  });
+
+  // API - Reorder all works
+  app.put("/api/works-reorder", async (req, res) => {
+    const { orderedIds } = req.body;
+    if (!Array.isArray(orderedIds)) {
+      return res.status(400).json({ error: "orderedIds deve ser um array." });
+    }
+
+    const data = await getDatabaseState();
+    data.works = data.works.map(w => {
+      const idx = orderedIds.indexOf(w.id);
+      return {
+        ...w,
+        order: idx !== -1 ? idx : (w.order ?? 999)
+      };
+    }).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+
+    const { supabaseStatus: _, ...cleanData } = data;
+    await saveDatabaseState(cleanData);
+    res.json({ message: "Ordem redefinida com sucesso.", works: data.works });
   });
 
   // API - Update/Modify work or progress measurement
