@@ -103,6 +103,14 @@ export default function WorkCard({
   const inicioDate = work.physicalStartDate || work.startOrderDate || work.startDate || "";
 
   const getDeadlineWarning = () => {
+    if (Number(work.progress) === 100) {
+      return {
+        type: "completed",
+        message: "Concluída!",
+        className: "bg-slate-100 text-slate-700 border border-slate-200"
+      };
+    }
+
     const vigenciaDateStr = vigenciaInfo.date;
     if (!vigenciaDateStr) return null;
 
@@ -304,6 +312,7 @@ export default function WorkCard({
           {deadlineWarning.type === "expired" && <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 animate-pulse" />}
           {deadlineWarning.type === "warning" && <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />}
           {deadlineWarning.type === "safe" && <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+          {deadlineWarning.type === "completed" && <CheckCircle className="w-4 h-4 text-slate-500 flex-shrink-0" />}
           <span>{deadlineWarning.message}</span>
         </div>
       )}

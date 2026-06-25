@@ -260,6 +260,30 @@ export default function WorkModal({
     const startExecucaoBase = startOrderDate || physicalStartDate || signingDate || new Date().toISOString().split("T")[0];
     const computedDeadline = addMonths(startExecucaoBase, termDaysExecucao, 12);
 
+    // Se a obra já possuir aditivos, recalculamos as datas finais (vigência e execução) de forma a incorporar as extensões existentes
+    const additives = editingWork?.additives || [];
+    const totalVigExtended = additives.reduce((acc, curr) => {
+      if (curr.type === "prazo" || curr.type === "misto") {
+        return acc + (curr.daysVigencia ?? curr.days ?? 0);
+      }
+      return acc;
+    }, 0);
+
+    const totalExecExtended = additives.reduce((acc, curr) => {
+      if (curr.type === "prazo" || curr.type === "misto") {
+        return acc + (curr.daysExecucao ?? curr.days ?? 0);
+      }
+      return acc;
+    }, 0);
+
+    const finalActiveContractDate = totalVigExtended > 0
+      ? addMonths(computedActiveContractDate, totalVigExtended.toString())
+      : computedActiveContractDate;
+
+    const finalDeadline = totalExecExtended > 0
+      ? addMonths(computedDeadline, totalExecExtended.toString())
+      : computedDeadline;
+
     setIsSaving(true);
     try {
       const payload: Partial<Obra> = {
@@ -268,8 +292,8 @@ export default function WorkModal({
         contractorName: contractorName.trim(),
         biddedValue: valueNum,
         startDate: computedStartDate,
-        deadlineDate: computedDeadline,
-        activeContractDate: computedActiveContractDate,
+        deadlineDate: finalDeadline,
+        activeContractDate: finalActiveContractDate,
         progress,
         status,
 
@@ -581,33 +605,7 @@ export default function WorkModal({
           )}
 
           {/* Modal Actions Footer */}
-          <div className="flex pt-4 border-t border-slate-100 justify-between items-center gap-4 flex-wrap">
-            {/* AI Reader Button on the Left */}
-            <div>
-              <input
-                type="file"
-                id="ai-image-upload"
-                accept="image/*"
-                onChange={handleAiUpload}
-                className="hidden"
-                disabled={isAiAnalyzing || isSaving}
-              />
-              <button
-                type="button"
-                id="ai-reader-btn"
-                disabled={isAiAnalyzing || isSaving}
-                onClick={() => document.getElementById("ai-image-upload")?.click()}
-                className={`relative px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${
-                  isAiAnalyzing
-                    ? "bg-purple-100 text-purple-700 border-purple-300 animate-pulse"
-                    : "bg-purple-600 hover:bg-purple-500 text-white border-transparent shadow-xs hover:scale-[1.02]"
-                }`}
-              >
-                <Sparkles className={`w-4 h-4 ${isAiAnalyzing ? "animate-spin" : ""}`} />
-                <span>{isAiAnalyzing ? "Analisando..." : "Leitor de IA"}</span>
-              </button>
-            </div>
-
+          <div className="flex pt-4 border-t border-slate-100 justify-end items-center gap-4 flex-wrap">
             {/* Standard Actions on the Right */}
             <div className="flex gap-2.5">
               <button
