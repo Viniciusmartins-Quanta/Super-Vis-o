@@ -361,6 +361,40 @@ async function startServer() {
     }
   });
 
+  // API - Custom Gemini Chat Request Endpoint
+  app.post("/api/chat", async (req, res) => {
+    const { mensagemDoUsuario } = req.body;
+    if (!mensagemDoUsuario) {
+      return res.status(400).json({ error: "O campo 'mensagemDoUsuario' é obrigatório." });
+    }
+
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      return res.status(500).json({ error: "A chave de API do Gemini (GEMINI_API_KEY) não está configurada no servidor." });
+    }
+
+    try {
+      const client = new GoogleGenAI({
+        apiKey: geminiApiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      const response = await client.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: mensagemDoUsuario,
+      });
+
+      res.json({ respostaDaIA: response.text });
+    } catch (erro: any) {
+      console.error("Erro na integração com Gemini:", erro);
+      res.status(500).json({ erro: "Falha ao conectar com a IA." });
+    }
+  });
+
   // API - Reset DB to default template
   app.post("/api/contract/reset", async (req, res) => {
     await saveDatabaseState(defaultData);
@@ -634,3 +668,22 @@ async function startServer() {
 }
 
 startServer();
+
+// Next.js-style Route Handler requested by the user
+export async function POST(request: any) {
+  const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+  const { mensagemDoUsuario } = await request.json();
+
+  try {
+    const response = await client.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: mensagemDoUsuario,
+    });
+
+    return Response.json({ respostaDaIA: response.text });
+
+  } catch (erro) {
+    return Response.json({ erro: "Falha ao conectar com a IA." }, { status: 500 });
+  }
+}
+
