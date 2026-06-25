@@ -2311,42 +2311,193 @@ export default function WorkDetail({
           <div>
             <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
               <PlusCircle className="w-4.5 h-4.5 text-amber-500" />
-              <span>Inserção de Lançamento de Atividade Semanal</span>
+              <span>Lançamentos Semanais de Atividade</span>
             </h3>
             <p className="text-[11px] text-slate-400 mt-0.5">
-              Área exclusiva para cadastro de novos relatórios semanais de acompanhamento de campo
+              Área exclusiva para cadastro e visualização dos boletins de acompanhamento de campo
             </p>
           </div>
 
-          <div className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-6 shadow-3xs">
-            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto text-amber-500">
-              <Logs className="w-8 h-8" />
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="text-base font-black text-slate-900">Registrar Atividade Semanal</h4>
-              <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
-                Utilize esta seção para registrar o boletim de acompanhamento semanal, avanço físico consolidado, e as atividades executadas na semana.
-              </p>
-            </div>
+          {workLogs.length === 0 ? (
+            <div className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-6 shadow-3xs">
+              <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto text-amber-500">
+                <Logs className="w-8 h-8" />
+              </div>
+              
+              <div className="space-y-2">
+                <h4 className="text-base font-black text-slate-900">Nenhum Lançamento Registrado</h4>
+                <p className="text-xs text-slate-500 leading-relaxed max-w-md mx-auto">
+                  Esta obra ainda não possui nenhum boletim de acompanhamento semanal registrado. Lance a primeira atividade para iniciar o histórico.
+                </p>
+              </div>
 
-            <div className="pt-2">
-              <button
-                onClick={() => setIsActivityModalOpen(true)}
-                className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs px-6 py-3.5 rounded-2xl shadow-2xs hover:shadow-xs transition duration-200 flex items-center gap-2 mx-auto cursor-pointer"
-              >
-                <PlusCircle className="w-4.5 h-4.5" />
-                <span>Lançar Atividade Semanal</span>
-              </button>
-            </div>
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsActivityModalOpen(true)}
+                  className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs px-6 py-3.5 rounded-2xl shadow-2xs hover:shadow-xs transition duration-200 flex items-center gap-2 mx-auto cursor-pointer"
+                >
+                  <PlusCircle className="w-4.5 h-4.5" />
+                  <span>Lançar Atividade Semanal</span>
+                </button>
+              </div>
 
-            <div className="border-t border-slate-100 pt-6 mt-4">
-              <p className="text-[10px] text-slate-400 flex items-center justify-center gap-1.5 font-semibold uppercase tracking-wider">
-                <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Os lançamentos registrados serão consolidados na aba Termos Aditivos & Timeline</span>
-              </p>
+              <div className="border-t border-slate-100 pt-6 mt-4">
+                <p className="text-[10px] text-slate-400 flex items-center justify-center gap-1.5 font-semibold uppercase tracking-wider">
+                  <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
+                  <span>Os lançamentos registrados serão consolidados na aba Termos Aditivos & Timeline</span>
+                </p>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+              {/* Left Column: Quick Action Box */}
+              <div className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-3xs">
+                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
+                  <Logs className="w-6 h-6" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Registrar Nova Atividade</h4>
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Insira as informações semanais, avanço físico consolidado, fotos de progresso e observações de campo.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsActivityModalOpen(true)}
+                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs py-3 rounded-xl shadow-2xs hover:shadow-xs transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <PlusCircle className="w-4.5 h-4.5" />
+                  <span>Lançar Atividade Semanal</span>
+                </button>
+              </div>
+
+              {/* Right Column: Weekly Logs list */}
+              <div className="lg:col-span-2 space-y-4">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Histórico de Lançamentos ({workLogs.length})</h4>
+                
+                <div className="space-y-4">
+                  {workLogs.map((log) => {
+                    const parsed = parseWeeklyReport(log.notes);
+                    return (
+                      <div key={log.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition space-y-4">
+                        {/* Log Card Header */}
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-extrabold text-slate-900 text-sm">Lançamento de Atividade Semanal</span>
+                              <span className="bg-amber-100 text-amber-800 text-[10px] font-mono font-black px-2 py-0.5 rounded-full">
+                                {log.newProgress}% avanço
+                              </span>
+                            </div>
+                            <p className="text-xs text-slate-500 font-medium">
+                              Por: <span className="text-slate-700 font-bold">{log.userName}</span> ({log.userRole}) • {formatDate(log.timestamp.split("T")[0])}
+                            </p>
+                          </div>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => handleExportPDF(log)}
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-lg transition cursor-pointer"
+                              title="Exportar PDF do boletim"
+                            >
+                              <FileText className="w-3.5 h-3.5" />
+                            </button>
+                            {onDeleteLog && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (confirm("Deseja realmente excluir este relatório semanal de atividade?")) {
+                                    onDeleteLog(log.id);
+                                  }
+                                }}
+                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-50 border border-slate-200 hover:border-rose-200 rounded-lg transition cursor-pointer"
+                                title="Excluir Relatório"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Content details */}
+                        <div className="text-xs text-slate-600 space-y-3 pt-3 border-t border-slate-100">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-slate-500">
+                            <div>Período: <span className="font-extrabold text-slate-700">{parsed.period}</span></div>
+                            {parsed.isStandardReport && (
+                              <>
+                                <div>Aditivo: <span className="font-semibold text-slate-700">{parsed.sitacaoAditivo}</span></div>
+                                <div>ENEL: <span className="font-semibold text-slate-700">{parsed.enelStatus}</span></div>
+                              </>
+                            )}
+                          </div>
+
+                          {parsed.isStandardReport ? (
+                            <div className="space-y-3">
+                              {parsed.weeklyActivities && parsed.weeklyActivities.length > 0 && (
+                                <div className="space-y-1">
+                                  <span className="font-bold text-slate-800 block">Atividades Executadas na Semana:</span>
+                                  <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-slate-600">
+                                    {parsed.weeklyActivities.map((act, i) => (
+                                      <li key={i}>{act}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              {parsed.nextWeekActivities && parsed.nextWeekActivities.length > 0 && (
+                                <div className="space-y-1">
+                                  <span className="font-bold text-slate-800 block">Próxima Semana:</span>
+                                  <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-slate-500">
+                                    {parsed.nextWeekActivities.map((act, i) => (
+                                      <li key={i}>{act}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {parsed.observations && parsed.observations.length > 0 && (
+                                <div className="space-y-1">
+                                  <span className="font-bold text-rose-700 block">Observações / Apontamentos:</span>
+                                  <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-rose-600">
+                                    {parsed.observations.map((act, i) => (
+                                      <li key={i}>{act}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="italic leading-relaxed">"{log.notes}"</p>
+                          )}
+
+                          {/* Image Gallery */}
+                          {(log.coverImage || (log.progressImages && log.progressImages.length > 0)) && (
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                              {log.coverImage && (
+                                <div className="relative group/img rounded-lg overflow-hidden border border-slate-200 bg-slate-50 aspect-video">
+                                  <img src={log.coverImage} referrerPolicy="no-referrer" className="w-full h-full object-cover" alt="Foto Capa" />
+                                  <span className="absolute bottom-1 left-1 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">Capa</span>
+                                </div>
+                              )}
+                              {log.progressImages?.map((imgUrl, idx) => (
+                                <div key={idx} className="relative group/img rounded-lg overflow-hidden border border-slate-200 bg-slate-50 aspect-video">
+                                  <img src={imgUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover" alt={`Foto Progresso ${idx + 1}`} />
+                                  <span className="absolute bottom-1 left-1 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded font-sans font-medium">Foto {idx + 1}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
