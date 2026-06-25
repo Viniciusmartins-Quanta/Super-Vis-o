@@ -92,6 +92,56 @@ export default function WorkModal({
 
   if (!isOpen) return null;
 
+  // Compress image on the client side to prevent 413 Payload Too Large error and speed up network requests
+  const compressImage = (file: File): Promise<{ base64: string; mimeType: string }> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) {
+            reject(new Error("Não foi possível carregar o canvas de imagem."));
+            return;
+          }
+
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Use image/jpeg with 0.8 quality to produce highly-compressed, crisp images (typically under 150KB)
+          const compressedBase64 = canvas.toDataURL("image/jpeg", 0.8);
+          resolve({
+            base64: compressedBase64,
+            mimeType: "image/jpeg"
+          });
+        };
+        img.onerror = () => reject(new Error("Erro ao carregar imagem para compressão."));
+        img.src = e.target?.result as string;
+      };
+      reader.onerror = () => reject(new Error("Falha ao ler arquivo de imagem."));
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleAiUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -106,15 +156,8 @@ export default function WorkModal({
     setAiSuccessMessage("");
 
     try {
-      const reader = new FileReader();
-      
-      const fileLoadPromise = new Promise<string>((resolve, reject) => {
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error("Falha ao ler o arquivo de imagem."));
-      });
-      
-      reader.readAsDataURL(file);
-      const base64Str = await fileLoadPromise;
+      // Compress first
+      const { base64, mimeType } = await compressImage(file);
 
       const response = await fetch("/api/works/read-image-ai", {
         method: "POST",
@@ -122,14 +165,29 @@ export default function WorkModal({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          imageBase64: base64Str,
-          mimeType: file.type,
+          imageBase64: base64,
+          mimeType: mimeType,
         }),
       });
 
       if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.error || "Erro na análise da IA.");
+        let detailedError = "";
+        try {
+          const errData = await response.json();
+          detailedError = errData.error;
+        } catch {
+          try {
+            const rawText = await response.text();
+            if (rawText && rawText.length < 200) {
+              detailedError = rawText;
+            } else {
+              detailedError = `Erro HTTP ${response.status}`;
+            }
+          } catch {
+            detailedError = `Erro HTTP ${response.status}`;
+          }
+        }
+        throw new Error(detailedError || "Erro de servidor na análise da IA.");
       }
 
       const data = await response.json();

@@ -309,7 +309,8 @@ async function startServer() {
         }
       });
 
-      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+      // Split base64 more robustly
+      const base64Data = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
 
       const imagePart = {
         inlineData: {
@@ -320,40 +321,65 @@ async function startServer() {
 
       const promptText = "Analise esta imagem de documento público de engenharia (como contrato, extrato do diário oficial, termo aditivo, convênio, ordem de serviço, etc.) e extraia todas as informações necessárias para cadastrar uma nova obra civil. Preencha os campos de acordo com o esquema solicitado. Se alguma informação não estiver presente, retorne vazio ou nulo.";
 
-      const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: { parts: [imagePart, { text: promptText }] },
-        config: {
-          systemInstruction: "Você é um robô de leitura inteligente de documentos de licitação e contratos de obras de engenharia. Seu objetivo é identificar e retornar os dados estruturados em JSON de acordo com o esquema: name (título da obra), contractNumber (número do contrato), contractorName (empresa vencedora), biddingNumber (concorrência pública nº), adminProcess (processo administrativo nº), biddedValue (valor contratual inicial como número), termDaysVigencia (prazo vigência ex: '12 meses'), termDaysExecucao (prazo execução ex: '12 meses'), signingDate (data de assinatura como YYYY-MM-DD), publicationDateJom (data de publicação como YYYY-MM-DD), physicalStartDate (data de início física como YYYY-MM-DD), startOrderDate (data da ordem de início como YYYY-MM-DD), status (um destes: 'planejamento', 'em_andamento', 'paralisada', 'concluida') e progress (um inteiro de 0 a 100).",
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              contractNumber: { type: Type.STRING },
-              contractorName: { type: Type.STRING },
-              biddingNumber: { type: Type.STRING },
-              adminProcess: { type: Type.STRING },
-              biddedValue: { type: Type.NUMBER },
-              termDaysVigencia: { type: Type.STRING },
-              termDaysExecucao: { type: Type.STRING },
-              signingDate: { type: Type.STRING },
-              publicationDateJom: { type: Type.STRING },
-              physicalStartDate: { type: Type.STRING },
-              startOrderDate: { type: Type.STRING },
-              status: { type: Type.STRING },
-              progress: { type: Type.INTEGER },
-            }
+      let response;
+      const schemaConfig = {
+        systemInstruction: "Você é um robô de leitura inteligente de documentos de licitação e contratos de obras de engenharia. Seu objetivo é identificar e retornar os dados estruturados em JSON de acordo com o esquema: name (título da obra), contractNumber (número do contrato), contractorName (empresa vencedora), biddingNumber (concorrência pública nº), adminProcess (processo administrativo nº), biddedValue (valor contratual inicial como número), termDaysVigencia (prazo vigência ex: '12 meses'), termDaysExecucao (prazo execução ex: '12 meses'), signingDate (data de assinatura como YYYY-MM-DD), publicationDateJom (data de publicação como YYYY-MM-DD), physicalStartDate (data de início física como YYYY-MM-DD), startOrderDate (data da ordem de início como YYYY-MM-DD), status (um destes: 'planejamento', 'em_andamento', 'paralisada', 'concluida') e progress (um inteiro de 0 a 100).",
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING },
+            contractNumber: { type: Type.STRING },
+            contractorName: { type: Type.STRING },
+            biddingNumber: { type: Type.STRING },
+            adminProcess: { type: Type.STRING },
+            biddedValue: { type: Type.NUMBER },
+            termDaysVigencia: { type: Type.STRING },
+            termDaysExecucao: { type: Type.STRING },
+            signingDate: { type: Type.STRING },
+            publicationDateJom: { type: Type.STRING },
+            physicalStartDate: { type: Type.STRING },
+            startOrderDate: { type: Type.STRING },
+            status: { type: Type.STRING },
+            progress: { type: Type.INTEGER },
           }
         }
-      });
+      };
 
-      const resultText = response.text;
+      try {
+        console.log("Tentando analisar imagem com gemini-3.5-flash...");
+        response = await ai.models.generateContent({
+          model: "gemini-3.5-flash",
+          contents: { parts: [imagePart, { text: promptText }] },
+          config: schemaConfig
+        });
+      } catch (err35: any) {
+        console.warn("Erro ao usar gemini-3.5-flash, tentando gemini-2.5-flash como fallback. Erro:", err35.message || err35);
+        response = await ai.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: { parts: [imagePart, { text: promptText }] },
+          config: schemaConfig
+        });
+      }
+
+      let resultText = response.text;
       if (!resultText) {
         throw new Error("Não foi possível ler as informações da imagem.");
       }
 
-      const parsedData = JSON.parse(resultText);
+      // Safe JSON cleaning
+      let cleanText = resultText.trim();
+      if (cleanText.startsWith("```json")) {
+        cleanText = cleanText.substring(7);
+      } else if (cleanText.startsWith("```")) {
+        cleanText = cleanText.substring(3);
+      }
+      if (cleanText.endsWith("```")) {
+        cleanText = cleanText.substring(0, cleanText.length - 3);
+      }
+      cleanText = cleanText.trim();
+
+      const parsedData = JSON.parse(cleanText);
       res.json(parsedData);
     } catch (error: any) {
       console.error("Erro ao processar imagem no Gemini:", error);
