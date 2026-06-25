@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Obra, UserProfile } from "../types";
-import { X, Briefcase, Calendar, Building2, DollarSign, HelpCircle, Save } from "lucide-react";
+import { X, Briefcase, Calendar, Building2, DollarSign, HelpCircle, Save, Sparkles } from "lucide-react";
 
 interface WorkModalProps {
   isOpen: boolean;
@@ -39,6 +39,8 @@ export default function WorkModal({
 
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [isAiAnalyzing, setIsAiAnalyzing] = useState(false);
+  const [aiSuccessMessage, setAiSuccessMessage] = useState("");
 
   useEffect(() => {
     if (editingWork) {
@@ -85,9 +87,86 @@ export default function WorkModal({
       setStartOrderDate("");
     }
     setErrorMessage((prev) => prev !== "" ? "" : prev);
+    setAiSuccessMessage("");
   }, [editingWork, isOpen]);
 
   if (!isOpen) return null;
+
+  const handleAiUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrorMessage("Por favor, envie um arquivo de imagem válido (PNG, JPG, etc.).");
+      return;
+    }
+
+    setIsAiAnalyzing(true);
+    setErrorMessage("");
+    setAiSuccessMessage("");
+
+    try {
+      const reader = new FileReader();
+      
+      const fileLoadPromise = new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Falha ao ler o arquivo de imagem."));
+      });
+      
+      reader.readAsDataURL(file);
+      const base64Str = await fileLoadPromise;
+
+      const response = await fetch("/api/works/read-image-ai", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          imageBase64: base64Str,
+          mimeType: file.type,
+        }),
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || "Erro na análise da IA.");
+      }
+
+      const data = await response.json();
+
+      if (data.name) setName(data.name);
+      if (data.contractNumber) setContractNumber(data.contractNumber);
+      if (data.contractorName) setContractorName(data.contractorName);
+      if (data.biddingNumber) setBiddingNumber(data.biddingNumber);
+      if (data.adminProcess) setAdminProcess(data.adminProcess);
+      if (data.biddedValue) setBiddedValue(data.biddedValue.toString());
+      if (data.termDaysVigencia) setTermDaysVigencia(data.termDaysVigencia);
+      if (data.termDaysExecucao) setTermDaysExecucao(data.termDaysExecucao);
+      if (data.signingDate) setSigningDate(data.signingDate);
+      if (data.publicationDateJom) setPublicationDateJom(data.publicationDateJom);
+      if (data.physicalStartDate) setPhysicalStartDate(data.physicalStartDate);
+      if (data.startOrderDate) setStartOrderDate(data.startOrderDate);
+      
+      if (data.status) {
+        const validStatuses = ["planejamento", "em_andamento", "paralisada", "concluida"];
+        if (validStatuses.includes(data.status)) {
+          setStatus(data.status as any);
+        }
+      }
+      
+      if (typeof data.progress === "number" && data.progress >= 0 && data.progress <= 100) {
+        setProgress(data.progress);
+      }
+
+      setAiSuccessMessage("Dados preenchidos automaticamente com IA com sucesso!");
+    } catch (err: any) {
+      console.error(err);
+      setErrorMessage(err.message || "Não foi possível analisar o documento com IA. Tente novamente.");
+    } finally {
+      setIsAiAnalyzing(false);
+      e.target.value = "";
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -430,6 +509,13 @@ export default function WorkModal({
             </div>
           </div>
 
+          {aiSuccessMessage && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 font-bold text-center flex items-center justify-center gap-2">
+              <Sparkles className="w-4 h-4 text-emerald-600 animate-pulse" />
+              <span>{aiSuccessMessage}</span>
+            </div>
+          )}
+
           {errorMessage && (
             <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-xs text-rose-700 font-semibold text-center">
               {errorMessage}
@@ -437,23 +523,52 @@ export default function WorkModal({
           )}
 
           {/* Modal Actions Footer */}
-          <div className="flex gap-2.5 pt-4 border-t border-slate-100 justify-end">
-            <button
-              type="button"
-              disabled={isSaving}
-              onClick={onClose}
-              className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={isSaving}
-              className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold px-6 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
-            >
-              <Save className="w-4 h-4" />
-              <span>{isSaving ? "Gravando..." : "Salvar Obra"}</span>
-            </button>
+          <div className="flex pt-4 border-t border-slate-100 justify-between items-center gap-4 flex-wrap">
+            {/* AI Reader Button on the Left */}
+            <div>
+              <input
+                type="file"
+                id="ai-image-upload"
+                accept="image/*"
+                onChange={handleAiUpload}
+                className="hidden"
+                disabled={isAiAnalyzing || isSaving}
+              />
+              <button
+                type="button"
+                id="ai-reader-btn"
+                disabled={isAiAnalyzing || isSaving}
+                onClick={() => document.getElementById("ai-image-upload")?.click()}
+                className={`relative px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer border ${
+                  isAiAnalyzing
+                    ? "bg-purple-100 text-purple-700 border-purple-300 animate-pulse"
+                    : "bg-purple-600 hover:bg-purple-500 text-white border-transparent shadow-xs hover:scale-[1.02]"
+                }`}
+              >
+                <Sparkles className={`w-4 h-4 ${isAiAnalyzing ? "animate-spin" : ""}`} />
+                <span>{isAiAnalyzing ? "Analisando..." : "Leitor de IA"}</span>
+              </button>
+            </div>
+
+            {/* Standard Actions on the Right */}
+            <div className="flex gap-2.5">
+              <button
+                type="button"
+                disabled={isSaving || isAiAnalyzing}
+                onClick={onClose}
+                className="bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-2.5 rounded-xl text-xs transition cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving || isAiAnalyzing}
+                className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold px-6 py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm disabled:opacity-50 cursor-pointer"
+              >
+                <Save className="w-4 h-4" />
+                <span>{isSaving ? "Gravando..." : "Salvar Obra"}</span>
+              </button>
+            </div>
           </div>
 
         </form>

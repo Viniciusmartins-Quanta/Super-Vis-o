@@ -1784,48 +1784,12 @@ export default function App() {
                   </p>
                   <p className="text-xs text-slate-655 leading-relaxed font-semibold">
                     {state.supabaseStatus.rlsEnabled 
-                      ? "Para resolver isso e habilitar a gravação instantânea de dados, execute o comando abaixo no painel SQL Editor do Supabase:"
-                      : "Para habilitar o salvamento em nuvem e a sincronização em tempo real de cards, obras, aditivos e logs no Supabase, execute o script SQL abaixo no SQL Editor do seu painel do Supabase:"}
+                      ? "Para resolver isso e habilitar a gravação instantânea de dados, desative o recurso RLS no painel do Supabase."
+                      : "Para habilitar o salvamento em nuvem e a sincronização em tempo real de cards, obras, aditivos e logs no Supabase, certifique-se de que a tabela contract_state esteja criada."}
                   </p>
                 </div>
               </div>
 
-              <div className="bg-slate-900 rounded-xl overflow-hidden border border-slate-800 relative group">
-                <div className="flex items-center justify-between px-4 py-2 bg-slate-950 border-b border-slate-800 text-slate-400 text-[10px] font-mono tracking-wider uppercase font-bold">
-                  <span>Script de Inicialização SQL</span>
-                  <button
-                    onClick={() => {
-                      const sql = state.supabaseStatus?.rlsEnabled 
-                        ? "ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;"
-                        : `CREATE TABLE contract_state (
-  id text PRIMARY KEY,
-  data jsonb NOT NULL,
-  updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- Desativar RLS para permitir leitura e gravação anônima via chave pública
-ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`;
-                      navigator.clipboard.writeText(sql);
-                      alert("Script SQL copiado com sucesso!");
-                    }}
-                    className="hover:text-white transition flex items-center gap-1 cursor-pointer bg-slate-800 px-2 py-1 rounded font-sans leading-none font-bold text-[10px] text-slate-200"
-                  >
-                    Copiar Código
-                  </button>
-                </div>
-                <pre className="p-4 overflow-x-auto text-[11.5px] font-mono text-slate-300 leading-relaxed font-semibold">
-                  {state.supabaseStatus.rlsEnabled 
-                    ? "ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;"
-                    : `CREATE TABLE contract_state (
-  id text PRIMARY KEY,
-  data jsonb NOT NULL,
-  updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
-);
-
--- Desativar RLS para permitir leitura e gravação anônima via chave pública
-ALTER TABLE contract_state DISABLE ROW LEVEL SECURITY;`}
-                </pre>
-              </div>
               <div className="text-[11px] text-amber-700 font-medium leading-normal">
                 Nota: O sistema está atualmente usando o <strong>armazenamento local (database.json)</strong> de forma 100% funcional. Todos os seus salvamentos, criações e exclusões estão sendo mantidos com sucesso! Assim que resolver as permissões de tabela no Supabase, a sincronização em nuvem se tornará ativa automaticamente!
               </div>

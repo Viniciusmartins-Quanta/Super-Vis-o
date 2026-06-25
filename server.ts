@@ -5,6 +5,7 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseSessionMiddleware } from "./src/supabaseServer";
+import { GoogleGenAI, Type } from "@google/genai";
 
 dotenv.config();
 
@@ -284,6 +285,80 @@ async function startServer() {
   app.get("/api/contract", async (req, res) => {
     const data = await getDatabaseState();
     res.json(data);
+  });
+
+  // API - Read Work Data from Image using Gemini AI
+  app.post("/api/works/read-image-ai", async (req, res) => {
+    const { imageBase64, mimeType } = req.body;
+    if (!imageBase64 || !mimeType) {
+      return res.status(400).json({ error: "Imagem e tipo MIME são obrigatórios." });
+    }
+
+    const geminiApiKey = process.env.GEMINI_API_KEY;
+    if (!geminiApiKey) {
+      return res.status(500).json({ error: "A chave de API do Gemini (GEMINI_API_KEY) não está configurada no servidor." });
+    }
+
+    try {
+      const ai = new GoogleGenAI({
+        apiKey: geminiApiKey,
+        httpOptions: {
+          headers: {
+            'User-Agent': 'aistudio-build',
+          }
+        }
+      });
+
+      const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, "");
+
+      const imagePart = {
+        inlineData: {
+          mimeType: mimeType,
+          data: base64Data,
+        },
+      };
+
+      const promptText = "Analise esta imagem de documento público de engenharia (como contrato, extrato do diário oficial, termo aditivo, convênio, ordem de serviço, etc.) e extraia todas as informações necessárias para cadastrar uma nova obra civil. Preencha os campos de acordo com o esquema solicitado. Se alguma informação não estiver presente, retorne vazio ou nulo.";
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-flash",
+        contents: { parts: [imagePart, { text: promptText }] },
+        config: {
+          systemInstruction: "Você é um robô de leitura inteligente de documentos de licitação e contratos de obras de engenharia. Seu objetivo é identificar e retornar os dados estruturados em JSON de acordo com o esquema: name (título da obra), contractNumber (número do contrato), contractorName (empresa vencedora), biddingNumber (concorrência pública nº), adminProcess (processo administrativo nº), biddedValue (valor contratual inicial como número), termDaysVigencia (prazo vigência ex: '12 meses'), termDaysExecucao (prazo execução ex: '12 meses'), signingDate (data de assinatura como YYYY-MM-DD), publicationDateJom (data de publicação como YYYY-MM-DD), physicalStartDate (data de início física como YYYY-MM-DD), startOrderDate (data da ordem de início como YYYY-MM-DD), status (um destes: 'planejamento', 'em_andamento', 'paralisada', 'concluida') e progress (um inteiro de 0 a 100).",
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              contractNumber: { type: Type.STRING },
+              contractorName: { type: Type.STRING },
+              biddingNumber: { type: Type.STRING },
+              adminProcess: { type: Type.STRING },
+              biddedValue: { type: Type.NUMBER },
+              termDaysVigencia: { type: Type.STRING },
+              termDaysExecucao: { type: Type.STRING },
+              signingDate: { type: Type.STRING },
+              publicationDateJom: { type: Type.STRING },
+              physicalStartDate: { type: Type.STRING },
+              startOrderDate: { type: Type.STRING },
+              status: { type: Type.STRING },
+              progress: { type: Type.INTEGER },
+            }
+          }
+        }
+      });
+
+      const resultText = response.text;
+      if (!resultText) {
+        throw new Error("Não foi possível ler as informações da imagem.");
+      }
+
+      const parsedData = JSON.parse(resultText);
+      res.json(parsedData);
+    } catch (error: any) {
+      console.error("Erro ao processar imagem no Gemini:", error);
+      res.status(500).json({ error: error.message || "Erro interno ao processar imagem com IA." });
+    }
   });
 
   // API - Reset DB to default template
