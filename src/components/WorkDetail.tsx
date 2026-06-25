@@ -1043,6 +1043,42 @@ export default function WorkDetail({
     ? addMonths(baseExecucaoDateCalculated, totalDaysExtended.toString())
     : (work.deadlineDate || baseExecucaoDateCalculated);
 
+  // Find baseline dates excluding the editing additive (for accurate incremental calculation)
+  const getBaselineDates = () => {
+    const otherAdditives = currentAdditives.filter(a => a.id !== editingAdditiveId);
+
+    // Sum of previous vigência extensions
+    const prevVigenciaMonths = otherAdditives.reduce((acc, curr) => {
+      if (curr.type === "prazo" || curr.type === "misto") {
+        return acc + (curr.daysVigencia ?? curr.days ?? 0);
+      }
+      return acc;
+    }, 0);
+
+    // Sum of previous execução extensions
+    const prevExecucaoMonths = otherAdditives.reduce((acc, curr) => {
+      if (curr.type === "prazo" || curr.type === "misto") {
+        return acc + (curr.daysExecucao ?? curr.days ?? 0);
+      }
+      return acc;
+    }, 0);
+
+    const baselineVigencia = prevVigenciaMonths > 0
+      ? addMonths(baseVigenciaDateCalculated, prevVigenciaMonths.toString())
+      : baseVigenciaDateCalculated;
+
+    const baselineExecucao = prevExecucaoMonths > 0
+      ? addMonths(baseExecucaoDateCalculated, prevExecucaoMonths.toString())
+      : baseExecucaoDateCalculated;
+
+    return {
+      vigencia: baselineVigencia,
+      execucao: baselineExecucao
+    };
+  };
+
+  const baselineDates = getBaselineDates();
+
   // Warning calculations
   const calculateDaysPassed = (dateStr: string) => {
     const targetDate = new Date(dateStr + "T12:00:00");
@@ -1134,24 +1170,6 @@ export default function WorkDetail({
 
     setIsSavingAdditive(true);
     try {
-      let updatedDeadline = work.deadlineDate;
-      let updatedActiveContractDate = work.activeContractDate;
-
-      // If editing, first subtract the old additive's months/days to revert back to base
-      if (editingAdditiveId) {
-        const oldAdd = currentAdditives.find(a => a.id === editingAdditiveId);
-        if (oldAdd && (oldAdd.type === "prazo" || oldAdd.type === "misto")) {
-          const subExec = oldAdd.daysExecucao ?? oldAdd.days ?? 0;
-          const subVig = oldAdd.daysVigencia ?? oldAdd.days ?? 0;
-          if (subExec > 0) {
-            updatedDeadline = subtractMonthsFromDate(updatedDeadline, subExec);
-          }
-          if (subVig > 0) {
-            updatedActiveContractDate = subtractMonthsFromDate(updatedActiveContractDate, subVig);
-          }
-        }
-      }
-
       const additiveData: ContractAdditive = {
         id: editingAdditiveId || `add-${Date.now()}`,
         number: addNo.trim(),
@@ -1167,24 +1185,35 @@ export default function WorkDetail({
         publicationDateJom: addPublicationDateJom || undefined
       };
 
-      // Compute updated deadlines if deadline additive
-      if (addType === "prazo" || addType === "misto") {
-        if (addNewExecucaoDate) {
-          const calcExecDate = addMonths(updatedDeadline, daysExecNum.toString());
-          updatedDeadline = calcExecDate || addNewExecucaoDate;
-        }
-        if (addNewVigenciaDate) {
-          const calcVigDate = addMonths(updatedActiveContractDate, daysVigNum.toString());
-          updatedActiveContractDate = calcVigDate || addNewVigenciaDate;
-        }
-      }
-
       let updatedAdditives: ContractAdditive[];
       if (editingAdditiveId) {
         updatedAdditives = currentAdditives.map(a => a.id === editingAdditiveId ? additiveData : a);
       } else {
         updatedAdditives = [...currentAdditives, additiveData];
       }
+
+      // Recompute total active dates accurately based on all current additives
+      const totalVigExtended = updatedAdditives.reduce((acc, curr) => {
+        if (curr.type === "prazo" || curr.type === "misto") {
+          return acc + (curr.daysVigencia ?? curr.days ?? 0);
+        }
+        return acc;
+      }, 0);
+
+      const totalExecExtended = updatedAdditives.reduce((acc, curr) => {
+        if (curr.type === "prazo" || curr.type === "misto") {
+          return acc + (curr.daysExecucao ?? curr.days ?? 0);
+        }
+        return acc;
+      }, 0);
+
+      const updatedActiveContractDate = totalVigExtended > 0
+        ? addMonths(baseVigenciaDateCalculated, totalVigExtended.toString())
+        : baseVigenciaDateCalculated;
+
+      const updatedDeadline = totalExecExtended > 0
+        ? addMonths(baseExecucaoDateCalculated, totalExecExtended.toString())
+        : baseExecucaoDateCalculated;
 
       await onUpdateWork({
         ...work,
@@ -1219,30 +1248,29 @@ export default function WorkDetail({
     if (!window.confirm("Deseja realmente remover este termo aditivo?")) return;
 
     try {
-      const deletedItem = currentAdditives.find(a => a.id === id);
       const updatedAdditives = currentAdditives.filter((a) => a.id !== id);
 
-      // Revert deadlines if deleted item had days
-      let updatedDeadline = work.deadlineDate;
-      let updatedActiveContractDate = work.activeContractDate;
-
-      if (deletedItem && (deletedItem.type === "prazo" || deletedItem.type === "misto")) {
-        const subtractDaysFromDate = (dateStr: string, daysToSub: number) => {
-          const date = new Date(dateStr + "T12:00:00");
-          if (isNaN(date.getTime())) return dateStr;
-          date.setDate(date.getDate() - daysToSub);
-          return date.toISOString().split("T")[0];
-        };
-        const subExecucao = deletedItem.daysExecucao ?? deletedItem.days ?? 0;
-        const subVigencia = deletedItem.daysVigencia ?? deletedItem.days ?? 0;
-
-        if (subExecucao > 0) {
-          updatedDeadline = subtractDaysFromDate(work.deadlineDate, subExecucao);
+      const totalVigExtended = updatedAdditives.reduce((acc, curr) => {
+        if (curr.type === "prazo" || curr.type === "misto") {
+          return acc + (curr.daysVigencia ?? curr.days ?? 0);
         }
-        if (subVigencia > 0) {
-          updatedActiveContractDate = subtractDaysFromDate(work.activeContractDate, subVigencia);
+        return acc;
+      }, 0);
+
+      const totalExecExtended = updatedAdditives.reduce((acc, curr) => {
+        if (curr.type === "prazo" || curr.type === "misto") {
+          return acc + (curr.daysExecucao ?? curr.days ?? 0);
         }
-      }
+        return acc;
+      }, 0);
+
+      const updatedActiveContractDate = totalVigExtended > 0
+        ? addMonths(baseVigenciaDateCalculated, totalVigExtended.toString())
+        : baseVigenciaDateCalculated;
+
+      const updatedDeadline = totalExecExtended > 0
+        ? addMonths(baseExecucaoDateCalculated, totalExecExtended.toString())
+        : baseExecucaoDateCalculated;
 
       await onUpdateWork({
         ...work,
@@ -2137,7 +2165,7 @@ export default function WorkDetail({
                             setAddDaysVigencia(val);
                             const d = parseInt(val, 10);
                             if (!isNaN(d) && d >= 0) {
-                              setAddNewVigenciaDate(addMonths(work.activeContractDate, d.toString()));
+                              setAddNewVigenciaDate(addMonths(baselineDates.vigencia, d.toString()));
                             } else {
                               setAddNewVigenciaDate("");
                             }
@@ -2156,8 +2184,8 @@ export default function WorkDetail({
                           onChange={(e) => setAddNewVigenciaDate(e.target.value)}
                           className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none transition shadow-2xs cursor-pointer"
                         />
-                        <p className="text-[9px] text-slate-400 italic block">
-                          Original: {formatDate(work.activeContractDate)}
+                        <p className="text-[9px] text-amber-700 font-medium italic block">
+                          Original / Anterior: {formatDate(baselineDates.vigencia)}
                         </p>
                       </div>
                     </div>
@@ -2178,7 +2206,7 @@ export default function WorkDetail({
                             setAddDaysExecucao(val);
                             const d = parseInt(val, 10);
                             if (!isNaN(d) && d >= 0) {
-                              setAddNewExecucaoDate(addMonths(work.deadlineDate, d.toString()));
+                              setAddNewExecucaoDate(addMonths(baselineDates.execucao, d.toString()));
                             } else {
                               setAddNewExecucaoDate("");
                             }
@@ -2197,8 +2225,8 @@ export default function WorkDetail({
                           onChange={(e) => setAddNewExecucaoDate(e.target.value)}
                           className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none transition shadow-2xs cursor-pointer"
                         />
-                        <p className="text-[9px] text-slate-400 italic block">
-                          Original: {formatDate(work.deadlineDate)}
+                        <p className="text-[9px] text-amber-700 font-medium italic block">
+                          Original / Anterior: {formatDate(baselineDates.execucao)}
                         </p>
                       </div>
                     </div>

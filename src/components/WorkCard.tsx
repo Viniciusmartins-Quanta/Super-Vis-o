@@ -57,6 +57,98 @@ export default function WorkCard({
 
   const isCompleted = work.progress === 100 || work.status === "concluida";
 
+  // Helper to find latest vigência date after aditivos
+  const getLatestVigencia = () => {
+    if (work.additives && work.additives.length > 0) {
+      const withVigencia = work.additives.filter(a => a.newVigenciaDate);
+      if (withVigencia.length > 0) {
+        return {
+          date: withVigencia[withVigencia.length - 1].newVigenciaDate!,
+          aditivado: true
+        };
+      }
+    }
+    return {
+      date: work.activeContractDate || work.signingDate || "",
+      aditivado: false
+    };
+  };
+
+  // Helper to find latest execução date after aditivos
+  const getLatestExecucao = () => {
+    if (work.additives && work.additives.length > 0) {
+      const withExecucao = work.additives.filter(a => a.newExecucaoDate);
+      if (withExecucao.length > 0) {
+        return {
+          date: withExecucao[withExecucao.length - 1].newExecucaoDate!,
+          aditivado: true
+        };
+      }
+      const withVigencia = work.additives.filter(a => a.newVigenciaDate);
+      if (withVigencia.length > 0) {
+        return {
+          date: withVigencia[withVigencia.length - 1].newVigenciaDate!,
+          aditivado: true
+        };
+      }
+    }
+    return {
+      date: work.deadlineDate || work.physicalStartDate || "",
+      aditivado: false
+    };
+  };
+
+  const vigenciaInfo = getLatestVigencia();
+  const execucaoInfo = getLatestExecucao();
+  const inicioDate = work.physicalStartDate || work.startOrderDate || work.startDate || "";
+
+  const getDeadlineWarning = () => {
+    const vigenciaDateStr = vigenciaInfo.date;
+    if (!vigenciaDateStr) return null;
+
+    const parts = vigenciaDateStr.split("-");
+    let targetDate: Date;
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1; // 0-indexed
+      const day = parseInt(parts[2], 10);
+      targetDate = new Date(year, month, day, 12, 0, 0);
+    } else {
+      targetDate = new Date(vigenciaDateStr);
+    }
+
+    if (isNaN(targetDate.getTime())) return null;
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+
+    const diffTime = targetDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      const overdueDays = Math.abs(diffDays);
+      return {
+        type: "expired",
+        message: `Verificar Situação do Aditivo. (${overdueDays} ${overdueDays === 1 ? 'dia se passou' : 'dias se passaram'} do prazo)`,
+        className: "bg-rose-50 text-rose-700 border border-rose-200"
+      };
+    } else if (diffDays <= 45) {
+      return {
+        type: "warning",
+        message: "Perto do Fim do Prazo Contratual.",
+        className: "bg-amber-50 text-amber-700 border border-amber-200"
+      };
+    } else {
+      return {
+        type: "safe",
+        message: "Dentro do Prazo Contratual.",
+        className: "bg-emerald-50 text-emerald-700 border border-emerald-200"
+      };
+    }
+  };
+
+  const deadlineWarning = getDeadlineWarning();
+
   return (
     <article
       className="bg-white rounded-2xl border border-slate-200 hover:border-amber-400 p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4 relative overflow-hidden"
@@ -163,78 +255,58 @@ export default function WorkCard({
       )}
 
       {/* Timeline Dates Container with rich fields */}
-      <div className="border-t border-b border-slate-100 py-3 space-y-2 text-xs text-slate-600">
-        {work.signingDate && (
-          <div className="flex justify-between items-center">
-            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-              <Calendar className="w-3.5 h-3.5" /> Data Assinatura:
-            </span>
-            <span className="font-semibold text-slate-700 font-mono">
-              {formatDate(work.signingDate)}
-            </span>
-          </div>
-        )}
-        {work.publicationDateJom && (
-          <div className="flex justify-between items-center">
-            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-              <Calendar className="w-3.5 h-3.5" /> Publicação JOM:
-            </span>
-            <span className="font-semibold text-slate-700 font-mono">
-              {formatDate(work.publicationDateJom)}
-            </span>
-          </div>
-        )}
-        {work.physicalStartDate && (
-          <div className="flex justify-between items-center">
-            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-              <Calendar className="w-3.5 h-3.5" /> Início Físico:
-            </span>
-            <span className="font-semibold text-slate-700 font-mono">
-              {formatDate(work.physicalStartDate)}
-            </span>
-          </div>
-        )}
-        {work.startOrderDate && (
-          <div className="flex justify-between items-center">
-            <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-              <Calendar className="w-3.5 h-3.5" /> Ordem de Início:
-            </span>
-            <span className="font-semibold text-slate-700 font-mono">
-              {formatDate(work.startOrderDate)}
-            </span>
-          </div>
-        )}
+      <div className="border-t border-b border-slate-100 py-3.5 space-y-2.5 text-xs text-slate-600" id={`obra-timeline-dates-${work.id}`}>
+        <div className="flex justify-between items-center bg-transparent">
+          <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+            <Calendar className="w-3.5 h-3.5" /> Data de Início:
+          </span>
+          <span className="font-semibold text-slate-700 font-mono">
+            {formatDate(inicioDate)}
+          </span>
+        </div>
 
-        {/* Fallback metrics for initial database records that might not have custom dates */}
-        {!work.signingDate && (
-          <>
-            <div className="flex justify-between items-center bg-transparent">
-              <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-                <Calendar className="w-3.5 h-3.5" /> Data de Início:
+        <div className="flex justify-between items-center">
+          <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+            <FileCheck className="w-3.5 h-3.5" /> Vigência do Contrato:
+          </span>
+          <div className="flex items-center gap-1.5">
+            {vigenciaInfo.aditivado && (
+              <span className="text-[9px] uppercase font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded border border-amber-200">
+                Aditivado
               </span>
-              <span className="font-semibold text-slate-700 font-mono">
-                {formatDate(work.startDate)}
+            )}
+            <span className={`font-semibold font-mono ${vigenciaInfo.aditivado ? 'text-amber-700 bg-amber-50/50 px-1.5 py-0.5 rounded border border-amber-100/50' : 'text-slate-700'}`}>
+              {formatDate(vigenciaInfo.date)}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <span className="flex items-center gap-1.5 text-slate-400 font-medium">
+            <Calendar className="w-3.5 h-3.5" /> Prazo de Execução:
+          </span>
+          <div className="flex items-center gap-1.5">
+            {execucaoInfo.aditivado && (
+              <span className="text-[9px] uppercase font-bold text-amber-600 bg-amber-50 px-1 py-0.5 rounded border border-amber-200">
+                Aditivado
               </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="flex items-center gap-1.5 text-slate-400 font-medium">
-                <Calendar className="w-3.5 h-3.5" /> Prazo de Execução:
-              </span>
-              <span className="font-semibold text-slate-700 font-mono">
-                {formatDate(work.deadlineDate)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="flex items-center gap-1.5 text-slate-400 font-medium text-ellipsis">
-                <FileCheck className="w-3.5 h-3.5" /> Contrato Vigente até:
-              </span>
-              <span className="font-semibold text-amber-700 font-mono bg-amber-50 rounded px-1.5 py-0.5 border border-amber-100/50">
-                {formatDate(work.activeContractDate)}
-              </span>
-            </div>
-          </>
-        )}
+            )}
+            <span className={`font-semibold font-mono ${execucaoInfo.aditivado ? 'text-amber-700 bg-amber-50/50 px-1.5 py-0.5 rounded border border-amber-100/50' : 'text-slate-700'}`}>
+              {formatDate(execucaoInfo.date)}
+            </span>
+          </div>
+        </div>
       </div>
+
+      {/* Alert Banner for Contract Validity */}
+      {deadlineWarning && (
+        <div className={`p-3 rounded-xl flex items-center gap-2.5 text-xs font-semibold shadow-3xs ${deadlineWarning.className}`} id={`obra-deadline-warning-${work.id}`}>
+          {deadlineWarning.type === "expired" && <AlertTriangle className="w-4 h-4 text-rose-600 flex-shrink-0 animate-pulse" />}
+          {deadlineWarning.type === "warning" && <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />}
+          {deadlineWarning.type === "safe" && <CheckCircle className="w-4 h-4 text-emerald-600 flex-shrink-0" />}
+          <span>{deadlineWarning.message}</span>
+        </div>
+      )}
 
       {/* Progress visual tracker block */}
       <div className="space-y-2">
