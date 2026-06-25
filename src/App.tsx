@@ -1530,7 +1530,8 @@ export default function App() {
           progress: workData.progress || 0,
           contractorName: workData.contractorName || "",
           biddedValue: workData.biddedValue || 0,
-          status: workData.status || "planejamento"
+          status: workData.status || "planejamento",
+          ...workData
         };
         updatedWorks.push(newObra);
       }
