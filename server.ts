@@ -610,10 +610,10 @@ async function startServer() {
     res.json({ message: "Obra atualizada com sucesso.", obra: updatedObra });
   });
 
-  // API - Update specific update log notes
+  // API - Update specific update log notes/fields
   app.put("/api/logs/:id", async (req, res) => {
     const { id } = req.params;
-    const { notes } = req.body;
+    const { notes, newProgress, coverImage, progressImages } = req.body;
 
     const data = await getDatabaseState();
     const logIndex = data.logs.findIndex((l) => l.id === id);
@@ -621,7 +621,22 @@ async function startServer() {
       return res.status(404).json({ error: "Lançamento não encontrado." });
     }
 
-    data.logs[logIndex].notes = notes;
+    const log = data.logs[logIndex];
+    if (notes !== undefined) log.notes = notes;
+    if (newProgress !== undefined) log.newProgress = Number(newProgress);
+    if (coverImage !== undefined) log.coverImage = coverImage;
+    if (progressImages !== undefined) log.progressImages = progressImages;
+
+    // Check if this log is the most recent one for its workId to sync work's progress
+    const workId = log.workId;
+    const workLogs = data.logs.filter((l) => l.workId === workId);
+    const sortedLogs = [...workLogs].sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    if (sortedLogs[0]?.id === id) {
+      const obraIndex = data.works.findIndex((w) => w.id === workId);
+      if (obraIndex !== -1 && newProgress !== undefined) {
+        data.works[obraIndex].progress = Number(newProgress);
+      }
+    }
 
     const { supabaseStatus: _, ...cleanData } = data;
     await saveDatabaseState(cleanData);

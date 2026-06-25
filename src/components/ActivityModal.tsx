@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Obra, UserProfile } from "../types";
+import { Obra, UserProfile, UpdateLog } from "../types";
 import { X, Plus, Trash2, Save, HelpCircle, Calendar, Sparkles, Upload, Image as ImageIcon, Camera } from "lucide-react";
 
 interface ActivityModalProps {
@@ -16,6 +16,14 @@ interface ActivityModalProps {
     coverImage?: string,
     progressImages?: string[]
   ) => Promise<void>;
+  onUpdatingActivity?: (
+    logId: string,
+    newProgress: number,
+    notes: string,
+    coverImage?: string,
+    progressImages?: string[]
+  ) => Promise<void>;
+  existingLog?: UpdateLog | null;
 }
 
 export default function ActivityModal({
@@ -23,7 +31,9 @@ export default function ActivityModal({
   onClose,
   work,
   activeUser,
-  onSubmittingActivity
+  onSubmittingActivity,
+  onUpdatingActivity,
+  existingLog
 }: ActivityModalProps) {
   // 1. INÍCIO DA SEMANA
   const [startDate, setStartDate] = useState("");
@@ -64,6 +74,129 @@ export default function ActivityModal({
 
   const [isSaving, setIsSaving] = useState(false);
   const [errText, setErrText] = useState("");
+
+  React.useEffect(() => {
+    if (isOpen && existingLog) {
+      // Parse existingLog.notes using similar parsing logic to parseWeeklyReport
+      const notesText = existingLog.notes || "";
+      
+      // Parse Period e.g. "Período: 01/06/2026 a 05/06/2026"
+      const periodMatch = notesText.match(/(?:Período|Period):\s*\*?([^\n\r*]+)/i);
+      let pStart = "";
+      let pEnd = "";
+      if (periodMatch) {
+        const periodStr = periodMatch[1].trim();
+        const periodParts = periodStr.split(/\s+a\s+/);
+        
+        const parseDateToYYYYMMDD = (ptBrDateStr: string) => {
+          const parts = ptBrDateStr.trim().split("/");
+          if (parts.length === 3) {
+            const day = parts[0].padStart(2, "0");
+            const month = parts[1].padStart(2, "0");
+            const year = parts[2];
+            return `${year}-${month}-${day}`;
+          }
+          return "";
+        };
+
+        if (periodParts[0]) pStart = parseDateToYYYYMMDD(periodParts[0]);
+        if (periodParts[1]) pEnd = parseDateToYYYYMMDD(periodParts[1]);
+      }
+      setStartDate(pStart);
+      setEndDate(pEnd);
+      
+      setPhysicalProgress(existingLog.newProgress);
+
+      // Parse Situação do Aditivo
+      const aditivoMatch = notesText.match(/Situação do Aditivo:\*\*?\s*(.*)$/im);
+      setAditivoStatus(aditivoMatch ? aditivoMatch[1].trim().replace(/\*/g, '') : "N/A");
+
+      // Atividades da Infraestrutura de Dados
+      const infraMatch = notesText.match(/Infraestrutura de Dados:\*\*?\s*(.*)$/im);
+      setDataInfrastructure(infraMatch ? infraMatch[1].trim().replace(/\*/g, '') : "N/A");
+
+      // Status do Aumento de Carga (ENEL)
+      const enelMatch = notesText.match(/Aumento de Carga \(ENEL\):\*\*?\s*(.*)$/im);
+      setEnelStatus(enelMatch ? enelMatch[1].trim().replace(/\*/g, '') : "N/A");
+
+      // Status da Subestação Elétrica
+      const subMatch = notesText.match(/Subestação Elétrica:\*\*?\s*(.*)$/im);
+      setSubstationStatus(subMatch ? subMatch[1].trim().replace(/\*/g, '') : "N/A");
+
+      // Informação Relevante
+      const relevantMatch = notesText.match(/Informação Relevante:\*\*?\s*(.*)$/im);
+      setRelevantInfo(relevantMatch ? relevantMatch[1].trim().replace(/\*/g, '') : "N/A");
+
+      // Helper to extract bulleted items:
+      const extractSectionBullets = (headerKeyword: string) => {
+        const lines = notesText.split("\n");
+        let startIdx = -1;
+        
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase().includes(headerKeyword.toLowerCase())) {
+            startIdx = i;
+            break;
+          }
+        }
+
+        if (startIdx === -1) return [];
+
+        const bullets: string[] = [];
+        for (let i = startIdx + 1; i < lines.length; i++) {
+          const line = lines[i].trim();
+          
+          if (line.includes("**") && !line.startsWith("•") && !line.startsWith("-") && !line.startsWith("*")) {
+            break;
+          }
+
+          if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*")) {
+            const content = line.replace(/^[•\-\*]\s*/, "").trim();
+            if (content) bullets.push(content);
+          } else if (line !== "" && !line.includes("**") && bullets.length > 0) {
+            // Ignore or handle
+          } else if (line !== "" && !line.includes("**") && bullets.length === 0) {
+            bullets.push(line);
+          } else if (bullets.length > 0 && line === "") {
+            // empty line
+          }
+        }
+        return bullets;
+      };
+
+      const wActs = extractSectionBullets("Atividades da Semana");
+      setWeeklyActivities(wActs.length > 0 ? wActs : [""]);
+
+      const nActs = extractSectionBullets("Atividades da Próxima Semana");
+      setNextWeekActivities(nActs.length > 0 ? nActs : [""]);
+
+      const obs = extractSectionBullets("Observações & Apontamentos importantes");
+      setImportantNotes(obs.length > 0 ? obs : [""]);
+
+      setCoverImage(existingLog.coverImage || "");
+      
+      const pImgs = existingLog.progressImages || [];
+      const progressSlots = ["", "", "", ""];
+      pImgs.forEach((img, index) => {
+        if (index < 4) progressSlots[index] = img;
+      });
+      setProgressImages(progressSlots);
+    } else if (isOpen) {
+      // Reset to default values when creating a new log
+      setStartDate("");
+      setEndDate("");
+      setPhysicalProgress(work.progress);
+      setAditivoStatus("Formalizado");
+      setDataInfrastructure("N/A");
+      setEnelStatus("N/A");
+      setSubstationStatus("N/A");
+      setRelevantInfo("N/A");
+      setWeeklyActivities(["Alocação de forma e armadura nos trechos..."]);
+      setNextWeekActivities(["Concretagem integral dos blocos da viga de coroamento..."]);
+      setImportantNotes(["Identificadas trincas superficiais na passarela..."]);
+      setCoverImage("");
+      setProgressImages(["", "", "", ""]);
+    }
+  }, [existingLog, isOpen, work.progress]);
 
   if (!isOpen) return null;
 
@@ -171,15 +304,25 @@ ${importantNotes.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• N
 
       const finalProgressImages = progressImages.filter(img => img !== "");
 
-      await onSubmittingActivity(
-        work.id,
-        physicalProgress,
-        formattedNotes,
-        activeUser.name,
-        activeUser.role,
-        coverImage || undefined,
-        finalProgressImages.length > 0 ? finalProgressImages : undefined
-      );
+      if (existingLog && onUpdatingActivity) {
+        await onUpdatingActivity(
+          existingLog.id,
+          physicalProgress,
+          formattedNotes,
+          coverImage || undefined,
+          finalProgressImages.length > 0 ? finalProgressImages : undefined
+        );
+      } else {
+        await onSubmittingActivity(
+          work.id,
+          physicalProgress,
+          formattedNotes,
+          activeUser.name,
+          activeUser.role,
+          coverImage || undefined,
+          finalProgressImages.length > 0 ? finalProgressImages : undefined
+        );
+      }
 
       onClose();
     } catch (err) {
@@ -206,7 +349,7 @@ ${importantNotes.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• N
             <Sparkles className="w-5 h-5 text-amber-500 animate-pulse-slow" />
             <div>
               <h3 className="text-base font-extrabold text-slate-800">
-                Lançar Atividades e Progresso
+                {existingLog ? "Editar Relatório de Atividade" : "Lançar Atividades e Progresso"}
               </h3>
               <p className="text-[11px] text-slate-400 font-medium">
                 Obra: <span className="text-slate-700 font-semibold">{work.name}</span>
@@ -593,7 +736,7 @@ ${importantNotes.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• N
               className="flex-grow bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-900 font-extrabold py-3 px-4 rounded-xl text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md disabled:opacity-50 cursor-pointer"
             >
               <Save className="w-4.5 h-4.5" />
-              <span>{isSaving ? "Gravando Atividades..." : "Confirmar e Registrar Atividades"}</span>
+              <span>{isSaving ? "Gravando Atividades..." : existingLog ? "Salvar Alterações" : "Confirmar e Registrar Atividades"}</span>
             </button>
             <button
               type="button"

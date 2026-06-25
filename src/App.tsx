@@ -522,10 +522,9 @@ export default function App() {
       periodFormatted = `${pad(d1.getDate())}/${pad(d1.getMonth() + 1)}/${d1.getFullYear()} a ${pad(d2.getDate())}/${pad(d2.getMonth() + 1)}/${d2.getFullYear()}`;
     }
 
-    // Filter active works that have at least one weekly report for the selected week
+    // Filter works that have at least one weekly report for the selected week
     const activeWorks = state.works
       .filter(w => {
-        if (w.status !== 'em_andamento') return false;
         const logsForWork = state.logs.filter(log => {
           let logDate = new Date(log.timestamp);
           const parsed = parsePeriodDates(log.notes);
@@ -540,7 +539,7 @@ export default function App() {
       .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     if (activeWorks.length === 0) {
-      alert("Nenhuma obra ativa com lançamentos registrados na semana em questão foi encontrada.");
+      alert("Nenhuma obra com lançamentos registrados na semana em questão foi encontrada.");
       return;
     }
 
@@ -1378,6 +1377,61 @@ export default function App() {
     }
   };
 
+  // Update specific log entry fields (notes, progress, images) and sync work progress if latest
+  const handleUpdateLog = async (
+    logId: string,
+    newProgress: number,
+    notes: string,
+    coverImage?: string,
+    progressImages?: string[]
+  ) => {
+    if (useDirectSupabaseMode) {
+      const updatedLogs = state.logs.map((l) => {
+        if (l.id === logId) {
+          return { ...l, newProgress, notes, coverImage, progressImages };
+        }
+        return l;
+      });
+
+      const editedLog = state.logs.find((l) => l.id === logId);
+      let updatedWorks = state.works;
+      if (editedLog) {
+        const workLogs = updatedLogs.filter((l) => l.workId === editedLog.workId);
+        const sortedLogs = [...workLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        if (sortedLogs[0]?.id === logId) {
+          updatedWorks = state.works.map((w) => {
+            if (w.id === editedLog.workId) {
+              return { ...w, progress: newProgress };
+            }
+            return w;
+          });
+        }
+      }
+
+      const newState: DatabaseState = {
+        ...state,
+        works: updatedWorks,
+        logs: updatedLogs
+      };
+      await saveStateDirect(newState);
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/logs/${logId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ notes, newProgress, coverImage, progressImages })
+      });
+      if (!res.ok) throw new Error("Erro ao atualizar lançamento.");
+      await loadState();
+      setErrorHeader("");
+    } catch (err) {
+      console.error(err);
+      setErrorHeader("Erro ao salvar alteração do lançamento.");
+    }
+  };
+
   const handleDeleteLog = async (logId: string) => {
     if (useDirectSupabaseMode) {
       const updatedLogs = state.logs.filter((l) => l.id !== logId);
@@ -1742,6 +1796,7 @@ export default function App() {
             }}
             onLaunchMeasurement={handleLaunchMeasurement}
             onUpdateLogNotes={handleUpdateLogNotes}
+            onUpdateLog={handleUpdateLog}
             onDeleteLog={handleDeleteLog}
           />
         </main>

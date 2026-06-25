@@ -53,6 +53,13 @@ interface WorkDetailProps {
     progressImages?: string[]
   ) => Promise<void>;
   onUpdateLogNotes?: (logId: string, notes: string) => Promise<void>;
+  onUpdateLog?: (
+    logId: string,
+    newProgress: number,
+    notes: string,
+    coverImage?: string,
+    progressImages?: string[]
+  ) => Promise<void>;
   onDeleteLog?: (logId: string) => Promise<void>;
 }
 
@@ -65,6 +72,7 @@ export default function WorkDetail({
   onEditClick,
   onLaunchMeasurement,
   onUpdateLogNotes,
+  onUpdateLog,
   onDeleteLog
 }: WorkDetailProps) {
   const [activeTab, setActiveTab] = useState<
@@ -90,6 +98,7 @@ export default function WorkDetail({
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
   const [expandedLogIds, setExpandedLogIds] = useState<Record<string, boolean>>({});
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [editingLog, setEditingLog] = useState<UpdateLog | null>(null);
   const [isEditingReport, setIsEditingReport] = useState(false);
   const [editNotesText, setEditNotesText] = useState("");
 
@@ -1864,6 +1873,16 @@ export default function WorkDetail({
 
                           <div className="flex items-center gap-1 shrink-0">
                             <button
+                              onClick={() => {
+                                setEditingLog(log);
+                                setIsActivityModalOpen(true);
+                              }}
+                              className="p-1 text-slate-400 hover:text-amber-600 bg-white border border-slate-200 hover:border-amber-200 rounded-md transition cursor-pointer"
+                              title="Editar Lançamento"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
                               onClick={() => handleExportPDF(log)}
                               className="p-1 text-slate-400 hover:text-amber-600 bg-white border border-slate-200 hover:border-amber-200 rounded-md transition cursor-pointer"
                               title="Exportar PDF do boletim"
@@ -2399,6 +2418,17 @@ export default function WorkDetail({
                           <div className="flex items-center gap-1.5 shrink-0">
                             <button
                               type="button"
+                              onClick={() => {
+                                setEditingLog(log);
+                                setIsActivityModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-lg transition cursor-pointer"
+                              title="Editar Lançamento"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleExportPDF(log)}
                               className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-lg transition cursor-pointer"
                               title="Exportar PDF do boletim"
@@ -2619,10 +2649,15 @@ export default function WorkDetail({
 
       <ActivityModal
         isOpen={isActivityModalOpen}
-        onClose={() => setIsActivityModalOpen(false)}
+        onClose={() => {
+          setIsActivityModalOpen(false);
+          setEditingLog(null);
+        }}
         work={work}
         onSubmittingActivity={onLaunchMeasurement}
+        onUpdatingActivity={onUpdateLog}
         activeUser={activeUser}
+        existingLog={editingLog}
       />
     </div>
   );
