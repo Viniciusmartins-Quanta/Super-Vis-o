@@ -62,6 +62,7 @@ export interface DatabaseState {
   contractAdditives?: ContractAdditive[];
   works: Obra[];
   logs: UpdateLog[];
+  authorizedUsers: string[];
   supabaseStatus?: {
     connected: boolean;
     tableExists: boolean;

@@ -6,6 +6,7 @@ import { supabase } from "./supabase";
 // Custom visual components
 import ContractOverview from "./components/ContractOverview";
 import DashboardFilters from "./components/DashboardFilters";
+import UserAccessControl from "./components/UserAccessControl";
 import WorkCard from "./components/WorkCard";
 import WorkModal from "./components/WorkModal";
 import WorkDetail from "./components/WorkDetail";
@@ -98,7 +99,8 @@ const DEFAULT_FALLBACK_STATE: DatabaseState = {
       newProgress: 88,
       notes: "Acompanhamento da concretagem do pilar central e avanço das aduelas metálicas."
     }
-  ]
+  ],
+  authorizedUsers: []
 };
 
 export default function App() {
@@ -107,7 +109,8 @@ export default function App() {
     contractName: "",
     supervisorCompany: "",
     works: [],
-    logs: []
+    logs: [],
+    authorizedUsers: []
   });
 
   const [loading, setLoading] = useState(true);
@@ -350,6 +353,15 @@ export default function App() {
   }, []);
 
   // Update overall Contract Settings
+  const handleUpdateAuthorizedUsers = async (newUsers: string[]) => {
+    const updatedState = { ...state, authorizedUsers: newUsers };
+    setState(updatedState);
+    await supabase
+      .from("contract_state")
+      .upsert({ id: "current_state", data: updatedState, updated_at: new Date().toISOString() });
+    localStorage.setItem("contract_state_local", JSON.stringify(updatedState));
+  };
+
   const handleUpdateSettings = async (
     contractName: string,
     supervisorCompany: string,
@@ -1895,6 +1907,12 @@ export default function App() {
             onActiveUserChange={setActiveUser}
             onResetData={handleResetData}
           />
+          
+          <UserAccessControl
+            authorizedUsers={state.authorizedUsers || []}
+            onUpdateAuthorizedUsers={handleUpdateAuthorizedUsers}
+          />
+
 
           {/* Core Content Grid Workspace Split: Left Side Obras, Right Side Updates log */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
