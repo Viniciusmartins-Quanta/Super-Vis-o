@@ -153,19 +153,33 @@ export default function App() {
 
       if (configError) throw configError;
 
-      const { data: obrasData } = await supabase
+       const configSegura = configData || {
+        contract_name: "Contrato de Supervisão (Novo)",
+        supervisor_company: "Empresa Supervisora",
+        contract_value: 0,
+        contract_start_date: "",
+        contract_end_date: ""
+      };
+
+      const { data: obrasData, error: obrasError } = await supabase
         .from("obras")
         .select("*")
         .order("order_index", { ascending: true });
+        
+      if (obrasError) throw obrasError;
 
-      const { data: logsData } = await supabase
+      const { data: logsData, error: logsError } = await supabase
         .from("medicoes_logs")
         .select("*")
         .order("timestamp", { ascending: false });
+        
+      if (logsError) throw logsError;
 
-      const { data: aditivosData } = await supabase
+      const { data: aditivosData, error: aditivosError } = await supabase
         .from("aditivos")
         .select("*");
+        
+      if (aditivosError) throw aditivosError;    
 
       const obrasFormatadas = (obrasData || []).map((o: any) => ({
         id: o.id,
@@ -183,7 +197,6 @@ export default function App() {
 
       const logsFormatados = (logsData || []).map((l: any) => {
         const obraRelacionada = obrasFormatadas.find((w: any) => w.id === l.work_id);
-        
         return {
           id: l.id,
           workId: l.work_id,
@@ -210,15 +223,15 @@ export default function App() {
       }));
 
       setState({
-        contractName: configData.contract_name || "Novo Contrato",
-        supervisorCompany: configData.supervisor_company || "Sua Empresa",
-        contractValue: configData.contract_value || 0,
-        contractStartDate: configData.contract_start_date || "",
-        contractEndDate: configData.contract_end_date || "",
+        contractName: configSegura.contract_name,
+        supervisorCompany: configSegura.supervisor_company,
+        contractValue: configSegura.contract_value,
+        contractStartDate: configSegura.contract_start_date || "",
+        contractEndDate: configSegura.contract_end_date || "",
         contractAdditives: aditivosFormatados,
         works: obrasFormatadas,
         logs: logsFormatados,
-        authorizedUsers: state.authorizedUsers || [], // Mantém os usuários
+        authorizedUsers: state.authorizedUsers || [],
         supabaseStatus: {
           connected: true,
           tableExists: true,
@@ -230,7 +243,15 @@ export default function App() {
 
     } catch (err: any) {
       console.warn("Erro ao buscar dados separados:", err.message);
-      setErrorHeader("Erro ao conectar com o banco de dados.");
+      
+      if (err.message.includes("violates row-level security") || err.code === '42501') {
+        setErrorHeader("Bloqueio de Segurança RLS Ativo no Supabase.");
+      } else {
+        setErrorHeader("Erro ao conectar com o banco de dados.");
+      }
+    } finally {
+      setLoading(false);
+      setIsSyncing(false);
     }
   };
 
