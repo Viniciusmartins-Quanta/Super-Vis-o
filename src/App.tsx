@@ -145,97 +145,92 @@ export default function App() {
    */
   const loadDirectSupabaseState = async () => {
     try {
-      const { data, error } = await supabase
-        .from("contract_state")
-        .select("data")
-        .eq("id", "current_state")
-        .maybeSingle();
+      const { data: configData, error: configError } = await supabase
+        .from("contrato_config")
+        .select("*")
+        .eq("id", "config-atual")
+        .single();
 
-      if (error) {
-        console.warn("Direct connection to Supabase failed:", error.message);
-        const isMissingTable = error.code === "PGRST205" || error.message.includes("Could not find the table");
-        const isRls = error.code === "42501" || error.message.includes("violates row-level security");
+      if (configError) throw configError;
 
-        // Fallback to default
-        const restoredState = DEFAULT_FALLBACK_STATE;
+      const { data: obrasData } = await supabase
+        .from("obras")
+        .select("*")
+        .order("order_index", { ascending: true });
 
-        setState({
-          ...restoredState,
-          supabaseStatus: {
-            connected: true,
-            tableExists: !isMissingTable,
-            rlsEnabled: isRls,
-            error: error.message
-          }
-        });
-        setErrorHeader("");
-        return;
-      }
+      const { data: logsData } = await supabase
+        .from("medicoes_logs")
+        .select("*")
+        .order("timestamp", { ascending: false });
 
-      setErrorHeader("");
-      
-      if (!data) {
-        console.log("Supabase table is empty. Initializing data from client fallback...");
-        // Try to fetch from Supabase first
-        const { data: fetchedData, error: fetchError } = await supabase
-          .from("contract_state")
-          .select("data")
-          .eq("id", "current_state")
-          .single();
+      const { data: aditivosData } = await supabase
+        .from("aditivos")
+        .select("*");
 
-        let stateToUse: DatabaseState;
-        if (fetchedData) {
-          stateToUse = fetchedData.data as DatabaseState;
-        } else {
-          stateToUse = DEFAULT_FALLBACK_STATE;
-        }
+      const obrasFormatadas = (obrasData || []).map((o: any) => ({
+        id: o.id,
+        name: o.name,
+        contractNumber: o.contract_number || "",
+        contractorName: o.contractor_name || "",
+        progress: o.progress || 0,
+        status: o.status || "em_andamento",
+        startDate: o.start_date || "",
+        deadlineDate: o.deadline_date || "",
+        activeContractDate: o.active_contract_date || "",
+        biddedValue: o.bidded_value || 0,
+        order: o.order_index || 0
+      }));
 
-        // Update Supabase to be sure
-        await supabase
-          .from("contract_state")
-          .upsert({ id: "current_state", data: stateToUse, updated_at: new Date().toISOString() });
+      const logsFormatados = (logsData || []).map((l: any) => {
+        const obraRelacionada = obrasFormatadas.find((w: any) => w.id === l.work_id);
+        
+        return {
+          id: l.id,
+          workId: l.work_id,
+          workName: obraRelacionada ? obraRelacionada.name : "Obra Desconhecida",
+          userName: l.user_name || "Usuário",
+          userRole: l.user_role || "",
+          oldProgress: l.old_progress || 0,
+          newProgress: l.new_progress || 0,
+          notes: l.notes || "",
+          coverImage: l.cover_image,
+          progressImages: l.progress_images || [],
+          timestamp: l.timestamp
+        };
+      });
 
-        setState({
-          ...stateToUse,
-          supabaseStatus: {
-            connected: !fetchError,
-            tableExists: !fetchError,
-            rlsEnabled: !!fetchError,
-            error: fetchError ? fetchError.message : ""
-          }
-        });
-        await supabase
-          .from("contract_state")
-          .upsert({ id: "current_state", data: stateToUse, updated_at: new Date().toISOString() });
-      } else {
-        await supabase
-          .from("contract_state")
-          .upsert({ id: "current_state", data: data.data, updated_at: new Date().toISOString() });
-        setState({
-          ...(data.data as DatabaseState),
-          supabaseStatus: {
-            connected: true,
-            tableExists: true,
-            rlsEnabled: false,
-            error: ""
-          }
-        });
-      }
-    } catch (err: any) {
-      console.warn("Exception in direct Supabase connection:", err.message);
-      const isRls = err.message.includes("violates row-level security") || err.message.includes("42501");
-      const restoredState = DEFAULT_FALLBACK_STATE;
+      const aditivosFormatados = (aditivosData || []).map((a: any) => ({
+        id: a.id,
+        number: a.number || "",
+        type: a.type || "",
+        value: a.value || 0,
+        days: a.days || 0,
+        description: a.description || "",
+        signatureDate: a.signature_date || ""
+      }));
 
       setState({
-        ...restoredState,
+        contractName: configData.contract_name || "Novo Contrato",
+        supervisorCompany: configData.supervisor_company || "Sua Empresa",
+        contractValue: configData.contract_value || 0,
+        contractStartDate: configData.contract_start_date || "",
+        contractEndDate: configData.contract_end_date || "",
+        contractAdditives: aditivosFormatados,
+        works: obrasFormatadas,
+        logs: logsFormatados,
+        authorizedUsers: state.authorizedUsers || [], // Mantém os usuários
         supabaseStatus: {
-          connected: false,
-          tableExists: !err.message.includes("PGRST205"),
-          rlsEnabled: isRls,
-          error: err.message
+          connected: true,
+          tableExists: true,
+          rlsEnabled: false,
+          error: ""
         }
       });
       setErrorHeader("");
+
+    } catch (err: any) {
+      console.warn("Erro ao buscar dados separados:", err.message);
+      setErrorHeader("Erro ao conectar com o banco de dados.");
     }
   };
 
@@ -342,29 +337,24 @@ export default function App() {
 
   // Synchronize on startup
   useEffect(() => {
-    loadState(true);
+    setUseDirectSupabaseMode(true);
 
-    // Real-time synchronization
-    const channel = supabase
-      .channel('schema-db-changes')
+    loadDirectSupabaseState();
+
+    const canalTempoReal = supabase
+      .channel('escuta-banco-inteiro')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'contract_state',
-          filter: 'id=eq.current_state',
-        },
-        (payload: any) => {
-          if (payload.new && payload.new.data) {
-            setState(payload.new.data as DatabaseState);
-          }
+        { event: '*', schema: 'public' },
+        (payload) => {
+          console.log('Mudança detectada no banco!', payload);
+          loadDirectSupabaseState();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(canalTempoReal);
     };
   }, []);
 
