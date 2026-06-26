@@ -150,14 +150,12 @@ export default function App() {
 
   useEffect(() => {
     if (currentUserEmail && !loading) {
-      const isCreator = currentUserEmail === "vinicius.martins@quantaconsultoria.com";
-      const isAuthorizedUser = state.authorizedUsers?.includes(currentUserEmail);
-      setIsAuthorized(isCreator || !!isAuthorizedUser);
+      setIsAuthorized(true);
     } else if (loading) {
         // Still loading, keep isAuthorized as null
         setIsAuthorized(null);
     }
-  }, [currentUserEmail, state.authorizedUsers, loading]);
+  }, [currentUserEmail, loading]);
 
   if (isAuthorized === false) {
     return (
