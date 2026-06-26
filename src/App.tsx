@@ -310,12 +310,27 @@ export default function App() {
   useEffect(() => {
     loadState(true);
 
-    // Dynamic background polling to keep multiple users in sync!
-    const pollInterval = setInterval(() => {
-      loadState(false);
-    }, 8000);
+    // Real-time synchronization
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'contract_state',
+          filter: 'id=eq.current_state',
+        },
+        (payload: any) => {
+          setState(payload.new.data as DatabaseState);
+          localStorage.setItem("contract_state_local", JSON.stringify(payload.new.data));
+        }
+      )
+      .subscribe();
 
-    return () => clearInterval(pollInterval);
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   // Update overall Contract Settings
