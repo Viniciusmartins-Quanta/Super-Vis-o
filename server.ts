@@ -5,7 +5,6 @@ import { createServer as createViteServer } from "vite";
 import dotenv from "dotenv";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseSessionMiddleware } from "./src/supabaseServer";
-import { GoogleGenAI, Type } from "@google/genai";
 
 dotenv.config();
 
@@ -249,26 +248,10 @@ async function startServer() {
   });
 
   // API - Read Work Data from Image using Gemini AI
-  app.post("/api/works/read-image-ai", async (req, res) => {
-    const { imageBase64, mimeType } = req.body;
-    if (!imageBase64 || !mimeType) {
-      return res.status(400).json({ error: "Imagem e tipo MIME são obrigatórios." });
-    }
+  // API - Image analysis removed
 
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-    if (!geminiApiKey) {
-      return res.status(500).json({ error: "A chave de API do Gemini (GEMINI_API_KEY) não está configurada no servidor." });
-    }
 
-    try {
-      const ai = new GoogleGenAI({
-        apiKey: geminiApiKey,
-        httpOptions: {
-          headers: {
-            'User-Agent': 'aistudio-build',
-          }
-        }
-      });
+
 
       // Split base64 more robustly
       const base64Data = imageBase64.includes(",") ? imageBase64.split(",")[1] : imageBase64;
@@ -342,11 +325,7 @@ async function startServer() {
 
       const parsedData = JSON.parse(cleanText);
       res.json(parsedData);
-    } catch (error: any) {
-      console.error("Erro ao processar imagem no Gemini:", error);
-      res.status(500).json({ error: error.message || "Erro interno ao processar imagem com IA." });
-    }
-  });
+
 
   // API - Custom Gemini Chat Request Endpoint
   app.post("/api/chat", async (req, res) => {
@@ -670,22 +649,4 @@ async function startServer() {
 }
 
 startServer();
-
-// Next.js-style Route Handler requested by the user
-export async function POST(request: any) {
-  const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-  const { mensagemDoUsuario } = await request.json();
-
-  try {
-    const response = await client.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: mensagemDoUsuario,
-    });
-
-    return Response.json({ respostaDaIA: response.text });
-
-  } catch (erro) {
-    return Response.json({ erro: "Falha ao conectar com a IA." }, { status: 500 });
-  }
-}
 
