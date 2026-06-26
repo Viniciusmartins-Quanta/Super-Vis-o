@@ -135,46 +135,10 @@ export default function App() {
   const [selectedWorkId, setSelectedWorkId] = useState<string | null>(null);
   
   // Authorization state
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>("vinicius.martins@quantaconsultoria.com");
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(true);
 
-  useEffect(() => {
-    if (!currentUserEmail) {
-      const email = prompt("Por favor, insira seu e-mail para acessar a plataforma:");
-      if (email) {
-        setCurrentUserEmail(email);
-      }
-    }
-  }, [currentUserEmail]);
-
-  useEffect(() => {
-    if (currentUserEmail && !loading) {
-      setIsAuthorized(true);
-    } else if (loading) {
-        // Still loading, keep isAuthorized as null
-        setIsAuthorized(null);
-    }
-  }, [currentUserEmail, loading]);
-
-  if (isAuthorized === false) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-slate-50 text-slate-800">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center">
-          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-2">Acesso Negado</h2>
-          <p className="text-slate-600">Você não tem permissão para acessar esta aplicação.</p>
-          <button 
-            onClick={() => {
-              window.location.reload();
-            }}
-            className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-lg"
-          >
-            Tentar outro e-mail
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Authentication prompts and checks have been removed to make the app accessible without logging in.
 
   /**
    * Loads state from localStorage or Supabase directly. Used when the backend server is unavailable.
