@@ -167,23 +167,37 @@ export default function App() {
       
       if (!data) {
         console.log("Supabase table is empty. Initializing data from client fallback...");
-        const localCached = localStorage.getItem("contract_state_local");
-        const initialData = localCached ? JSON.parse(localCached) : DEFAULT_FALLBACK_STATE;
-
-        const { error: insertError } = await supabase
+        // Try to fetch from Supabase first
+        const { data: fetchedData, error: fetchError } = await supabase
           .from("contract_state")
-          .upsert({ id: "current_state", data: initialData, updated_at: new Date().toISOString() });
+          .select("data")
+          .eq("id", "current_state")
+          .single();
+
+        let stateToUse: DatabaseState;
+        if (fetchedData) {
+          stateToUse = fetchedData.data as DatabaseState;
+        } else {
+          // Fallback to localStorage or default
+          const localCached = localStorage.getItem("contract_state_local");
+          stateToUse = localCached ? JSON.parse(localCached) : DEFAULT_FALLBACK_STATE;
+        }
+
+        // Update Supabase to be sure
+        await supabase
+          .from("contract_state")
+          .upsert({ id: "current_state", data: stateToUse, updated_at: new Date().toISOString() });
 
         setState({
-          ...initialData,
+          ...stateToUse,
           supabaseStatus: {
-            connected: true,
-            tableExists: true,
-            rlsEnabled: !!insertError,
-            error: insertError ? insertError.message : ""
+            connected: !fetchError,
+            tableExists: !fetchError,
+            rlsEnabled: !!fetchError,
+            error: fetchError ? fetchError.message : ""
           }
         });
-        localStorage.setItem("contract_state_local", JSON.stringify(initialData));
+        localStorage.setItem("contract_state_local", JSON.stringify(stateToUse));
       } else {
         localStorage.setItem("contract_state_local", JSON.stringify(data.data));
         setState({
@@ -316,14 +330,16 @@ export default function App() {
       .on(
         'postgres_changes',
         {
-          event: 'UPDATE',
+          event: '*',
           schema: 'public',
           table: 'contract_state',
           filter: 'id=eq.current_state',
         },
         (payload: any) => {
-          setState(payload.new.data as DatabaseState);
-          localStorage.setItem("contract_state_local", JSON.stringify(payload.new.data));
+          if (payload.new && payload.new.data) {
+            setState(payload.new.data as DatabaseState);
+            localStorage.setItem("contract_state_local", JSON.stringify(payload.new.data));
+          }
         }
       )
       .subscribe();
