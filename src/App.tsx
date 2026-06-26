@@ -135,14 +135,13 @@ export default function App() {
   const [selectedWorkId, setSelectedWorkId] = useState<string | null>(null);
   
   // Authorization state
-  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(localStorage.getItem("currentUserEmail"));
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null);
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!currentUserEmail) {
       const email = prompt("Por favor, insira seu e-mail para acessar a plataforma:");
       if (email) {
-        localStorage.setItem("currentUserEmail", email);
         setCurrentUserEmail(email);
       }
     }
@@ -166,7 +165,6 @@ export default function App() {
           <p className="text-slate-600">Você não tem permissão para acessar esta aplicação.</p>
           <button 
             onClick={() => {
-              localStorage.removeItem("currentUserEmail");
               window.location.reload();
             }}
             className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-lg"

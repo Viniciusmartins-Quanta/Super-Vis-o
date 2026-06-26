@@ -68,7 +68,7 @@ interface Database {
   logs: UpdateLog[];
 }
 
-const DB_PATH = path.join(process.cwd(), "database.json");
+// No longer needed
 
 const defaultData: Database = {
   contractName: "Contrato de Supervisão nº 085/2025 - DER/PR",
@@ -158,8 +158,11 @@ const defaultData: Database = {
   ]
 };
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "https://sfxyybvhxntsyfyiinov.supabase.co";
-const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeHl5YnZoeG50c3lmeWlpbm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4ODcwNDQsImV4cCI6MjA5NzQ2MzA0NH0.kbBekuJeGhwaLeJHCP8rQhUsNE0ba4XIMfGVkLw26rA";
+if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+  throw new Error("SUPABASE_URL and SUPABASE_ANON_KEY environment variables are required");
+}
+const SUPABASE_URL = process.env.SUPABASE_URL!;
+const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY!;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -170,27 +173,8 @@ const supabaseStatus = {
   error: "Não inicializado"
 };
 
-function readDbLocal(): Database {
-  try {
-    if (!fs.existsSync(DB_PATH)) {
-      fs.writeFileSync(DB_PATH, JSON.stringify(defaultData, null, 2), "utf-8");
-      return defaultData;
-    }
-    const content = fs.readFileSync(DB_PATH, "utf-8");
-    return JSON.parse(content) as Database;
-  } catch (error) {
-    console.error("Erro ao ler banco de dados JSON local, usando dados padrão:", error);
-    return defaultData;
-  }
-}
 
-function writeDbLocal(data: Database) {
-  try {
-    fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), "utf-8");
-  } catch (error) {
-    console.error("Erro ao escrever banco de dados JSON local:", error);
-  }
-}
+// No longer needed
 
 async function getDatabaseState(): Promise<Database & { supabaseStatus?: typeof supabaseStatus }> {
   try {
@@ -208,7 +192,7 @@ async function getDatabaseState(): Promise<Database & { supabaseStatus?: typeof 
       supabaseStatus.tableExists = !isMissingTable;
       supabaseStatus.rlsEnabled = false;
       supabaseStatus.error = error.message;
-      return { ...readDbLocal(), supabaseStatus };
+      return { ...defaultData, supabaseStatus };
     }
 
     supabaseStatus.connected = true;
@@ -217,10 +201,9 @@ async function getDatabaseState(): Promise<Database & { supabaseStatus?: typeof 
     supabaseStatus.error = "";
 
     if (!data) {
-      console.log("Tabela do Supabase encontrada mas vazia. Inicializando com dados locais...");
-      const localData = readDbLocal();
-      await saveDatabaseState(localData);
-      return { ...localData, supabaseStatus };
+      console.log("Tabela do Supabase encontrada mas vazia. Inicializando com dados padrão...");
+      await saveDatabaseState(defaultData);
+      return { ...defaultData, supabaseStatus };
     }
 
     return { ...(data.data as Database), supabaseStatus };
@@ -231,14 +214,11 @@ async function getDatabaseState(): Promise<Database & { supabaseStatus?: typeof 
     supabaseStatus.tableExists = !err.message.includes("PGRST205");
     supabaseStatus.rlsEnabled = isRls;
     supabaseStatus.error = err.message;
-    return { ...readDbLocal(), supabaseStatus };
+    return { ...defaultData, supabaseStatus };
   }
 }
 
 async function saveDatabaseState(data: Database): Promise<void> {
-  // Always save locally first
-  writeDbLocal(data);
-
   try {
     const { error } = await supabase
       .from("contract_state")
@@ -246,30 +226,11 @@ async function saveDatabaseState(data: Database): Promise<void> {
 
     if (error) {
       console.warn("Erro ao persistir no Supabase:", error.message);
-      const isRls = error.code === "42501" || error.message.includes("violates row-level security");
-      
-      supabaseStatus.connected = true;
-      if (isRls) {
-        supabaseStatus.tableExists = true;
-        supabaseStatus.rlsEnabled = true;
-      } else {
-        const isMissingTable = error.code === "PGRST205" || error.message.includes("Could not find the table");
-        supabaseStatus.tableExists = !isMissingTable;
-        supabaseStatus.rlsEnabled = false;
-      }
-      supabaseStatus.error = error.message;
-    } else {
-      supabaseStatus.connected = true;
-      supabaseStatus.tableExists = true;
-      supabaseStatus.rlsEnabled = false;
-      supabaseStatus.error = "";
+      throw new Error(`Erro ao salvar no Supabase: ${error.message}`);
     }
   } catch (err: any) {
-    console.warn("Exception ao salvar no Supabase:", err.message);
-    const isRls = err.message.includes("violates row-level security") || err.message.includes("42501");
-    supabaseStatus.connected = false;
-    supabaseStatus.rlsEnabled = isRls;
-    supabaseStatus.error = err.message;
+    console.error("Exception ao salvar no Supabase:", err.message);
+    throw err;
   }
 }
 
