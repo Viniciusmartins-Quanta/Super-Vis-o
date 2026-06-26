@@ -12,7 +12,7 @@ import WorkModal from "./components/WorkModal";
 import WorkDetail from "./components/WorkDetail";
 
 // Icons from Lucide
-import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database, Sliders, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database, Sliders, ArrowUp, ArrowDown, Users, X } from "lucide-react";
 
 const DEFAULT_FALLBACK_STATE: DatabaseState = {
   contractName: "Contrato de Supervisão nº 085/2025 - DER/PR",
@@ -130,8 +130,55 @@ export default function App() {
 
   // Form Modals Toggles
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAccessControlOpen, setIsAccessControlOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<Obra | null>(null);
   const [selectedWorkId, setSelectedWorkId] = useState<string | null>(null);
+  
+  // Authorization state
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(localStorage.getItem("currentUserEmail"));
+  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    if (!currentUserEmail) {
+      const email = prompt("Por favor, insira seu e-mail para acessar a plataforma:");
+      if (email) {
+        localStorage.setItem("currentUserEmail", email);
+        setCurrentUserEmail(email);
+      }
+    }
+  }, [currentUserEmail]);
+
+  useEffect(() => {
+    if (currentUserEmail && !loading) {
+      const isCreator = currentUserEmail === "vinicius.martins@quantaconsultoria.com";
+      const isAuthorizedUser = state.authorizedUsers?.includes(currentUserEmail);
+      setIsAuthorized(isCreator || !!isAuthorizedUser);
+    } else if (loading) {
+        // Still loading, keep isAuthorized as null
+        setIsAuthorized(null);
+    }
+  }, [currentUserEmail, state.authorizedUsers, loading]);
+
+  if (isAuthorized === false) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-slate-50 text-slate-800">
+        <div className="bg-white p-8 rounded-xl shadow-lg text-center">
+          <AlertTriangle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-2">Acesso Negado</h2>
+          <p className="text-slate-600">Você não tem permissão para acessar esta aplicação.</p>
+          <button 
+            onClick={() => {
+              localStorage.removeItem("currentUserEmail");
+              window.location.reload();
+            }}
+            className="mt-4 px-4 py-2 bg-slate-800 text-white rounded-lg"
+          >
+            Tentar outro e-mail
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   /**
    * Loads state from localStorage or Supabase directly. Used when the backend server is unavailable.
@@ -149,9 +196,8 @@ export default function App() {
         const isMissingTable = error.code === "PGRST205" || error.message.includes("Could not find the table");
         const isRls = error.code === "42501" || error.message.includes("violates row-level security");
 
-        // Load from localStorage if available
-        const localCached = localStorage.getItem("contract_state_local");
-        const restoredState = localCached ? JSON.parse(localCached) : DEFAULT_FALLBACK_STATE;
+        // Fallback to default
+        const restoredState = DEFAULT_FALLBACK_STATE;
 
         setState({
           ...restoredState,
@@ -181,9 +227,7 @@ export default function App() {
         if (fetchedData) {
           stateToUse = fetchedData.data as DatabaseState;
         } else {
-          // Fallback to localStorage or default
-          const localCached = localStorage.getItem("contract_state_local");
-          stateToUse = localCached ? JSON.parse(localCached) : DEFAULT_FALLBACK_STATE;
+          stateToUse = DEFAULT_FALLBACK_STATE;
         }
 
         // Update Supabase to be sure
@@ -200,9 +244,13 @@ export default function App() {
             error: fetchError ? fetchError.message : ""
           }
         });
-        localStorage.setItem("contract_state_local", JSON.stringify(stateToUse));
+        await supabase
+          .from("contract_state")
+          .upsert({ id: "current_state", data: stateToUse, updated_at: new Date().toISOString() });
       } else {
-        localStorage.setItem("contract_state_local", JSON.stringify(data.data));
+        await supabase
+          .from("contract_state")
+          .upsert({ id: "current_state", data: data.data, updated_at: new Date().toISOString() });
         setState({
           ...(data.data as DatabaseState),
           supabaseStatus: {
@@ -216,8 +264,7 @@ export default function App() {
     } catch (err: any) {
       console.warn("Exception in direct Supabase connection:", err.message);
       const isRls = err.message.includes("violates row-level security") || err.message.includes("42501");
-      const localCached = localStorage.getItem("contract_state_local");
-      const restoredState = localCached ? JSON.parse(localCached) : DEFAULT_FALLBACK_STATE;
+      const restoredState = DEFAULT_FALLBACK_STATE;
 
       setState({
         ...restoredState,
@@ -237,7 +284,6 @@ export default function App() {
    */
   const saveStateDirect = async (updatedState: DatabaseState) => {
     setState(updatedState);
-    localStorage.setItem("contract_state_local", JSON.stringify(updatedState));
 
     try {
       const { error } = await supabase
@@ -289,38 +335,49 @@ export default function App() {
     if (showLoadingIndicator) setLoading(true);
     setIsSyncing(true);
     
-    let success = false;
-    let data: DatabaseState | null = null;
-    let attempts = 2; // Keep attempts short to fallback faster
-    let lastError: any = null;
+    try {
+      let success = false;
+      let data: DatabaseState | null = null;
+      let attempts = 2; // Keep attempts short to fallback faster
+      let lastError: any = null;
 
-    while (attempts > 0 && !success) {
-      try {
-        const res = await fetch("/api/contract");
-        if (!res.ok) throw new Error("Falha ao consultar estado no servidor.");
-        data = (await res.json()) as DatabaseState;
-        success = true;
-      } catch (err) {
-        lastError = err;
-        attempts--;
-        if (attempts > 0) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
+      while (attempts > 0 && !success) {
+        try {
+          // Timeout of 5 seconds
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+          const res = await fetch("/api/contract", { signal: controller.signal });
+          clearTimeout(timeoutId);
+          
+          if (!res.ok) throw new Error("Falha ao consultar estado no servidor.");
+          data = (await res.json()) as DatabaseState;
+          success = true;
+        } catch (err) {
+          lastError = err;
+          attempts--;
+          console.warn("loadState attempt failed:", err);
+          if (attempts > 0) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+          }
         }
       }
-    }
 
-    if (success && data) {
-      setState(data);
-      setErrorHeader("");
-      setUseDirectSupabaseMode(false);
-    } else {
-      console.warn("Backend API not responding/offline. Falling back to direct client-side Supabase/LocalStorage connection.");
-      setUseDirectSupabaseMode(true);
-      await loadDirectSupabaseState();
+      if (success && data) {
+        setState(data);
+        setErrorHeader("");
+        setUseDirectSupabaseMode(false);
+      } else {
+        console.warn("Backend API not responding/offline. Falling back to direct client-side Supabase/LocalStorage connection.");
+        setUseDirectSupabaseMode(true);
+        await loadDirectSupabaseState();
+      }
+    } catch (err) {
+      console.error("Critical error in loadState:", err);
+    } finally {
+      if (showLoadingIndicator) setLoading(false);
+      setIsSyncing(false);
     }
-
-    if (showLoadingIndicator) setLoading(false);
-    setIsSyncing(false);
   };
 
   // Synchronize on startup
@@ -341,7 +398,6 @@ export default function App() {
         (payload: any) => {
           if (payload.new && payload.new.data) {
             setState(payload.new.data as DatabaseState);
-            localStorage.setItem("contract_state_local", JSON.stringify(payload.new.data));
           }
         }
       )
@@ -359,7 +415,6 @@ export default function App() {
     await supabase
       .from("contract_state")
       .upsert({ id: "current_state", data: updatedState, updated_at: new Date().toISOString() });
-    localStorage.setItem("contract_state_local", JSON.stringify(updatedState));
   };
 
   const handleUpdateSettings = async (
@@ -1908,10 +1963,34 @@ export default function App() {
             onResetData={handleResetData}
           />
           
-          <UserAccessControl
-            authorizedUsers={state.authorizedUsers || []}
-            onUpdateAuthorizedUsers={handleUpdateAuthorizedUsers}
-          />
+          {currentUserEmail === "vinicius.martins@quantaconsultoria.com" && (
+            <button
+              onClick={() => setIsAccessControlOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 transition"
+            >
+              <Users className="w-4 h-4" />
+              Gerenciar Usuários
+            </button>
+          )}
+
+          {isAccessControlOpen && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+                <div className="flex justify-between items-center p-4 border-b">
+                  <h3 className="font-bold text-slate-800">Gerenciar Usuários</h3>
+                  <button onClick={() => setIsAccessControlOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="p-4">
+                  <UserAccessControl
+                    authorizedUsers={state.authorizedUsers || []}
+                    onUpdateAuthorizedUsers={handleUpdateAuthorizedUsers}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
 
           {/* Core Content Grid Workspace Split: Left Side Obras, Right Side Updates log */}
