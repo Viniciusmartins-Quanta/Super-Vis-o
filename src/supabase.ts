@@ -1,6 +1,6 @@
-import { createBrowserClient } from "@supabase/ssr";
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_URL || "https://sfxyybvhxntsyfyiinov.supabase.co";
-const supabaseKey = (import.meta as any).env?.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmeHl5YnZoeG50c3lmeWlpbm92Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4ODcwNDQsImV4cCI6MjA5NzQ2MzA0NH0.kbBekuJeGhwaLeJHCP8rQhUsNE0ba4XIMfGVkLw26rA";
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL || "https://jaopixixqfcbszwuceuc.supabase.co";
+const supabaseAnonKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imphb3BpeGl4cWZjYnN6d3VjZXVjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE4Nzk1OTksImV4cCI6MjA5NzQ1NTU5OX0.Kg3VkiB7ulWsiyH93vnz99rbDnKHt6jl4VYehKK2Co8";
 
-export const supabase = createBrowserClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
