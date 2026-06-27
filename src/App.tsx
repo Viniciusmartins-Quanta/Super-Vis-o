@@ -1678,7 +1678,7 @@ export default function App() {
                   : "bg-rose-50 text-rose-700 border-rose-200"
               }`} title={state.supabaseStatus.error || "Supabase sincronizado com sucesso"}>
                 <Cloud className="w-3.5 h-3.5" />
-                <span>
+                <span className="hidden sm:inline">
                   {state.supabaseStatus.connected && state.supabaseStatus.tableExists
                     ? state.supabaseStatus.rlsEnabled
                       ? "Supabase RLS Blq"
@@ -1707,7 +1707,7 @@ export default function App() {
             {/* Quick Logout Button */}
             <button
               onClick={() => supabase.auth.signOut()}
-              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition"
+              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition cursor-pointer"
               title="Sair do Sistema"
             >
               <LogOut className="w-4 h-4" />
@@ -1722,7 +1722,7 @@ export default function App() {
               id="add-obra-top-btn"
             >
               <Plus className="w-4 h-4" />
-              <span>Adicionar Obra</span>
+              <span className="hidden sm:inline">Adicionar Obra</span>
             </button>
           </div>
         </div>
@@ -1775,4 +1775,192 @@ export default function App() {
             contractName={state.contractName}
             supervisorCompany={state.supervisorCompany}
             contractValue={state.contractValue}
-            contract
+            contractStartDate={state.contractStartDate}
+            contractEndDate={state.contractEndDate}
+            contractAdditives={state.contractAdditives}
+            works={state.works}
+            logs={state.logs}
+            onUpdateSettings={handleUpdateSettings}
+            reportWeek={reportWeek}
+            setReportWeek={setReportWeek}
+            onGenerateReport={handleGenerateConsolidatedReport}
+          />
+
+          {/* Supabase Status and Table Creation Guidance */}
+          {state.supabaseStatus && (!state.supabaseStatus.tableExists || state.supabaseStatus.rlsEnabled || !state.supabaseStatus.connected) && (
+            <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-5 space-y-4 shadow-xs text-slate-800" id="supabase-guidance">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-amber-500 text-slate-900 rounded-xl mt-0.5 shadow-xs">
+                  <Database className="w-5 h-5 text-slate-900" />
+                </div>
+                <div className="space-y-1">
+                  <h3 className="font-extrabold text-slate-900 text-sm">
+                    {state.supabaseStatus.rlsEnabled 
+                      ? "Ajuste pendente: Desativação do RLS no Supabase" 
+                      : "Supabase Conectado! Crie a tabela para ativar a nuvem"}
+                  </h3>
+                  <p className="text-xs text-slate-655 leading-relaxed">
+                    {state.supabaseStatus.rlsEnabled 
+                      ? "A sincronização com o Supabase foi interrompida porque o recurso RLS (Row Level Security) está ativo no banco e bloqueou as gravações anônimas."
+                      : "Sua conexão com o Supabase foi estabelecida com sucesso. Contudo, a tabela contract_state ainda não foi criada no banco de dados."}
+                  </p>
+                  <p className="text-xs text-slate-655 leading-relaxed font-semibold">
+                    {state.supabaseStatus.rlsEnabled 
+                      ? "Para resolver isso e habilitar a gravação instantânea de dados, desative o recurso RLS no painel do Supabase."
+                      : "Para habilitar o salvamento em nuvem e a sincronização em tempo real de cards, obras, aditivos e logs no Supabase, certifique-se de que a tabela contract_state esteja criada."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="text-[11px] text-amber-700 font-medium leading-normal">
+                Nota: O sistema está atualmente usando o armazenamento local. Assim que resolver as permissões de tabela no Supabase, a sincronização em nuvem se tornará ativa automaticamente!
+              </div>
+            </div>
+          )}
+
+          {/* Section: Dashboard interactive filters and sorting */}
+          <DashboardFilters
+            search={search}
+            onSearchChange={setSearch}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            sortBy={sortBy}
+            onSortByChange={setSortBy}
+            activeUser={activeUser}
+            onActiveUserChange={setActiveUser}
+            onResetData={handleResetData}
+          />
+          
+          {currentUserEmail === "vinicius.martins@quantaconsultoria.com" && (
+            <button
+              onClick={() => setIsAccessControlOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 transition"
+            >
+              <Users className="w-4 h-4" />
+              Gerenciar Usuários
+            </button>
+          )}
+
+          {isAccessControlOpen && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
+                <div className="flex justify-between items-center p-4 border-b">
+                  <h3 className="font-bold text-slate-800">Gerenciar Usuários</h3>
+                  <button onClick={() => setIsAccessControlOpen(false)} className="text-slate-400 hover:text-slate-600">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="p-4">
+                  <UserAccessControl
+                    authorizedUsers={state.authorizedUsers || []}
+                    onUpdateAuthorizedUsers={handleUpdateAuthorizedUsers}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Core Content Grid Workspace Split: Left Side Obras, Right Side Updates log */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            
+            {/* Left Workspace: Works Cards Grid (takes 3 of 3 cols) */}
+            <div className="lg:col-span-3 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-3xs">
+                <h2 className="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-amber-500" />
+                  Grade de Obras sob Supervisão
+                </h2>
+                
+                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                  <button
+                    onClick={handleToggleReorderMode}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${
+                      isReorderMode
+                        ? "bg-amber-500 text-slate-900 border-amber-600 shadow-sm"
+                        : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
+                    }`}
+                    title="Habilitar botões para reorganizar a sequência das obras"
+                  >
+                    <Sliders className="w-3.5 h-3.5" />
+                    <span>{isReorderMode ? "Concluir Ordenação" : "Reorganizar Sequência"}</span>
+                  </button>
+                  <span className="text-xs text-slate-500 font-medium">
+                    Exibindo {filteredWorks.length} de {state.works.length} obras
+                  </span>
+                </div>
+              </div>
+
+              {filteredWorks.length === 0 ? (
+                <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-450 space-y-3">
+                  <ClipboardList className="w-12 h-12 text-slate-300 mx-auto" />
+                  <div>
+                    <h3 className="font-bold text-slate-700">Nenhuma obra localizada</h3>
+                    <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+                      Não há obras que correspondam à busca ou filtro de status selecionado. Ajuste os filtros ou crie uma ficha de obra nova.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setEditingWork(null);
+                      setIsModalOpen(true);
+                    }}
+                    className="mt-2 inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs px-4 py-2 rounded-xl transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Adicionar Primeira Obra</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5" id="obras-grid-container">
+                  {filteredWorks.map((work) => (
+                    <WorkCard
+                      key={work.id}
+                      work={work}
+                      activeUser={activeUser}
+                      isReorderMode={isReorderMode}
+                      onMoveUp={() => handleMoveWork(work.id, "up")}
+                      onMoveDown={() => handleMoveWork(work.id, "down")}
+                      onLaunchMeasurement={handleLaunchMeasurement}
+                      onEditClick={(w) => {
+                        setEditingWork(w);
+                        setIsModalOpen(true);
+                      }}
+                      onDeleteClick={handleDeleteWork}
+                      onViewDetail={(w) => setSelectedWorkId(w.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      )}
+
+      {/* Persistent Applet Footer */}
+      <footer className="bg-white border-t border-slate-200 mt-auto py-6" id="applet-footer">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-end gap-4 text-xs text-slate-400">
+          <div className="flex gap-4">
+            <span className="font-mono bg-slate-50 px-2.5 py-1 rounded border border-slate-250">
+              Dispositivo: Navegador/Híbrido Mobile
+            </span>
+            <span className="text-emerald-500 font-semibold flex items-center gap-1">
+              ● Banco Cripto-Sincronizado
+            </span>
+          </div>
+        </div>
+      </footer>
+
+      {/* Dual interaction form modal overlay */}
+      <WorkModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingWork(null);
+        }}
+        onSave={handleSaveWork}
+        editingWork={editingWork}
+        activeUser={activeUser}
+      />
+    </div>
+  );
+}
