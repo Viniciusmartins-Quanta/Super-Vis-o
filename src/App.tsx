@@ -149,7 +149,7 @@ export default function App() {
         .from("contrato_config")
         .select("*")
         .eq("id", "config-atual")
-        .single();
+        .maybeSingle();
 
       if (configError) throw configError;
 
