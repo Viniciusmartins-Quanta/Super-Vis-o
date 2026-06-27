@@ -33,6 +33,7 @@ export default function App() {
   const [errorHeader, setErrorHeader] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [useDirectSupabaseMode, setUseDirectSupabaseMode] = useState(false);
+  const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   // Active user profile context for field signatures
   const [activeUser, setActiveUser] = useState<UserProfile>(USER_PROFILES[0]);
@@ -157,7 +158,7 @@ export default function App() {
         contractAdditives: aditivosFormatados,
         works: obrasFormatadas,
         logs: logsFormatados,
-        authorizedUsers: state.authorizedUsers || [],
+        authorizedUsers: configSegura.authorized_emails || [],
         supabaseStatus: {
           connected: true,
           tableExists: true,
@@ -320,8 +321,27 @@ export default function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAuthLoading(true);
+    setAuthError("");
+
+    const { error } = await supabase.auth.signUp({
+      email: authEmail,
+      password: authPassword,
+    });
+
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      setAuthError("✅ Conta criada! Um administrador precisa liberar seu acesso.");
+      setIsRegisterMode(false); // Volta pra tela de login
+    }
+    setIsAuthLoading(false);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault(); // Evita que a página recarregue
+    e.preventDefault();
     setIsAuthLoading(true);
     setAuthError("");
 
@@ -334,6 +354,25 @@ export default function App() {
       setAuthError("Email ou senha incorretos.");
       setIsAuthLoading(false);
     }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsAuthLoading(true);
+    setAuthError("");
+
+    const { error } = await supabase.auth.signUp({
+      email: authEmail,
+      password: authPassword,
+    });
+
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      setAuthError("✅ Conta criada! Um administrador precisa liberar seu acesso.");
+      setIsRegisterMode(false); // Volta pra tela de login
+    }
+    setIsAuthLoading(false);
   };
     
   const handleResetData = async () => {
@@ -354,8 +393,9 @@ export default function App() {
     const updatedState = { ...state, authorizedUsers: newUsers };
     setState(updatedState);
     await supabase
-      .from("contract_state")
-      .upsert({ id: "current_state", data: updatedState, updated_at: new Date().toISOString() });
+      .from("contrato_config")
+      .update({ authorized_emails: newUsers })
+      .eq("id", "config-atual");
   };
 
   const handleUpdateSettings = async (
@@ -1606,7 +1646,7 @@ export default function App() {
             <p className="text-sm text-slate-500 mt-1">Acesso restrito ao escritório</p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <form onSubmit={isRegisterMode ? handleSignUp : handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
               <input 
@@ -1619,7 +1659,7 @@ export default function App() {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Senha</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Senha (Mín. 6 caracteres)</label>
               <input 
                 type="password" 
                 value={authPassword}
@@ -1631,7 +1671,7 @@ export default function App() {
             </div>
 
             {authError && (
-              <div className="bg-rose-50 text-rose-600 text-xs p-3 rounded-lg text-center font-semibold">
+              <div className={`text-xs p-3 rounded-lg text-center font-semibold ${authError.includes('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'}`}>
                 {authError}
               </div>
             )}
@@ -1640,9 +1680,52 @@ export default function App() {
               type="submit" 
               className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold py-3 rounded-lg transition"
             >
-              Entrar no Sistema
+              {isRegisterMode ? "Criar Conta" : "Entrar no Sistema"}
             </button>
           </form>
+
+          <div className="mt-6 text-center">
+            <button 
+              onClick={() => {
+                setIsRegisterMode(!isRegisterMode);
+                setAuthError("");
+              }}
+              className="text-xs text-slate-500 hover:text-slate-800 font-bold underline"
+            >
+              {isRegisterMode ? "Já tenho uma conta. Fazer Login" : "Não tem conta? Solicitar Acesso"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2.5. TELA DE BLOQUEIO / AGUARDANDO APROVAÇÃO
+  // Descobre qual o email logado e checa se ele é você (Admin) ou se está na Lista Branca
+  const emailLogado = session?.user?.email;
+  const isSuperAdmin = emailLogado === currentUserEmail; // O email master que você definiu
+  const isApproved = isSuperAdmin || (state.authorizedUsers && state.authorizedUsers.includes(emailLogado));
+
+  if (session && !isApproved) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center space-y-4">
+          <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-2">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-black text-slate-800">Acesso em Análise</h2>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            A sua conta foi vinculada ao email <strong>{emailLogado}</strong> com sucesso, mas você ainda não possui permissão para ver as obras.
+          </p>
+          <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded border border-slate-200">
+            Peça ao administrador do sistema para incluir seu email na lista de acessos autorizados. Assim que ele fizer isso, a sua tela será liberada automaticamente.
+          </p>
+          <button 
+            onClick={() => supabase.auth.signOut()}
+            className="mt-4 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition"
+          >
+            Sair e Voltar para Login
+          </button>
         </div>
       </div>
     );
