@@ -12,96 +12,7 @@ import WorkModal from "./components/WorkModal";
 import WorkDetail from "./components/WorkDetail";
 
 // Icons from Lucide
-import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database, Sliders, ArrowUp, ArrowDown, Users, X } from "lucide-react";
-
-const DEFAULT_FALLBACK_STATE: DatabaseState = {
-  contractName: "Contrato de Supervisão nº 085/2025 - DER/PR",
-  supervisorCompany: "Quanta Consultoria e Engenharia",
-  contractValue: 3450000,
-  contractStartDate: "2025-01-15",
-  contractEndDate: "2027-01-15",
-  contractAdditives: [
-    {
-      id: "add-1",
-      number: "Aditivo 01/2025",
-      type: "financeiro",
-      value: 450000,
-      description: "Acréscimo para serviços extraordinários de sondagem rotativa.",
-      signatureDate: "2025-04-10"
-    },
-    {
-      id: "add-2",
-      number: "Aditivo 02/2025",
-      type: "prazo",
-      days: 180,
-      description: "Prorrogação de prazo devido a atraso na liberação de licenças ambientais.",
-      signatureDate: "2025-05-22"
-    }
-  ],
-  works: [
-    {
-      id: "obra-1",
-      name: "Duplicação da Rodovia BR-277",
-      contractNumber: "CTR-DER-104/2024",
-      startDate: "2024-03-10",
-      deadlineDate: "2026-09-30",
-      activeContractDate: "2026-12-31",
-      progress: 65,
-      contractorName: "Egesa Engenharia S.A.",
-      biddedValue: 45800000,
-      status: "em_andamento"
-    },
-    {
-      id: "obra-2",
-      name: "Construção de Ponte Estaiada sobre o Rio Iguaçu",
-      contractNumber: "CTR-DER-203/2024",
-      startDate: "2024-05-15",
-      deadlineDate: "2026-07-30",
-      activeContractDate: "2026-10-31",
-      progress: 88,
-      contractorName: "Queiroz Galvão S.A.",
-      biddedValue: 28500000,
-      status: "em_andamento"
-    },
-    {
-      id: "obra-3",
-      name: "Restauração de Intercalares e Pavimentação PR-412",
-      contractNumber: "CTR-DER-011/2025",
-      startDate: "2025-01-20",
-      deadlineDate: "2025-12-20",
-      activeContractDate: "2026-03-31",
-      progress: 25,
-      contractorName: "Castilho Engenharia",
-      biddedValue: 12400000,
-      status: "em_andamento"
-    }
-  ],
-  logs: [
-    {
-      id: "log-1",
-      workId: "obra-1",
-      workName: "Duplicação da Rodovia BR-277",
-      userName: "Supervisão",
-      userRole: "Supervisor",
-      timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
-      oldProgress: 60,
-      newProgress: 65,
-      notes: "Homologação do asfalto CBUQ no subtrecho km 18 e conclusão da drenagem lateral."
-    },
-    {
-      id: "log-2",
-      workId: "obra-2",
-      workName: "Construção de Ponte Estaiada sobre o Rio Iguaçu",
-      userName: "Supervisão",
-      userRole: "Supervisor",
-      timestamp: new Date(Date.now() - 3600000 * 2).toISOString(),
-      oldProgress: 85,
-      newProgress: 88,
-      notes: "Acompanhamento da concretagem do pilar central e avanço das aduelas metálicas."
-    }
-  ],
-  authorizedUsers: []
-};
+import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database, Sliders, ArrowUp, ArrowDown, Users, X, LogOut } from "lucide-react";
 
 export default function App() {
   // Database state
@@ -114,6 +25,11 @@ export default function App() {
   });
 
   const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState<any>(null); // Guarda se o usuário está logado
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [isAuthLoading, setIsAuthLoading] = useState(true); // Carregamento inicial da tela de login
+  const [authError, setAuthError] = useState("");
   const [errorHeader, setErrorHeader] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
   const [useDirectSupabaseMode, setUseDirectSupabaseMode] = useState(false);
@@ -138,8 +54,6 @@ export default function App() {
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>("vinicius.martins@quantaconsultoria.com");
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(true);
 
-  // Authentication prompts and checks have been removed to make the app accessible without logging in.
-
   /**
    * Loads state from localStorage or Supabase directly. Used when the backend server is unavailable.
    */
@@ -153,7 +67,7 @@ export default function App() {
 
       if (configError) throw configError;
 
-       const configSegura = configData || {
+      const configSegura = configData || {
         contract_name: "Contrato de Supervisão (Novo)",
         supervisor_company: "Empresa Supervisora",
         contract_value: 0,
@@ -200,9 +114,11 @@ export default function App() {
         termDaysExecucao: o.term_days_execucao || "",
         signingDate: o.signing_date || "",
         publicationDateJom: o.publication_date_jom || "",
+        
+        // --- CORREÇÃO DAS DATAS INDEPENDENTES ---
         startOrderDate: o.start_order_date || "",
         startDate: o.start_date || "",
-        physicalStartDate: o.start_date || "",
+        physicalStartDate: o.start_date || ""
       }));
 
       const logsFormatados = (logsData || []).map((l: any) => {
@@ -218,18 +134,18 @@ export default function App() {
           notes: l.notes || "",
           coverImage: l.cover_image,
           progressImages: l.progress_images || [],
-          timestamp: l.timestamp
+          timestamp: l.timestamp || new Date().toISOString()
         };
       });
 
       const aditivosFormatados = (aditivosData || []).map((a: any) => ({
         id: a.id,
-        number: a.number || "",
+        number: a.number || "00",
         type: a.type || "",
         value: a.value || 0,
         days: a.days || 0,
         description: a.description || "",
-        signatureDate: a.signature_date || ""
+        signatureDate: a.signature_date || "2024-01-01"
       }));
 
       setState({
@@ -354,7 +270,7 @@ export default function App() {
         setErrorHeader("");
         setUseDirectSupabaseMode(false);
       } else {
-        console.warn("Backend API not responding/offline. Falling back to direct client-side Supabase/LocalStorage connection.");
+        console.warn("Backend API not responding/offline. Falling back to direct client-side Supabase connection.");
         setUseDirectSupabaseMode(true);
         await loadDirectSupabaseState();
       }
@@ -369,7 +285,6 @@ export default function App() {
   // Synchronize on startup
   useEffect(() => {
     setUseDirectSupabaseMode(true);
-
     loadDirectSupabaseState();
 
     const canalTempoReal = supabase
@@ -388,8 +303,40 @@ export default function App() {
       supabase.removeChannel(canalTempoReal);
     };
   }, []);
+
+  // --- CONTROLE DE SESSÃO E AUTENTICAÇÃO ---
+  useEffect(() => {
+    // Verifica se já tem uma sessão ativa
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setIsAuthLoading(false);
+    });
+
+    // Fica escutando se o usuário fez login ou logout
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault(); // Evita que a página recarregue
+    setIsAuthLoading(true);
+    setAuthError("");
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email: authEmail,
+      password: authPassword,
+    });
+
+    if (error) {
+      setAuthError("Email ou senha incorretos.");
+      setIsAuthLoading(false);
+    }
+  };
     
-    const handleResetData = async () => {
+  const handleResetData = async () => {
     try {
       setLoading(true);
       await loadDirectSupabaseState();
@@ -441,7 +388,7 @@ export default function App() {
           await supabase
             .from("aditivos")
             .upsert({
-              id: add.id || `add-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+              id: add.id || `add-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
               config_id: "config-atual",
               number: add.number,
               type: add.type,
@@ -577,7 +524,7 @@ export default function App() {
         return { start, end };
       }
       return null;
-    };
+    }
 
     // Helper to get ISO week string "YYYY-Www"
     const getISOWeekString = (date: Date): string => {
@@ -753,7 +700,6 @@ export default function App() {
 
     // Page 1: Cover Page (Capa)
     const coverPageHtml = `
-  <!-- PAGE 1: COVER CARD (CAPA) -->
   <div class="page cover-page border border-slate-100 relative">
     <div class="absolute inset-0 z-0">
       <img src="/cover.jpg" class="w-full h-full object-cover" alt="Capa" />
@@ -786,7 +732,6 @@ export default function App() {
 
     // Page 2: Summary Table Page
     const summaryPageHtml = `
-  <!-- PAGE 2: FICHA TÉCNICA CONTRATUAL CONSOLIDADA -->
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
@@ -952,7 +897,6 @@ export default function App() {
         
         // PAGE 1: FICHA TÉCNICA CONTRATUAL
         worksDetailHtml += `
-  <!-- DETALHES CONTRATUAIS - ${work.name} -->
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
@@ -1034,7 +978,6 @@ export default function App() {
     </div>
   </div>
 
-  <!-- PAGE 2: CRONOLOGIA DA OBRA -->
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
@@ -1044,7 +987,6 @@ export default function App() {
           </h3>
         </div>
 
-        <!-- Place for User inserted Chronology -->
         ${work.timelineImage ? `
           <div class="mt-4">
             <img src="${work.timelineImage}" alt="Cronograma da Obra" class="max-w-full h-auto" />
@@ -1060,7 +1002,6 @@ export default function App() {
     </div>
   </div>
 
-  <!-- PAGE 3: ATIVIDADES DA SEMANA (MEDICAO SEMANAL) -->
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
@@ -1155,7 +1096,6 @@ export default function App() {
     </div>
   </div>
 
-  <!-- PAGE 4: REGISTRO FOTOGRÁFICO DE MARCOS (FOTOS DA OBRA) -->
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-5 flex flex-col justify-start">
@@ -1163,9 +1103,7 @@ export default function App() {
           FOTOS DA SEMANA — ${work.name}:
         </div>
         
-        <!-- Thick 1.5px solid black border enclosing 4 photos beautifully -->
         <div style="border: 0.3mm solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
-          <!-- PHOTO 1 -->
           <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
             ${log.progressImages && log.progressImages[0] ? `
               <img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 1" />
@@ -1177,7 +1115,6 @@ export default function App() {
             `}
           </div>
 
-          <!-- PHOTO 2 -->
           <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
             ${log.progressImages && log.progressImages[1] ? `
               <img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 2" />
@@ -1189,7 +1126,6 @@ export default function App() {
             `}
           </div>
 
-          <!-- PHOTO 3 -->
           <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
             ${log.progressImages && log.progressImages[2] ? `
               <img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 3" />
@@ -1201,7 +1137,6 @@ export default function App() {
             `}
           </div>
 
-          <!-- PHOTO 4 -->
           <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
             ${log.progressImages && log.progressImages[3] ? `
               <img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 4" />
@@ -1222,7 +1157,6 @@ export default function App() {
       } else {
         // Active work but NO log this week: output a single elegant notification page
         worksDetailHtml += `
-  <!-- DETALHE DA OBRA - ${work.name} (Sem Lançamentos) -->
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
       <div class="flex-grow my-4 flex flex-col justify-start">
@@ -1429,22 +1363,6 @@ export default function App() {
 
   // Update notes of a specific log entry
   const handleUpdateLogNotes = async (logId: string, notes: string) => {
-    if (useDirectSupabaseMode) {
-      const updatedLogs = state.logs.map((l) => {
-        if (l.id === logId) {
-          return { ...l, notes };
-        }
-        return l;
-      });
-
-      const newState: DatabaseState = {
-        ...state,
-        logs: updatedLogs
-      };
-      await saveStateDirect(newState);
-      return;
-    }
-
     try {
       const res = await fetch(`/api/logs/${logId}`, {
         method: "PUT",
@@ -1468,38 +1386,6 @@ export default function App() {
     coverImage?: string,
     progressImages?: string[]
   ) => {
-    if (useDirectSupabaseMode) {
-      const updatedLogs = state.logs.map((l) => {
-        if (l.id === logId) {
-          return { ...l, newProgress, notes, coverImage, progressImages };
-        }
-        return l;
-      });
-
-      const editedLog = state.logs.find((l) => l.id === logId);
-      let updatedWorks = state.works;
-      if (editedLog) {
-        const workLogs = updatedLogs.filter((l) => l.workId === editedLog.workId);
-        const sortedLogs = [...workLogs].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        if (sortedLogs[0]?.id === logId) {
-          updatedWorks = state.works.map((w) => {
-            if (w.id === editedLog.workId) {
-              return { ...w, progress: newProgress };
-            }
-            return w;
-          });
-        }
-      }
-
-      const newState: DatabaseState = {
-        ...state,
-        works: updatedWorks,
-        logs: updatedLogs
-      };
-      await saveStateDirect(newState);
-      return;
-    }
-
     try {
       const res = await fetch(`/api/logs/${logId}`, {
         method: "PUT",
@@ -1516,17 +1402,6 @@ export default function App() {
   };
 
   const handleDeleteLog = async (logId: string) => {
-    if (useDirectSupabaseMode) {
-      const updatedLogs = state.logs.filter((l) => l.id !== logId);
-      const newState: DatabaseState = {
-        ...state,
-        logs: updatedLogs
-      };
-      await saveStateDirect(newState);
-      await loadState();
-      return;
-    }
-
     try {
       const res = await fetch(`/api/logs/${logId}`, {
         method: "DELETE"
@@ -1542,30 +1417,6 @@ export default function App() {
 
   // Delete a work entry
   const handleDeleteWork = async (workId: string) => {
-    if (useDirectSupabaseMode) {
-      const targetWork = state.works.find((w) => w.id === workId);
-      const updatedWorks = state.works.filter((w) => w.id !== workId);
-      const newLog: UpdateLog = {
-        id: `log-${Date.now()}`,
-        workId,
-        workName: targetWork?.name || "Obra desconhecida",
-        userName: activeUser.name,
-        userRole: activeUser.role,
-        timestamp: new Date().toISOString(),
-        oldProgress: targetWork?.progress || 0,
-        newProgress: 0,
-        notes: `Remoção do registro de obra/lote sob supervisão.`
-      };
-
-      const newState: DatabaseState = {
-        ...state,
-        works: updatedWorks,
-        logs: [newLog, ...state.logs]
-      };
-      await saveStateDirect(newState);
-      return;
-    }
-
     try {
       const res = await fetch(`/api/works/${workId}?deleterName=${encodeURIComponent(activeUser.name)}&deleterRole=${encodeURIComponent(activeUser.role)}`, {
         method: "DELETE"
@@ -1606,15 +1457,6 @@ export default function App() {
       ...w,
       order: i
     }));
-
-    if (useDirectSupabaseMode) {
-      const newState: DatabaseState = {
-        ...state,
-        works: updatedWorks
-      };
-      await saveStateDirect(newState);
-      return;
-    }
 
     try {
       const orderedIds = updatedWorks.map(w => w.id);
@@ -1667,7 +1509,7 @@ export default function App() {
         signing_date: workData.signingDate || null,
         publication_date_jom: workData.publicationDateJom || null,
         start_order_date: workData.startOrderDate || null,
-        start_date: workData.physicalStartDate || workData.startDate || null,
+        start_date: workData.physicalStartDate || null,
       };
 
       // Comando mágico do Supabase: upsert significa "Se existir atualize, se não existir crie"
@@ -1741,6 +1583,72 @@ export default function App() {
       }
     });
 
+  // ==============================================================
+  // RENDERIZAÇÃO DA TELA (DIVIDIDA ENTRE LOGIN E APLICATIVO)
+  // ==============================================================
+
+  // 1. TELA DE CARREGAMENTO INICIAL DO LOGIN
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
+      </div>
+    );
+  }
+
+  // 2. TELA DE LOGIN (Mostra só se o usuário NÃO estiver logado)
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-black text-slate-800">Painel de Obras</h1>
+            <p className="text-sm text-slate-500 mt-1">Acesso restrito ao escritório</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
+              <input 
+                type="email" 
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-amber-500"
+                placeholder="seu@email.com"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Senha</label>
+              <input 
+                type="password" 
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-amber-500"
+                placeholder="••••••••"
+                required
+              />
+            </div>
+
+            {authError && (
+              <div className="bg-rose-50 text-rose-600 text-xs p-3 rounded-lg text-center font-semibold">
+                {authError}
+              </div>
+            )}
+
+            <button 
+              type="submit" 
+              className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold py-3 rounded-lg transition"
+            >
+              Entrar no Sistema
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. TELA DO APLICATIVO (Mostra só se o usuário estiver LOGADO)
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-stretch" id="applet-root">
       
@@ -1795,6 +1703,15 @@ export default function App() {
                 {errorHeader ? "Sem rede" : isSyncing ? "Sincronizando..." : "Sincronizado"}
               </span>
             </div>
+            
+            {/* Quick Logout Button */}
+            <button
+              onClick={() => supabase.auth.signOut()}
+              className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition"
+              title="Sair do Sistema"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
 
             <button
               onClick={() => {
@@ -1858,204 +1775,4 @@ export default function App() {
             contractName={state.contractName}
             supervisorCompany={state.supervisorCompany}
             contractValue={state.contractValue}
-            contractStartDate={state.contractStartDate}
-            contractEndDate={state.contractEndDate}
-            contractAdditives={state.contractAdditives}
-            works={state.works}
-            logs={state.logs}
-            onUpdateSettings={handleUpdateSettings}
-            reportWeek={reportWeek}
-            setReportWeek={setReportWeek}
-            onGenerateReport={handleGenerateConsolidatedReport}
-          />
-
-          {/* Supabase Status and Table Creation Guidance */}
-          {state.supabaseStatus && (!state.supabaseStatus.tableExists || state.supabaseStatus.rlsEnabled || !state.supabaseStatus.connected) && (
-            <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-5 space-y-4 shadow-xs text-slate-800" id="supabase-guidance">
-              <div className="flex items-start gap-3">
-                <div className="p-2 bg-amber-500 text-slate-900 rounded-xl mt-0.5 shadow-xs">
-                  <Database className="w-5 h-5 text-slate-900" />
-                </div>
-                <div className="space-y-1">
-                  <h3 className="font-extrabold text-slate-900 text-sm">
-                    {state.supabaseStatus.rlsEnabled 
-                      ? "Ajuste pendente: Desativação do RLS no Supabase" 
-                      : "Supabase Conectado! Crie a tabela para ativar a nuvem"}
-                  </h3>
-                  <p className="text-xs text-slate-655 leading-relaxed">
-                    {state.supabaseStatus.rlsEnabled 
-                      ? "A sincronização com o Supabase foi interrompida porque o recurso RLS (Row Level Security) está ativo no banco e bloqueou as gravações anônimas."
-                      : "Sua conexão com o Supabase foi estabelecida com sucesso. Contudo, a tabela contract_state ainda não foi criada no banco de dados."}
-                  </p>
-                  <p className="text-xs text-slate-655 leading-relaxed font-semibold">
-                    {state.supabaseStatus.rlsEnabled 
-                      ? "Para resolver isso e habilitar a gravação instantânea de dados, desative o recurso RLS no painel do Supabase."
-                      : "Para habilitar o salvamento em nuvem e a sincronização em tempo real de cards, obras, aditivos e logs no Supabase, certifique-se de que a tabela contract_state esteja criada."}
-                  </p>
-                </div>
-              </div>
-
-              <div className="text-[11px] text-amber-700 font-medium leading-normal">
-                Nota: O sistema está atualmente usando o <strong>armazenamento local (database.json)</strong> de forma 100% funcional. Todos os seus salvamentos, criações e exclusões estão sendo mantidos com sucesso! Assim que resolver as permissões de tabela no Supabase, a sincronização em nuvem se tornará ativa automaticamente!
-              </div>
-            </div>
-          )}
-
-          {/* Section: Dashboard interactive filters and sorting */}
-          <DashboardFilters
-            search={search}
-            onSearchChange={setSearch}
-            statusFilter={statusFilter}
-            onStatusFilterChange={setStatusFilter}
-            sortBy={sortBy}
-            onSortByChange={setSortBy}
-            activeUser={activeUser}
-            onActiveUserChange={setActiveUser}
-            onResetData={handleResetData}
-          />
-          
-          {currentUserEmail === "vinicius.martins@quantaconsultoria.com" && (
-            <button
-              onClick={() => setIsAccessControlOpen(true)}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 transition"
-            >
-              <Users className="w-4 h-4" />
-              Gerenciar Usuários
-            </button>
-          )}
-
-          {isAccessControlOpen && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white rounded-xl shadow-xl w-full max-w-sm overflow-hidden">
-                <div className="flex justify-between items-center p-4 border-b">
-                  <h3 className="font-bold text-slate-800">Gerenciar Usuários</h3>
-                  <button onClick={() => setIsAccessControlOpen(false)} className="text-slate-400 hover:text-slate-600">
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-                <div className="p-4">
-                  <UserAccessControl
-                    authorizedUsers={state.authorizedUsers || []}
-                    onUpdateAuthorizedUsers={handleUpdateAuthorizedUsers}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-
-          {/* Core Content Grid Workspace Split: Left Side Obras, Right Side Updates log */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            
-            {/* Left Workspace: Works Cards Grid (takes 3 of 3 cols) */}
-            <div className="lg:col-span-3 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-3xs">
-                <h2 className="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <CheckSquare className="w-5 h-5 text-amber-500" />
-                  Grade de Obras sob Supervisão
-                </h2>
-                
-                <div className="flex items-center gap-2.5 self-end sm:self-auto">
-                  <button
-                    onClick={handleToggleReorderMode}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${
-                      isReorderMode
-                        ? "bg-amber-500 text-slate-900 border-amber-600 shadow-sm"
-                        : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"
-                    }`}
-                    title="Habilitar botões para reorganizar a sequência das obras"
-                  >
-                    <Sliders className="w-3.5 h-3.5" />
-                    <span>{isReorderMode ? "Concluir Ordenação" : "Reorganizar Sequência"}</span>
-                  </button>
-                  <span className="text-xs text-slate-500 font-medium">
-                    Exibindo {filteredWorks.length} de {state.works.length} obras
-                  </span>
-                </div>
-              </div>
-
-              {filteredWorks.length === 0 ? (
-                <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-450 space-y-3">
-                  <ClipboardList className="w-12 h-12 text-slate-300 mx-auto" />
-                  <div>
-                    <h3 className="font-bold text-slate-700">Nenhuma obra localizada</h3>
-                    <p className="text-xs text-slate-400 mt-1 max-w-md mx-auto">
-                      Não há obras que correspondam à busca ou filtro de status selecionado. Ajuste os filtros ou crie uma ficha de obra nova.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => {
-                      setEditingWork(null);
-                      setIsModalOpen(true);
-                    }}
-                    className="mt-2 inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs px-4 py-2 rounded-xl transition cursor-pointer"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Adicionar Primeira Obra</span>
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5" id="obras-grid-container">
-                  {filteredWorks.map((work) => (
-                    <WorkCard
-                      key={work.id}
-                      work={work}
-                      activeUser={activeUser}
-                      isReorderMode={isReorderMode}
-                      onMoveUp={() => handleMoveWork(work.id, "up")}
-                      onMoveDown={() => handleMoveWork(work.id, "down")}
-                      onLaunchMeasurement={handleLaunchMeasurement}
-                      onEditClick={(w) => {
-                        setEditingWork(w);
-                        setIsModalOpen(true);
-                      }}
-                      onDeleteClick={handleDeleteWork}
-                      onViewDetail={(w) => setSelectedWorkId(w.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Quick instructions widget card for mobile/browser */}
-            <div className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 space-y-3 shadow-xs">
-              <span className="text-[10px] text-amber-400 uppercase tracking-wider font-extrabold block">Instrução Multi-Usuário</span>
-              <h4 className="text-xs font-bold font-sans">Simule um Acesso de Outro Navegador!</h4>
-              <p className="text-[11px] text-slate-300 leading-relaxed font-light">
-                Se você abrir esta aplicação em outra aba do navegador, escolher outro **Perfil Operando Como** na dashboard, e lançar uma medição ou cadastrar uma obra, verá a sincronização automática acontecer nesta aba em tempo real!
-              </p>
-            </div>
-
-          </div>
-
-        </main>
-      )}
-
-      {/* Persistent Applet Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-auto py-6" id="applet-footer">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-end gap-4 text-xs text-slate-400">
-          <div className="flex gap-4">
-            <span className="font-mono bg-slate-50 px-2.5 py-1 rounded border border-slate-250">
-              Dispositivo: Navegador/Híbrido Mobile
-            </span>
-            <span className="text-emerald-500 font-semibold flex items-center gap-1">
-              ● Banco Cripto-Sincronizado
-            </span>
-          </div>
-        </div>
-      </footer>
-
-      {/* Dual interaction form modal overlay */}
-      <WorkModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingWork(null);
-        }}
-        onSave={handleSaveWork}
-        editingWork={editingWork}
-        activeUser={activeUser}
-      />
-    </div>
-  );
-}
+            contract
