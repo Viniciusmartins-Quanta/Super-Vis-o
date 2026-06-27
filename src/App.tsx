@@ -396,38 +396,46 @@ export default function App() {
     contractEndDate?: string,
     contractAdditives?: ContractAdditive[]
   ) => {
-    if (useDirectSupabaseMode) {
-      const newState: DatabaseState = {
-        ...state,
-        contractName,
-        supervisorCompany,
-        contractValue,
-        contractStartDate,
-        contractEndDate,
-        contractAdditives
-      };
-      await saveStateDirect(newState);
-      return;
-    }
-
     try {
-      const res = await fetch("/api/contract/settings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contractName,
-          supervisorCompany,
-          contractValue,
-          contractStartDate,
-          contractEndDate,
-          contractAdditives
-        })
-      });
-      if (!res.ok) throw new Error("Erro de servidor ao atualizar contrato.");
-      await loadState();
-    } catch (err) {
-      console.error(err);
-      setErrorHeader("Não foi possível salvar os dados do contrato no servidor.");
+      // 1. Atualiza as configurações do contrato geral
+      const { error: configError } = await supabase
+        .from("contrato_config")
+        .upsert({
+          id: "config-atual",
+          contract_name: contractName,
+          supervisor_company: supervisorCompany,
+          contract_value: contractValue || 0,
+          contract_start_date: contractStartDate || null,
+          contract_end_date: contractEndDate || null,
+          updated_at: new Date().toISOString()
+        });
+
+      if (configError) throw configError;
+
+      // 2. Se houverem aditivos enviados pelo formulário, salvamos eles na tabela 'aditivos'
+      if (contractAdditives && contractAdditives.length > 0) {
+        for (const add of contractAdditives) {
+          await supabase
+            .from("aditivos")
+            .upsert({
+              id: add.id || `add-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+              config_id: "config-atual",
+              number: add.number,
+              type: add.type,
+              value: add.value || 0,
+              days: add.days || 0,
+              description: add.description,
+              signature_date: add.signatureDate || null
+            });
+        }
+      }
+
+      await loadDirectSupabaseState();
+      setErrorHeader("");
+
+    } catch (err: any) {
+      console.error("Erro ao atualizar configurações:", err.message);
+      setErrorHeader("Não foi possível salvar os dados do contrato no Supabase.");
     }
   };
 
@@ -1356,59 +1364,42 @@ export default function App() {
     coverImage?: string,
     progressImages?: string[]
   ) => {
-    if (useDirectSupabaseMode) {
-      const updatedWorks = state.works.map((w) => {
-        if (w.id === workId) {
-          return { ...w, progress: newProgress };
-        }
-        return w;
-      });
-
-      const matchedWork = state.works.find((w) => w.id === workId);
-      const oldProgress = matchedWork ? matchedWork.progress : 0;
-      const workName = matchedWork ? matchedWork.name : "Obra desconhecida";
-
-      const newLog: UpdateLog = {
-        id: `log-${Date.now()}`,
-        workId,
-        workName,
-        userName: updaterName,
-        userRole: updaterRole,
-        timestamp: new Date().toISOString(),
-        oldProgress,
-        newProgress,
-        notes,
-        coverImage,
-        progressImages
-      };
-
-      const newState: DatabaseState = {
-        ...state,
-        works: updatedWorks,
-        logs: [newLog, ...state.logs]
-      };
-      await saveStateDirect(newState);
-      return;
-    }
-
     try {
-      const res = await fetch(`/api/works/${workId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          progress: newProgress,
-          updateNotes: notes,
-          updaterName,
-          updaterRole,
-          coverImage,
-          progressImages
-        })
-      });
-      if (!res.ok) throw new Error("Erro ao lançar medição.");
-      await loadState();
+      // 1. Descobre o progresso antigo para deixar guardado no histórico
+      const obraAtual = state.works.find(w => w.id === workId);
+      const oldProgress = obraAtual ? obraAtual.progress : 0;
+
+      // 2. Atualiza o progresso atual na tabela 'obras'
+      const { error: updateError } = await supabase
+        .from("obras")
+        .update({ progress: newProgress })
+        .eq("id", workId);
+
+      if (updateError) throw updateError;
+
+      // 3. Adiciona a folha de boletim/log na tabela 'medicoes_logs'
+      const { error: insertError } = await supabase
+        .from("medicoes_logs")
+        .insert([{
+          id: `log-${Date.now()}`,
+          work_id: workId,
+          user_name: updaterName,
+          user_role: updaterRole,
+          old_progress: oldProgress,
+          new_progress: newProgress,
+          notes: notes,
+          cover_image: coverImage || null,
+          progress_images: progressImages || []
+        }]);
+
+      if (insertError) throw insertError;
+
+      // Recarrega os dados atualizados para atualizar a tela
+      await loadDirectSupabaseState();
       setErrorHeader("");
-    } catch (err) {
-      console.error(err);
+
+    } catch (err: any) {
+      console.error("Erro ao lançar medição:", err.message);
       setErrorHeader("Erro ao enviar boletim de medição física.");
     }
   };
@@ -1628,100 +1619,57 @@ export default function App() {
 
   // Add (create) or update a work
   const handleSaveWork = async (workData: Partial<Obra>) => {
-    if (useDirectSupabaseMode) {
+    try {
       const isEditing = !!workData.id;
-      let updatedWorks = [...state.works];
-      let oldProgress = 0;
-      let originalName = workData.name || "Nova Obra";
+      // Se for obra nova, geramos um ID único, se for edição, usamos o existente
+      const workId = workData.id || `obra-${Date.now()}`;
 
-      if (isEditing) {
-        const idx = updatedWorks.findIndex((w) => w.id === workData.id);
-        if (idx !== -1) {
-          oldProgress = updatedWorks[idx].progress;
-          originalName = updatedWorks[idx].name;
-          updatedWorks[idx] = { ...updatedWorks[idx], ...workData } as Obra;
-        }
-      } else {
-        const newId = `obra-${Date.now()}`;
-        const newObra: Obra = {
-          id: newId,
-          name: workData.name || "",
-          contractNumber: workData.contractNumber || "",
-          startDate: workData.startDate || "",
-          deadlineDate: workData.deadlineDate || "",
-          activeContractDate: workData.activeContractDate || "",
-          progress: workData.progress || 0,
-          contractorName: workData.contractorName || "",
-          biddedValue: workData.biddedValue || 0,
-          status: workData.status || "planejamento",
-          ...workData
-        };
-        updatedWorks.push(newObra);
+      // Montamos o objeto exatamente como a tabela 'obras' espera
+      const payloadObra = {
+        id: workId,
+        name: workData.name,
+        contract_number: workData.contractNumber,
+        contractor_name: workData.contractorName,
+        progress: workData.progress || 0,
+        status: workData.status,
+        start_date: workData.startDate || null,
+        deadline_date: workData.deadlineDate || null,
+        active_contract_date: workData.activeContractDate || null,
+        bidded_value: workData.biddedValue || 0,
+      };
+
+      // Comando mágico do Supabase: upsert significa "Se existir atualize, se não existir crie"
+      const { error: obraError } = await supabase
+        .from("obras")
+        .upsert(payloadObra);
+
+      if (obraError) throw obraError;
+
+      // Se for uma obra NOVA, aproveitamos e criamos um log de cadastro inicial na tabela 'medicoes_logs'
+      if (!isEditing) {
+        const { error: logError } = await supabase
+          .from("medicoes_logs")
+          .insert([{
+            id: `log-${Date.now()}`,
+            work_id: workId,
+            user_name: activeUser.name,
+            user_role: activeUser.role,
+            old_progress: 0,
+            new_progress: workData.progress || 0,
+            notes: `Cadastro inicial do lote/obra supervisionada: ${workData.name || ""}.`
+          }]);
+
+        if (logError) throw logError;
       }
 
-      const actionNotes = isEditing 
-        ? ""
-        : `Cadastro inicial do lote/obra supervisionada: ${workData.name || ""}.`;
+      // Fecha o modal e recarrega a tela
+      setIsModalOpen(false);
+      setEditingWork(null);
+      await loadDirectSupabaseState();
 
-      const newLog: UpdateLog | null = isEditing ? null : {
-        id: `log-${Date.now()}`,
-        workId: workData.id || `obra-${Date.now()}`,
-        workName: originalName,
-        userName: activeUser.name,
-        userRole: activeUser.role,
-        timestamp: new Date().toISOString(),
-        oldProgress,
-        newProgress: workData.progress || 0,
-        notes: actionNotes
-      };
-
-      const newState: DatabaseState = {
-        ...state,
-        works: updatedWorks,
-        logs: newLog ? [newLog, ...state.logs] : state.logs
-      };
-      await saveStateDirect(newState);
-      return;
-    }
-
-    const isEditing = !!workData.id;
-    const url = isEditing ? `/api/works/${workData.id}` : "/api/works";
-    const method = isEditing ? "PUT" : "POST";
-
-    const bodyPayload = {
-      ...workData,
-      creatorName: activeUser.name,
-      creatorRole: activeUser.role,
-      updaterName: activeUser.name,
-      updaterRole: activeUser.role
-    };
-
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bodyPayload)
-    });
-
-    if (!res.ok) throw new Error("Erro ao gravar dados no servidor.");
-    await loadState();
-    setErrorHeader("");
-  };
-
-  // Restore DB values back to original curated state
-  const handleResetData = async () => {
-    if (useDirectSupabaseMode) {
-      await saveStateDirect(DEFAULT_FALLBACK_STATE);
-      return;
-    }
-
-    try {
-      const res = await fetch("/api/contract/reset", { method: "POST" });
-      if (!res.ok) throw new Error();
-      await loadState(true);
-      setErrorHeader("");
-    } catch (err) {
-      console.error(err);
-      setErrorHeader("Não foi possível restaurar os dados.");
+    } catch (err: any) {
+      console.error("Erro ao salvar obra:", err.message);
+      setErrorHeader("Erro ao salvar os dados da obra no Supabase.");
     }
   };
 
