@@ -201,7 +201,7 @@ export default function App() {
         termDaysExecucao: o.term_days_execucao || "",
         signingDate: o.signing_date || "",
         publicationDateJom: o.publication_date_jom || "",
-        startOrderDate: o.start_order_date || ""
+        startOrderDate: o.start_order_date || "",
         startDate: o.start_date || "",
       }));
 
