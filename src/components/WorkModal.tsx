@@ -527,7 +527,7 @@ export default function WorkModal({
 
               <div className="space-y-1">
                 <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wide">
-                  DATA DE INÍCIO FÍSICA
+                  DATA DE INÍCIO FÍSICO:
                 </label>
                 <input
                   type="date"

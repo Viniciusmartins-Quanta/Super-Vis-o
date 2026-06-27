@@ -1661,7 +1661,7 @@ export default function WorkDetail({
                   </span>
                 </div>
                 <div className="flex justify-between md:grid md:grid-cols-3 border-b border-slate-100 pb-2.5">
-                  <span className="text-slate-450 font-bold col-span-1">Início Físico Efetivo em Campo:</span>
+                  <span className="text-slate-450 font-bold col-span-1">DATA DE INÍCIO FÍSICO:</span>
                   <span className="text-slate-800 font-bold font-mono col-span-2 text-right md:text-left">
                     {formatDate(work.physicalStartDate)}
                   </span>
