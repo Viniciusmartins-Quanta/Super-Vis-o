@@ -373,11 +373,24 @@ export default function App() {
         }
       )
       .subscribe();
-
+      
     return () => {
       supabase.removeChannel(canalTempoReal);
     };
   }, []);
+    
+    const handleResetData = async () => {
+    try {
+      setLoading(true);
+      await loadDirectSupabaseState();
+      setErrorHeader("");
+    } catch (err) {
+      console.error(err);
+      setErrorHeader("Não foi possível restaurar os dados.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Update overall Contract Settings
   const handleUpdateAuthorizedUsers = async (newUsers: string[]) => {
