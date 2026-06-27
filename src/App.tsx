@@ -355,26 +355,7 @@ export default function App() {
       setIsAuthLoading(false);
     }
   };
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsAuthLoading(true);
-    setAuthError("");
-
-    const { error } = await supabase.auth.signUp({
-      email: authEmail,
-      password: authPassword,
-    });
-
-    if (error) {
-      setAuthError(error.message);
-    } else {
-      setAuthError("✅ Conta criada! Um administrador precisa liberar seu acesso.");
-      setIsRegisterMode(false); // Volta pra tela de login
-    }
-    setIsAuthLoading(false);
-  };
-    
+ 
   const handleResetData = async () => {
     try {
       setLoading(true);
@@ -392,6 +373,8 @@ export default function App() {
   const handleUpdateAuthorizedUsers = async (newUsers: string[]) => {
     const updatedState = { ...state, authorizedUsers: newUsers };
     setState(updatedState);
+    
+    // Salva a nova lista de e-mails no Supabase
     await supabase
       .from("contrato_config")
       .update({ authorized_emails: newUsers })
