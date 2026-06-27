@@ -184,15 +184,24 @@ export default function App() {
       const obrasFormatadas = (obrasData || []).map((o: any) => ({
         id: o.id,
         name: o.name,
-        contractNumber: o.contract_number || "",
-        contractorName: o.contractor_name || "",
+        contractNumber: o.contract_number || "S/N",
+        contractorName: o.contractor_name || "Construtora não informada",
         progress: o.progress || 0,
         status: o.status || "em_andamento",
-        startDate: o.start_date || "",
-        deadlineDate: o.deadline_date || "",
-        activeContractDate: o.active_contract_date || "",
+        startDate: o.start_date || "2024-01-01",
+        deadlineDate: o.deadline_date || "2025-01-01",
+        activeContractDate: o.active_contract_date || "2025-01-01",
         biddedValue: o.bidded_value || 0,
-        order: o.order_index || 0
+        order: o.order_index || 0,
+        
+        // --- LENDO OS NOVOS CAMPOS DO BANCO ---
+        biddingNumber: o.bidding_number || "",
+        adminProcess: o.admin_process || "",
+        termDaysVigencia: o.term_days_vigencia || "",
+        termDaysExecucao: o.term_days_execucao || "",
+        signingDate: o.signing_date || "",
+        publicationDateJom: o.publication_date_jom || "",
+        startOrderDate: o.start_order_date || ""
       }));
 
       const logsFormatados = (logsData || []).map((l: any) => {
@@ -1649,6 +1658,15 @@ export default function App() {
         deadline_date: workData.deadlineDate || null,
         active_contract_date: workData.activeContractDate || null,
         bidded_value: workData.biddedValue || 0,
+        
+        // --- NOVOS CAMPOS ADICIONADOS ---
+        bidding_number: workData.biddingNumber || null,
+        admin_process: workData.adminProcess || null,
+        term_days_vigencia: workData.termDaysVigencia || null,
+        term_days_execucao: workData.termDaysExecucao || null,
+        signing_date: workData.signingDate || null,
+        publication_date_jom: workData.publicationDateJom || null,
+        start_order_date: workData.startOrderDate || null,
       };
 
       // Comando mágico do Supabase: upsert significa "Se existir atualize, se não existir crie"
