@@ -96,6 +96,7 @@ export default function WorkDetail({
   const [isSavingAdditive, setIsSavingAdditive] = useState(false);
   const [additiveError, setAdditiveError] = useState("");
   const [selectedLogId, setSelectedLogId] = useState<string | null>(null);
+  const [isWeekDropdownOpen, setIsWeekDropdownOpen] = useState(false);
   const [expandedLogIds, setExpandedLogIds] = useState<Record<string, boolean>>({});
   const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [editingLog, setEditingLog] = useState<UpdateLog | null>(null);
@@ -2268,13 +2269,6 @@ export default function WorkDetail({
 
       {activeTab === "lancamentos" && (
         <div className="animate-fade-in" id="detail-lancamentos-tab">
-            <div className="flex justify-between items-center mb-6">
-                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2 font-sans">
-                  <Logs className="w-4.5 h-4.5 text-amber-500" />
-                  <span>Relatórios Semanais de Campo</span>
-                </h3>
-            </div>
-
           {workLogs.length === 0 ? (
             <div className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-6 shadow-3xs">
               <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mx-auto text-amber-500">
@@ -2306,166 +2300,301 @@ export default function WorkDetail({
                 </p>
               </div>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-              {/* Left Column: Quick Action Box */}
-              <div className="lg:col-span-4 bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-3xs">
-                <div className="w-14 h-14 bg-amber-100/60 text-amber-650 rounded-2xl flex items-center justify-center shadow-3xs border border-amber-200/30">
-                  <Logs className="w-6.5 h-6.5" />
-                </div>
-                <div className="space-y-1.5">
-                  <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest font-sans">Registrar Nova Atividade</h4>
-                  <p className="text-[11.5px] text-slate-500 font-medium leading-relaxed">
-                    Insira as informações semanais, avanço físico consolidado, fotos de progresso e observações de campo.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setIsActivityModalOpen(true)}
-                  className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-3.5 rounded-2xl shadow-sm hover:shadow transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
-                >
-                  <PlusCircle className="w-4.5 h-4.5" />
-                  <span>Lançar Atividade Semanal</span>
-                </button>
-              </div>
-
-              {/* Right Column: Weekly Logs list */}
-              <div className="lg:col-span-8 space-y-4">
-                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest block font-sans">Histórico de Lançamentos ({workLogs.length})</h4>
+          ) : (() => {
+            const selectedLog = workLogs.find((log) => log.id === selectedLogId) || workLogs[0];
+            const selectedParsed = parseWeeklyReport(selectedLog.notes);
+            return (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                 
-                <div className="space-y-4">
-                  {workLogs.map((log) => {
-                    const parsed = parseWeeklyReport(log.notes);
-                    return (
-                      <div key={log.id} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-3xs hover:shadow-2xs transition duration-200 space-y-4">
-                        {/* Log Card Header */}
-                        <div className="flex justify-between items-start gap-4">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-extrabold text-slate-900 text-sm font-sans">Lançamento de Atividade Semanal</span>
-                              <span className="bg-amber-50 text-amber-700 text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full border border-amber-200/50 shadow-3xs">
-                                {log.newProgress}% avanço
-                              </span>
-                            </div>
-                            <p className="text-xs text-slate-500 font-medium">
-                              Por: <span className="text-slate-700 font-bold">{log.userName}</span> ({log.userRole}) • {formatDate(log.timestamp.split("T")[0])}
-                            </p>
+                {/* Left Column: Relatórios Semanais Sidebar */}
+                <div className="lg:col-span-4 bg-white border border-slate-200 rounded-3xl p-5 space-y-4 shadow-3xs">
+                  <div className="flex justify-between items-center">
+                    <h3 className="text-sm font-bold text-slate-900 font-sans tracking-wide">
+                      Relatórios Semanais
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => setIsActivityModalOpen(true)}
+                      className="px-3 py-1.5 border border-slate-900 hover:bg-slate-50 text-slate-900 text-xs font-bold rounded-full flex items-center gap-1 transition cursor-pointer"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      <span>Novo Relatório</span>
+                    </button>
+                  </div>
+
+                  <div className="border-b border-slate-100 my-3" />
+
+                  {/* List of weeks */}
+                  <div className="space-y-2 max-h-[500px] overflow-y-auto pr-1">
+                    {workLogs.map((log) => {
+                      const p = parseWeeklyReport(log.notes);
+                      const isSelected = selectedLog && selectedLog.id === log.id;
+                      return (
+                        <button
+                          key={log.id}
+                          type="button"
+                          onClick={() => setSelectedLogId(log.id)}
+                          className={`w-full text-left rounded-2xl p-4 transition flex justify-between items-center cursor-pointer border ${
+                            isSelected
+                              ? "bg-[#111c30] text-white shadow-sm border-transparent"
+                              : "bg-white border-slate-200 hover:border-slate-300 text-slate-800"
+                          }`}
+                        >
+                          <div className="space-y-0.5 min-w-0 flex-1 pr-2">
+                            <span className={`font-bold text-xs block ${isSelected ? "text-white" : "text-slate-900"}`}>
+                              Acompanhamento Semanal
+                            </span>
+                            <span className={`text-[10px] block font-semibold truncate ${isSelected ? "text-slate-450" : "text-slate-400"}`}>
+                              {p.period}
+                            </span>
                           </div>
-                          
-                          {/* Action Buttons */}
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEditingLog(log);
-                                setIsActivityModalOpen(true);
-                              }}
-                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-xl transition cursor-pointer shadow-3xs"
-                              title="Editar Lançamento"
-                            >
-                              <Edit3 className="w-3.5 h-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleExportPDF(log)}
-                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-xl transition cursor-pointer shadow-3xs"
-                              title="Exportar PDF do boletim"
-                            >
-                              <FileText className="w-3.5 h-3.5" />
-                            </button>
-                            {onDeleteLog && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (confirm("Deseja realmente excluir este relatório semanal de atividade?")) {
-                                    onDeleteLog(log.id);
-                                  }
-                                }}
-                                className="p-2 text-slate-400 hover:text-rose-650 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition cursor-pointer shadow-3xs"
-                                title="Excluir Relatório"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            )}
+                          <div className={`font-black text-xs shrink-0 ${isSelected ? "text-sky-400" : "text-indigo-600"}`}>
+                            {log.newProgress}%
                           </div>
-                        </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                        {/* Content details */}
-                        <div className="text-xs text-slate-600 space-y-4 pt-3.5 border-t border-slate-100">
-                          <div className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[11px] text-slate-500">
-                            <div>Período: <span className="font-extrabold text-slate-700">{parsed.period}</span></div>
-                            {parsed.isStandardReport && (
-                              <>
-                                <div>Aditivo: <span className="font-semibold text-slate-700">{parsed.sitacaoAditivo}</span></div>
-                                <div>ENEL: <span className="font-semibold text-slate-700">{parsed.enelStatus}</span></div>
-                              </>
-                            )}
+                {/* Right Column: Selected Log Details */}
+                <div className="lg:col-span-8 bg-white border border-slate-200 rounded-3xl p-6 shadow-3xs space-y-6">
+                  
+                  {/* Header of detailed report */}
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-100">
+                    <div className="space-y-1">
+                      <h3 className="text-base font-extrabold text-slate-900 font-sans">
+                        Relatório Semanal de Campo
+                      </h3>
+                      <p className="text-xs text-slate-500 font-medium">
+                        Período de Medição: <span className="font-extrabold text-slate-700">{selectedParsed.period}</span>
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {/* Menu Suspenso (Dropdown list of weeks) */}
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => setIsWeekDropdownOpen(!isWeekDropdownOpen)}
+                          className="px-3.5 py-1.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 hover:border-slate-300 rounded-xl transition duration-150 text-[11px] font-extrabold flex items-center gap-1.5 cursor-pointer shadow-3xs font-sans"
+                        >
+                          <span>Semanas Lançadas</span>
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                        </button>
+                        
+                        {isWeekDropdownOpen && (
+                          <div className="absolute right-0 mt-1.5 w-64 bg-white border border-slate-200 rounded-2xl shadow-xl py-1.5 z-30 animate-fade-in max-h-60 overflow-y-auto">
+                            {workLogs.map((log) => {
+                              const p = parseWeeklyReport(log.notes);
+                              return (
+                                <button
+                                  key={log.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedLogId(log.id);
+                                    setIsWeekDropdownOpen(false);
+                                  }}
+                                  className={`w-full text-left px-4 py-2.5 text-xs hover:bg-slate-50 transition flex justify-between items-center cursor-pointer ${
+                                    selectedLog.id === log.id ? "bg-amber-50/50 text-amber-700 font-extrabold" : "text-slate-700 font-medium"
+                                  }`}
+                                >
+                                  <div className="truncate mr-2">
+                                    <span className="block text-[11px] font-bold text-slate-900">{p.period}</span>
+                                    <span className="block text-[9px] text-slate-450 font-semibold">Avanço: {log.newProgress}%</span>
+                                  </div>
+                                  <span className={`text-[10px] font-mono font-black px-2 py-0.5 rounded-full ${
+                                    selectedLog.id === log.id ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-600"
+                                  }`}>
+                                    {log.newProgress}%
+                                  </span>
+                                </button>
+                              );
+                            })}
                           </div>
+                        )}
+                      </div>
 
-                          {parsed.isStandardReport ? (
-                            <div className="space-y-3.5 pt-1.5">
-                              {parsed.weeklyActivities && parsed.weeklyActivities.length > 0 && (
-                                <div className="space-y-1">
-                                  <span className="font-extrabold text-slate-800 block text-xs tracking-wide">• Atividades Executadas na Semana:</span>
-                                  <ul className="list-disc list-inside space-y-1 pl-2 text-slate-600 leading-relaxed text-[12.5px]">
-                                    {parsed.weeklyActivities.map((act, i) => (
-                                      <li key={i}>{act}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                              
-                              {parsed.nextWeekActivities && parsed.nextWeekActivities.length > 0 && (
-                                <div className="space-y-1">
-                                  <span className="font-extrabold text-slate-800 block text-xs tracking-wide">• Próxima Semana:</span>
-                                  <ul className="list-disc list-inside space-y-1 pl-2 text-slate-550 leading-relaxed text-[12.5px]">
-                                    {parsed.nextWeekActivities.map((act, i) => (
-                                      <li key={i}>{act}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
+                      {/* Action buttons */}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingLog(selectedLog);
+                          setIsActivityModalOpen(true);
+                        }}
+                        className="p-1.5 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-250 rounded-xl hover:border-slate-350 transition cursor-pointer text-[11px] font-extrabold flex items-center gap-1.5"
+                        title="Editar Lançamento"
+                      >
+                        <Edit3 className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Editar Report</span>
+                      </button>
 
-                              {parsed.observations && parsed.observations.length > 0 && (
-                                <div className="space-y-1">
-                                  <span className="font-extrabold text-rose-700 block text-xs tracking-wide">• Observações / Apontamentos:</span>
-                                  <ul className="list-disc list-inside space-y-1 pl-2 text-rose-600 leading-relaxed font-semibold text-[12.5px]">
-                                    {parsed.observations.map((act, i) => (
-                                      <li key={i}>{act}</li>
-                                    ))}
-                                  </ul>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="italic leading-relaxed">"{log.notes}"</p>
-                          )}
+                      <button
+                        type="button"
+                        onClick={() => handleExportPDF(selectedLog)}
+                        className="p-1.5 px-3.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/60 rounded-xl transition cursor-pointer text-[11px] font-black flex items-center gap-1.5"
+                        title="Exportar PDF do boletim"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-amber-600" />
+                        <span>Exportar PDF da Semana</span>
+                      </button>
 
-                          {/* Image Gallery */}
-                          {(log.coverImage || (log.progressImages && log.progressImages.length > 0)) && (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
-                              {log.coverImage && (
-                                <div className="relative group/img rounded-xl overflow-hidden border border-slate-200 bg-slate-50 aspect-video shadow-3xs">
-                                  <img src={log.coverImage} referrerPolicy="no-referrer" className="w-full h-full object-cover transition duration-200 group-hover/img:scale-105" alt="Foto Capa" />
-                                  <span className="absolute bottom-1.5 left-1.5 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">Capa</span>
-                                </div>
-                              )}
-                              {log.progressImages?.map((imgUrl, idx) => (
-                                <div key={idx} className="relative group/img rounded-xl overflow-hidden border border-slate-200 bg-slate-50 aspect-video shadow-3xs">
-                                  <img src={imgUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover transition duration-200 group-hover/img:scale-105" alt={`Foto Progresso ${idx + 1}`} />
-                                  <span className="absolute bottom-1.5 left-1.5 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">Foto {idx + 1}</span>
-                                </div>
+                      {onDeleteLog && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (confirm("Deseja realmente excluir este relatório semanal de atividade?")) {
+                              onDeleteLog(selectedLog.id);
+                              setSelectedLogId(null);
+                            }
+                          }}
+                          className="p-2 text-slate-400 hover:text-rose-650 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition cursor-pointer shadow-3xs"
+                          title="Excluir Relatório"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Metadata and Author Info */}
+                  <div className="text-[11px] text-slate-500 font-medium">
+                    Registrado por: <span className="text-slate-700 font-bold">{selectedLog.userName}</span> ({selectedLog.userRole}) • {formatDate(selectedLog.timestamp.split("T")[0])}
+                  </div>
+
+                  {/* FOTO DE CAPA DO RELATÓRIO */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block font-sans">
+                      Foto de Capa do Relatório
+                    </span>
+                    {selectedLog.coverImage ? (
+                      <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-50 aspect-[2.35/1] max-h-64 shadow-3xs group/img">
+                        <img
+                          src={selectedLog.coverImage}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-cover transition duration-300 group-hover/img:scale-102"
+                          alt="Foto Capa"
+                        />
+                      </div>
+                    ) : (
+                      <div className="border border-dashed border-slate-250 rounded-2xl p-6 text-center bg-slate-50/50 text-slate-450 text-xs font-semibold">
+                        Nenhuma foto de capa cadastrada para esta semana.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Indicators Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4.5 bg-slate-50/80 border border-slate-100 rounded-2xl shadow-3xs">
+                    <div className="flex flex-col space-y-0.5">
+                      <span className="text-[9.5px] text-slate-450 font-extrabold uppercase tracking-wider">Avanço Físico Real</span>
+                      <span className="text-indigo-650 font-black text-sm">{selectedLog.newProgress}%</span>
+                    </div>
+                    <div className="flex flex-col space-y-0.5">
+                      <span className="text-[9.5px] text-slate-450 font-extrabold uppercase tracking-wider">Situação do Aditivo</span>
+                      <span className="text-slate-800 font-extrabold text-sm">{selectedParsed.sitacaoAditivo}</span>
+                    </div>
+                    <div className="flex flex-col space-y-0.5">
+                      <span className="text-[9.5px] text-slate-450 font-extrabold uppercase tracking-wider">Rede ENEL (Média T.)</span>
+                      <span className="text-slate-800 font-extrabold text-sm">{selectedParsed.enelStatus}</span>
+                    </div>
+                    <div className="flex flex-col space-y-0.5">
+                      <span className="text-[9.5px] text-slate-450 font-extrabold uppercase tracking-wider">Subestação Elétrica</span>
+                      <span className="text-slate-800 font-extrabold text-sm">{selectedParsed.substationStatus}</span>
+                    </div>
+                  </div>
+
+                  {/* Lists Section */}
+                  <div className="space-y-5 pt-2">
+                    {selectedParsed.isStandardReport ? (
+                      <div className="space-y-5">
+                        {selectedParsed.weeklyActivities && selectedParsed.weeklyActivities.length > 0 && (
+                          <div className="space-y-2">
+                            <span className="font-extrabold text-slate-800 block text-xs tracking-wider uppercase font-sans">
+                              Atividades Desenvolvidas na Semana:
+                            </span>
+                            <ul className="space-y-1.5 pl-0.5 text-slate-700 leading-relaxed text-xs">
+                              {selectedParsed.weeklyActivities.map((act, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                  <span>{act}</span>
+                                </li>
                               ))}
+                            </ul>
+                          </div>
+                        )}
+                        
+                        {selectedParsed.nextWeekActivities && selectedParsed.nextWeekActivities.length > 0 && (
+                          <div className="space-y-2">
+                            <span className="font-extrabold text-slate-800 block text-xs tracking-wide uppercase font-sans">
+                              Atividades Programadas para Próxima Semana:
+                            </span>
+                            <ul className="space-y-1.5 pl-0.5 text-slate-600 leading-relaxed text-xs">
+                              {selectedParsed.nextWeekActivities.map((act, i) => (
+                                <li key={i} className="flex items-start gap-2">
+                                  <ArrowUpRight className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                                  <span>{act}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+
+                        {selectedParsed.observations && selectedParsed.observations.length > 0 && (
+                          <div className="space-y-2">
+                            <span className="font-extrabold text-rose-700 block text-xs tracking-wide uppercase font-sans">
+                              Observações, Não Conformidades & Alertas de Fiscalização:
+                            </span>
+                            <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-4">
+                              <ul className="space-y-1.5 text-rose-800 leading-relaxed font-semibold text-xs pl-0.5">
+                                {selectedParsed.observations.map((act, i) => (
+                                  <li key={i} className="flex items-start gap-2">
+                                    <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                                    <span>{act}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <span className="font-extrabold text-slate-800 block text-xs tracking-wide uppercase font-sans">
+                          Resumo / Notas de Campo:
+                        </span>
+                        <p className="text-slate-700 italic leading-relaxed text-xs">"{selectedLog.notes}"</p>
+                      </div>
+                    )}
+
+                    {/* Image Gallery */}
+                    {(selectedLog.coverImage || (selectedLog.progressImages && selectedLog.progressImages.length > 0)) && (
+                      <div className="space-y-3 pt-2">
+                        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block font-sans">
+                          Galeria de Fotos da Semana
+                        </span>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          {selectedLog.coverImage && (
+                            <div className="relative group/img rounded-xl overflow-hidden border border-slate-200 bg-slate-50 aspect-video shadow-3xs">
+                              <img src={selectedLog.coverImage} referrerPolicy="no-referrer" className="w-full h-full object-cover transition duration-200 group-hover/img:scale-105" alt="Foto Capa" />
+                              <span className="absolute bottom-1.5 left-1.5 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">Capa</span>
                             </div>
                           )}
+                          {selectedLog.progressImages?.map((imgUrl, idx) => (
+                            <div key={idx} className="relative group/img rounded-xl overflow-hidden border border-slate-200 bg-slate-50 aspect-video shadow-3xs">
+                              <img src={imgUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover transition duration-200 group-hover/img:scale-105" alt={`Foto Progresso ${idx + 1}`} />
+                              <span className="absolute bottom-1.5 left-1.5 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">Foto {idx + 1}</span>
+                            </div>
+                          ))}
                         </div>
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
+
                 </div>
+
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
