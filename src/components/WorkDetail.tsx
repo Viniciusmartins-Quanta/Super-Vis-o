@@ -1966,10 +1966,30 @@ export default function WorkDetail({
                         </span>
                       </div>
 
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                      <p className="text-xs text-slate-500 font-medium leading-relaxed mb-2">
                         {add.description}
                       </p>
-                      {/* ... other additive fields ... */}
+                      
+                      <div className="grid grid-cols-2 gap-3 text-[11px] bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        {add.value !== undefined && add.value !== null && (
+                          <div className="flex flex-col">
+                            <span className="text-slate-450 font-bold uppercase">Valor Aditivado</span>
+                            <span className="text-emerald-700 font-extrabold">{formatCurrency(add.value)}</span>
+                          </div>
+                        )}
+                        {add.days && (
+                          <div className="flex flex-col">
+                            <span className="text-slate-450 font-bold uppercase">Prazo Aditivado</span>
+                            <span className="text-blue-700 font-extrabold">{add.days} meses</span>
+                          </div>
+                        )}
+                        {add.signatureDate && (
+                          <div className="flex flex-col">
+                            <span className="text-slate-450 font-bold uppercase">Assinatura</span>
+                            <span className="text-slate-700 font-mono font-bold">{formatDate(add.signatureDate)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex gap-1.5 self-start md:opacity-0 group-hover:opacity-100 transition">

@@ -66,7 +66,7 @@ export default function App() {
 
       let errors: string[] = [];
       if (configError) {
-        console.error("Erro ao carregar configuração:", configError);
+        console.error("Erro ao carregar configuração:", configError.message, configError.details, configError.hint);
         errors.push("configuração");
       }
       
@@ -84,7 +84,7 @@ export default function App() {
         .order("order_index", { ascending: true });
         
       if (obrasError) {
-        console.error("Erro ao carregar obras:", obrasError);
+        console.error("Erro ao carregar obras:", obrasError.message, obrasError.details, obrasError.hint);
         errors.push("obras");
       }
 
@@ -94,7 +94,7 @@ export default function App() {
         .order("timestamp", { ascending: false });
         
       if (logsError) {
-        console.error("Erro ao carregar logs:", logsError);
+        console.error("Erro ao carregar logs:", logsError.message, logsError.details, logsError.hint);
         errors.push("logs");
       }
 
@@ -103,7 +103,7 @@ export default function App() {
         .select("*");
         
       if (aditivosError) {
-        console.error("Erro ao carregar aditivos:", aditivosError);
+        console.error("Erro ao carregar aditivos:", aditivosError.message, aditivosError.details, aditivosError.hint);
         errors.push("aditivos");
       }
 
