@@ -2000,11 +2000,11 @@ export default function WorkDetail({
                           </div>
                         )}
                         <div className="flex flex-col">
-                          <span className="text-slate-450 font-bold uppercase">Data Assinatura</span>
+                          <span className="text-slate-450 font-bold uppercase">Data de Execução</span>
                           <span className="text-slate-700 font-mono font-bold">{add.signatureDate ? formatDate(add.signatureDate) : 'N/A'}</span>
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-slate-450 font-bold uppercase">Data Vigência</span>
+                          <span className="text-slate-450 font-bold uppercase">Data de Vigência Contratual</span>
                           <span className="text-slate-700 font-mono font-bold">{add.newVigenciaDate ? formatDate(add.newVigenciaDate) : 'N/A'}</span>
                         </div>
                       </div>
@@ -2259,17 +2259,21 @@ export default function WorkDetail({
       )}
 
       {activeTab === "lancamentos" && (
-        <div className="space-y-6 animate-fade-in" id="detail-lancamentos-tab">
-          {/* Header Row */}
-          <div>
-            <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
-              <PlusCircle className="w-4.5 h-4.5 text-amber-500" />
-              <span>Lançamentos Semanais de Atividade</span>
-            </h3>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Área exclusiva para cadastro e visualização dos boletins de acompanhamento de campo
-            </p>
-          </div>
+        <div className="animate-fade-in" id="detail-lancamentos-tab">
+            <div className="flex justify-between items-center mb-6">
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                  <Logs className="w-4.5 h-4.5 text-amber-500" />
+                  <span>Relatórios Semanais de Campo</span>
+                </h3>
+                <button
+                    type="button"
+                    onClick={() => setIsActivityModalOpen(true)}
+                    className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs px-4 py-2 rounded-xl shadow-2xs hover:shadow-xs transition duration-200 flex items-center gap-2 cursor-pointer"
+                >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Novo Relatório</span>
+                </button>
+            </div>
 
           {workLogs.length === 0 ? (
             <div className="max-w-2xl mx-auto bg-white border border-slate-200 rounded-3xl p-8 text-center space-y-6 shadow-3xs">

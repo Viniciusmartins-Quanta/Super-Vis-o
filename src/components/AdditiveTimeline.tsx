@@ -51,7 +51,7 @@ export default function AdditiveTimeline({ additives, contractStartDate }: Addit
             </div>
             <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-2">
               <div className="flex justify-between text-xs">
-                <span className="text-blue-400 font-bold">Março / Data de Assinatura: {formatDate(contractStartDate)}</span>
+                <span className="text-blue-400 font-bold">Data de Assinatura: {formatDate(contractStartDate)}</span>
                 <span className="text-slate-500 font-bold uppercase">Início</span>
               </div>
               <h3 className="font-bold text-white">Assinatura do Contrato de Início</h3>
@@ -65,7 +65,7 @@ export default function AdditiveTimeline({ additives, contractStartDate }: Addit
               <div className={`absolute left-0 top-1 w-7 h-7 rounded-full border-4 border-slate-950 ${getMarkerColor(add.type)}`} />
               <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-blue-400 font-bold">Março / Data de Assinatura: {formatDate(add.signatureDate)}</span>
+                  <span className="text-blue-400 font-bold">Data de Assinatura: {formatDate(add.signatureDate)}</span>
                   <span className="text-slate-500 font-bold uppercase">Prazo</span>
                 </div>
                 <h3 className="font-bold text-white">{add.number}</h3>
@@ -87,10 +87,12 @@ export default function AdditiveTimeline({ additives, contractStartDate }: Addit
               <div key={add.id} className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-2">
                 <div className="flex justify-between items-center">
                     <span className="font-bold text-white text-sm">{add.number}</span>
-                    <span className="text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded">PRAZO</span>
+                    <span className="text-[10px] font-bold text-blue-400 bg-blue-900/30 px-2 py-0.5 rounded uppercase">{add.type}</span>
                 </div>
-                <p className="text-xs text-slate-400">Assinatura: {formatDate(add.signatureDate)}</p>
-                <p className="text-xs font-bold text-white">Prazo estendido em {add.days} dias</p>
+                <p className="text-xs text-slate-400">Assinatura: {formatDate(add.signatureDate)} {add.publicationDateJom && `| JOM: ${formatDate(add.publicationDateJom)}`}</p>
+                <p className="text-xs font-bold text-white">
+                  {add.type === 'prazo' ? `Prazo estendido em ${add.days} meses` : `Valor aditivado: ${formatCurrency(add.value || 0)}`}
+                </p>
                 <p className="text-[10px] text-slate-500 italic">"{add.description}"</p>
               </div>
             ))}
