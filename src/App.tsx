@@ -800,6 +800,13 @@ export default function App() {
             lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
           }
           
+          if (add.value !== undefined && add.value !== null) {
+            lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(add.value)}</span>`);
+            if (add.type === "financeiro" || add.type === "misto") {
+              lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(work.biddedValue + add.value)}</span>`);
+            }
+          }
+          
           if (add.newVigenciaDate) {
             lines.push(`Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
           }
@@ -1214,7 +1221,7 @@ export default function App() {
       }
       .black-grid-table td, .black-grid-table th {
         border: 1px solid #000000;
-        padding: 2px 8px;
+        padding: 1.2px 8px;
         color: #000000;
       }
     </style>
