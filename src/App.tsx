@@ -135,7 +135,8 @@ export default function App() {
         // --- CORREÇÃO DAS DATAS INDEPENDENTES ---
         startOrderDate: o.start_order_date || "",
         startDate: o.start_date || "",
-        physicalStartDate: o.start_date || ""
+        physicalStartDate: o.start_date || "",
+        additives: o.additives || []
       }));
 
       const logsFormatados = (logsData || []).map((l: any) => {
@@ -1505,8 +1506,6 @@ export default function App() {
         deadline_date: workData.deadlineDate || null,
         active_contract_date: workData.activeContractDate || null,
         bidded_value: workData.biddedValue || 0,
-        
-        // --- NOVOS CAMPOS ADICIONADOS ---
         bidding_number: workData.biddingNumber || null,
         admin_process: workData.adminProcess || null,
         term_days_vigencia: workData.termDaysVigencia || null,
@@ -1515,6 +1514,7 @@ export default function App() {
         publication_date_jom: workData.publicationDateJom || null,
         start_order_date: workData.startOrderDate || null,
         start_date: workData.physicalStartDate || null,
+        additives: workData.additives || []
       };
 
       // Comando mágico do Supabase: upsert significa "Se existir atualize, se não existir crie"
