@@ -60,13 +60,23 @@ export default function App() {
    */
   const loadDirectSupabaseState = async () => {
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error("No active session found in loadDirectSupabaseState");
+        // Perhaps set a state or redirect to login? 
+        // For now, let's just log and let the queries fail as they are currently doing.
+      }
+
       const { data: configData, error: configError } = await supabase
         .from("contrato_config")
         .select("*")
         .eq("id", "config-atual")
         .maybeSingle();
 
-      if (configError) throw configError;
+      if (configError) {
+        console.error("Erro ao carregar configuração:", configError);
+      }
+
 
       const configSegura = configData || {
         contract_name: "Contrato de Supervisão (Novo)",
@@ -81,20 +91,26 @@ export default function App() {
         .select("*")
         .order("order_index", { ascending: true });
         
-      if (obrasError) throw obrasError;
+      if (obrasError) {
+        console.error("Erro ao carregar obras:", obrasError);
+      }
 
       const { data: logsData, error: logsError } = await supabase
         .from("medicoes_logs")
         .select("*")
         .order("timestamp", { ascending: false });
         
-      if (logsError) throw logsError;
+      if (logsError) {
+        console.error("Erro ao carregar logs:", logsError);
+      }
 
       const { data: aditivosData, error: aditivosError } = await supabase
         .from("aditivos")
         .select("*");
         
-      if (aditivosError) throw aditivosError;    
+      if (aditivosError) {
+        console.error("Erro ao carregar aditivos:", aditivosError);
+      }
 
       const obrasFormatadas = (obrasData || []).map((o: any) => ({
         id: o.id,
@@ -351,6 +367,7 @@ export default function App() {
     });
 
     if (error) {
+      console.error("Erro no login:", error);
       setAuthError("Email ou senha incorretos.");
       setIsAuthLoading(false);
     }
