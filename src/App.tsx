@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Obra, UpdateLog, DatabaseState, UserProfile, USER_PROFILES, ContractAdditive } from "./types";
-import { formatDate, formatCurrency, formatPercent } from "./utils";
+import { Obra, DatabaseState, UserProfile, USER_PROFILES, ContractAdditive } from "./types";
+import { formatDate, formatCurrency } from "./utils";
 import { supabase } from "./supabase";
 
 // Custom visual components
@@ -11,8 +11,8 @@ import WorkCard from "./components/WorkCard";
 import WorkModal from "./components/WorkModal";
 import WorkDetail from "./components/WorkDetail";
 
-// Icons from Lucide
-import { Plus, Construction, ClipboardList, Activity, AlertTriangle, CheckSquare, RefreshCw, Layers, Cloud, Database, Sliders, ArrowUp, ArrowDown, Users, X, LogOut } from "lucide-react";
+// Icons from Lucide (Limpamos os não utilizados)
+import { Plus, Construction, ClipboardList, AlertTriangle, CheckSquare, RefreshCw, Cloud, Database, Sliders, Users, X, LogOut } from "lucide-react";
 
 export default function App() {
   // Database state
@@ -32,7 +32,6 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [errorHeader, setErrorHeader] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
-  const [useDirectSupabaseMode, setUseDirectSupabaseMode] = useState(false);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   // Active user profile context for field signatures
@@ -53,31 +52,24 @@ export default function App() {
   
   // Authorization state
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>("vinicius.martins@quantaconsultoria.com");
-  const [isAuthorized, setIsAuthorized] = useState<boolean | null>(true);
 
   /**
-   * Loads state from localStorage or Supabase directly. Used when the backend server is unavailable.
+   * Loads state from Supabase directly.
    */
   const loadDirectSupabaseState = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.error("No active session found in loadDirectSupabaseState");
-        // Perhaps set a state or redirect to login? 
-        // For now, let's just log and let the queries fail as they are currently doing.
-      }
-
       const { data: configData, error: configError } = await supabase
         .from("contrato_config")
         .select("*")
         .eq("id", "config-atual")
         .maybeSingle();
 
+      let errors: string[] = [];
       if (configError) {
         console.error("Erro ao carregar configuração:", configError);
+        errors.push("configuração");
       }
-
-
+      
       const configSegura = configData || {
         contract_name: "Contrato de Supervisão (Novo)",
         supervisor_company: "Empresa Supervisora",
@@ -93,6 +85,7 @@ export default function App() {
         
       if (obrasError) {
         console.error("Erro ao carregar obras:", obrasError);
+        errors.push("obras");
       }
 
       const { data: logsData, error: logsError } = await supabase
@@ -102,6 +95,7 @@ export default function App() {
         
       if (logsError) {
         console.error("Erro ao carregar logs:", logsError);
+        errors.push("logs");
       }
 
       const { data: aditivosData, error: aditivosError } = await supabase
@@ -110,6 +104,13 @@ export default function App() {
         
       if (aditivosError) {
         console.error("Erro ao carregar aditivos:", aditivosError);
+        errors.push("aditivos");
+      }
+
+      if (errors.length > 0) {
+        setErrorHeader(`Erro ao carregar: ${errors.join(", ")}`);
+      } else {
+        setErrorHeader("");
       }
 
       const obrasFormatadas = (obrasData || []).map((o: any) => ({
@@ -123,16 +124,12 @@ export default function App() {
         activeContractDate: o.active_contract_date || "2025-01-01",
         biddedValue: o.bidded_value || 0,
         order: o.order_index || 0,
-        
-        // --- LENDO OS NOVOS CAMPOS DO BANCO ---
         biddingNumber: o.bidding_number || "",
         adminProcess: o.admin_process || "",
         termDaysVigencia: o.term_days_vigencia || "",
         termDaysExecucao: o.term_days_execucao || "",
         signingDate: o.signing_date || "",
         publicationDateJom: o.publication_date_jom || "",
-        
-        // --- CORREÇÃO DAS DATAS INDEPENDENTES ---
         startOrderDate: o.start_order_date || "",
         startDate: o.start_date || "",
         physicalStartDate: o.start_date || "",
@@ -200,62 +197,10 @@ export default function App() {
     }
   };
 
-  /**
-   * Helper that upserts data to client-side localStorage and tries direct Supabase transfer.
-   */
-  const saveStateDirect = async (updatedState: DatabaseState) => {
-    setState(updatedState);
-
-    try {
-      const { error } = await supabase
-        .from("contract_state")
-        .upsert({ id: "current_state", data: updatedState, updated_at: new Date().toISOString() });
-
-      if (error) {
-        console.warn("Direct save to Supabase error:", error.message);
-        const isRls = error.code === "42501" || error.message.includes("violates row-level security");
-        const isMissingTable = error.code === "PGRST205" || error.message.includes("Could not find the table");
-        
-        setState(prev => ({
-          ...prev,
-          supabaseStatus: {
-            connected: true,
-            tableExists: !isMissingTable,
-            rlsEnabled: isRls,
-            error: error.message
-          }
-        }));
-      } else {
-        setState(prev => ({
-          ...prev,
-          supabaseStatus: {
-            connected: true,
-            tableExists: true,
-            rlsEnabled: false,
-            error: ""
-          }
-        }));
-      }
-    } catch (err: any) {
-      console.warn("Direct save to Supabase exception:", err.message);
-      const isRls = err.message.includes("violates row-level security") || err.message.includes("42501");
-      setState(prev => ({
-        ...prev,
-        supabaseStatus: {
-          connected: false,
-          tableExists: true,
-          rlsEnabled: isRls,
-          error: err.message
-        }
-      }));
-    }
-  };
-
-  // Load contract details from server with robust retry mechanism
+  // Load contract details from Supabase
   const loadState = async (showLoadingIndicator = false) => {
     if (showLoadingIndicator) setLoading(true);
     setIsSyncing(true);
-    setUseDirectSupabaseMode(true);
     
     try {
       await loadDirectSupabaseState();
@@ -271,7 +216,6 @@ export default function App() {
 
   // Synchronize on startup
   useEffect(() => {
-    setUseDirectSupabaseMode(true);
     loadDirectSupabaseState();
 
     const canalTempoReal = supabase
@@ -293,15 +237,14 @@ export default function App() {
 
   // --- CONTROLE DE SESSÃO E AUTENTICAÇÃO ---
   useEffect(() => {
-    // Verifica se já tem uma sessão ativa
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setIsAuthLoading(false);
     });
 
-    // Fica escutando se o usuário fez login ou logout
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
+      setIsAuthLoading(false); // CORREÇÃO: Libera a tela de loading quando o login é validado!
     });
 
     return () => subscription.unsubscribe();
@@ -319,11 +262,12 @@ export default function App() {
 
     if (error) {
       setAuthError(error.message);
+      setIsAuthLoading(false);
     } else {
       setAuthError("✅ Conta criada! Um administrador precisa liberar seu acesso.");
-      setIsRegisterMode(false); // Volta pra tela de login
+      setIsRegisterMode(false);
+      setIsAuthLoading(false);
     }
-    setIsAuthLoading(false);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -341,6 +285,7 @@ export default function App() {
       setAuthError("Email ou senha incorretos.");
       setIsAuthLoading(false);
     }
+    // Se não tiver erro, o onAuthStateChange cuida de desligar o Loading!
   };
  
   const handleResetData = async () => {
@@ -356,12 +301,10 @@ export default function App() {
     }
   };
 
-  // Update overall Contract Settings
   const handleUpdateAuthorizedUsers = async (newUsers: string[]) => {
     const updatedState = { ...state, authorizedUsers: newUsers };
     setState(updatedState);
     
-    // Salva a nova lista de e-mails no Supabase
     await supabase
       .from("contrato_config")
       .update({ authorized_emails: newUsers })
@@ -377,7 +320,6 @@ export default function App() {
     contractAdditives?: ContractAdditive[]
   ) => {
     try {
-      // 1. Atualiza as configurações do contrato geral
       const { error: configError } = await supabase
         .from("contrato_config")
         .upsert({
@@ -392,7 +334,6 @@ export default function App() {
 
       if (configError) throw configError;
 
-      // 2. Se houverem aditivos enviados pelo formulário, salvamos eles na tabela 'aditivos'
       if (contractAdditives && contractAdditives.length > 0) {
         for (const add of contractAdditives) {
           await supabase
@@ -419,14 +360,12 @@ export default function App() {
     }
   };
 
-  // Register an entry in physical progression measurements
   const handleGenerateConsolidatedReport = () => {
     if (!reportWeek) {
       alert("Por favor, selecione uma semana para o relatório.");
       return;
     }
 
-    // Helper functions for currency verbal representation and period handling
     function valorParaExtenso(valor: number): string {
       if (valor === 0) return "Zero reais";
       
@@ -524,7 +463,6 @@ export default function App() {
       return "08/06/2026 a 12/06/2026";
     };
 
-    // Helper to parse "Período: DD/MM/YYYY a DD/MM/YYYY" from notes
     const parsePeriodDates = (notes: string) => {
       if (!notes) return null;
       const periodMatch = notes.match(/(?:Período|Period):\s*\*?(\d{2})\/(\d{2})\/(\d{4})\s+a\s+(\d{2})\/(\d{2})\/(\d{4})/i);
@@ -534,9 +472,8 @@ export default function App() {
         return { start, end };
       }
       return null;
-    }
+    };
 
-    // Helper to get ISO week string "YYYY-Www"
     const getISOWeekString = (date: Date): string => {
       const target = new Date(date.valueOf());
       const dayNr = (date.getDay() + 6) % 7;
@@ -551,7 +488,6 @@ export default function App() {
       return `${year}-W${String(weekNum).padStart(2, '0')}`;
     };
 
-    // Helper to get Monday and Friday of a week
     const getDatesOfISOWeek = (w: string) => {
       const parts = w.split("-W");
       if (parts.length !== 2) return null;
@@ -579,7 +515,6 @@ export default function App() {
       periodFormatted = `${pad(d1.getDate())}/${pad(d1.getMonth() + 1)}/${d1.getFullYear()} a ${pad(d2.getDate())}/${pad(d2.getMonth() + 1)}/${d2.getFullYear()}`;
     }
 
-    // Filter works that have at least one weekly report for the selected week
     const activeWorks = state.works
       .filter(w => {
         const logsForWork = state.logs.filter(log => {
@@ -708,7 +643,6 @@ export default function App() {
 
     let currentPage = 1;
 
-    // Page 1: Cover Page (Capa)
     const coverPageHtml = `
   <div class="page cover-page border border-slate-100 relative">
     <div class="absolute inset-0 z-0">
@@ -734,13 +668,11 @@ export default function App() {
           Empresa especializada em engenharia para realização de serviços técnicos de Assessoramento, Gerenciamento, Supervisão, Fiscalização Técnica e Controle Tecnológico das obras que serão desenvolvidas no município de Maricá/RJ, no âmbito da CODEMAR.
         </p>
       </div>
-
       <div class="page-footer">${currentPage++}</div>
     </div>
   </div>
     `;
 
-    // Page 2: Summary Table Page
     const summaryPageHtml = `
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
@@ -827,7 +759,6 @@ export default function App() {
   </div>
     `;
 
-    // Subsequent detail pages per active work
     let worksDetailHtml = "";
     activeWorks.forEach(work => {
       const logsForWork = state.logs.filter(log => {
@@ -905,7 +836,6 @@ export default function App() {
       if (log) {
         const parsed = parseWeeklyReport(log.notes);
         
-        // PAGE 1: FICHA TÉCNICA CONTRATUAL
         worksDetailHtml += `
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
@@ -983,7 +913,6 @@ export default function App() {
           </tbody>
         </table>
       </div>
-      
       <div class="page-footer">${currentPage++}</div>
     </div>
   </div>
@@ -1007,7 +936,6 @@ export default function App() {
           </div>
         `}
       </div>
-      
       <div class="page-footer">${currentPage++}</div>
     </div>
   </div>
@@ -1101,7 +1029,6 @@ export default function App() {
           </tbody>
         </table>
       </div>
-      
       <div class="page-footer">${currentPage++}</div>
     </div>
   </div>
@@ -1159,13 +1086,11 @@ export default function App() {
           </div>
         </div>
       </div>
-      
       <div class="page-footer">${currentPage++}</div>
     </div>
   </div>
         `;
       } else {
-        // Active work but NO log this week: output a single elegant notification page
         worksDetailHtml += `
   <div class="page watermark-page border border-slate-100">
     <div class="page-content flex flex-col h-full justify-between">
@@ -1295,11 +1220,9 @@ export default function App() {
     </style>
 </head>
 <body>
-
   ${coverPageHtml}
   ${summaryPageHtml}
   ${worksDetailHtml}
-
   <script>
     window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
@@ -1307,12 +1230,10 @@ export default function App() {
       }, 500);
     });
   </script>
-
 </body>
 </html>
     `.trim();
 
-    // Open a raw standalone printable document window that runs under standard button triggers seamlessly
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(pdfHtml);
@@ -1332,11 +1253,9 @@ export default function App() {
     progressImages?: string[]
   ) => {
     try {
-      // 1. Descobre o progresso antigo para deixar guardado no histórico
       const obraAtual = state.works.find(w => w.id === workId);
       const oldProgress = obraAtual ? obraAtual.progress : 0;
 
-      // 2. Atualiza o progresso atual na tabela 'obras'
       const { error: updateError } = await supabase
         .from("obras")
         .update({ progress: newProgress })
@@ -1344,7 +1263,6 @@ export default function App() {
 
       if (updateError) throw updateError;
 
-      // 3. Adiciona a folha de boletim/log na tabela 'medicoes_logs'
       const { error: insertError } = await supabase
         .from("medicoes_logs")
         .insert([{
@@ -1361,7 +1279,6 @@ export default function App() {
 
       if (insertError) throw insertError;
 
-      // Recarrega os dados atualizados para atualizar a tela
       await loadDirectSupabaseState();
       setErrorHeader("");
 
@@ -1371,7 +1288,6 @@ export default function App() {
     }
   };
 
-  // Update notes of a specific log entry
   const handleUpdateLogNotes = async (logId: string, notes: string) => {
     try {
       const { error } = await supabase.from("medicoes_logs").update({ notes }).eq("id", logId);
@@ -1384,7 +1300,6 @@ export default function App() {
     }
   };
 
-  // Update specific log entry fields (notes, progress, images) and sync work progress if latest
   const handleUpdateLog = async (
     logId: string,
     newProgress: number,
@@ -1402,7 +1317,6 @@ export default function App() {
       
       if (logError) throw logError;
 
-      // Atualiza o progresso geral da obra
       const logEntry = state.logs.find((l) => l.id === logId);
       if (logEntry) {
         await supabase.from("obras").update({ progress: newProgress }).eq("id", logEntry.workId);
@@ -1428,15 +1342,13 @@ export default function App() {
     }
   };
 
-  // Delete a work entry
   const handleDeleteWork = async (workId: string) => {
     try {
-      // Exclui a obra do banco (os logs vinculados devem sumir sozinhos se houver CASCADE no banco)
       const { error } = await supabase.from("obras").delete().eq("id", workId);
       if (error) throw error;
       
       await loadDirectSupabaseState();
-      setSelectedWorkId(null); // Volta para a tela inicial
+      setSelectedWorkId(null);
       setErrorHeader("");
     } catch (err) {
       console.error(err);
@@ -1444,7 +1356,6 @@ export default function App() {
     }
   };
 
-  // Move a work up or down in sequence order
   const handleMoveWork = async (workId: string, direction: "up" | "down") => {
     const sorted = [...state.works].map((w, index) => {
       if (w.order === undefined) return { ...w, order: index };
@@ -1466,11 +1377,9 @@ export default function App() {
 
     const updatedWorks = sorted.map((w, i) => ({ ...w, order: i }));
     
-    // Atualiza a tela instantaneamente
     setState({ ...state, works: updatedWorks });
 
     try {
-      // Salva a nova ordem no Supabase
       for (const work of updatedWorks) {
         await supabase.from("obras").update({ order_index: work.order }).eq("id", work.id);
       }
@@ -1489,14 +1398,11 @@ export default function App() {
     }
   };
 
-  // Add (create) or update a work
   const handleSaveWork = async (workData: Partial<Obra>) => {
     try {
       const isEditing = !!workData.id;
-      // Se for obra nova, geramos um ID único, se for edição, usamos o existente
       const workId = workData.id || `obra-${Date.now()}`;
 
-      // Montamos o objeto exatamente como a tabela 'obras' espera
       const payloadObra = {
         id: workId,
         name: workData.name,
@@ -1519,14 +1425,12 @@ export default function App() {
         timeline_image: workData.timelineImage || null
       };
 
-      // Comando mágico do Supabase: upsert significa "Se existir atualize, se não existir crie"
       const { error: obraError } = await supabase
         .from("obras")
         .upsert(payloadObra);
 
       if (obraError) throw obraError;
 
-      // Se for uma obra NOVA, aproveitamos e criamos um log de cadastro inicial na tabela 'medicoes_logs'
       if (!isEditing) {
         const { error: logError } = await supabase
           .from("medicoes_logs")
@@ -1543,7 +1447,6 @@ export default function App() {
         if (logError) throw logError;
       }
 
-      // Fecha o modal e recarrega a tela
       setIsModalOpen(false);
       setEditingWork(null);
       await loadDirectSupabaseState();
@@ -1554,19 +1457,14 @@ export default function App() {
     }
   };
 
-  // Process Works: Filter & Sort Client Side
   const filteredWorks = state.works
     .filter((w) => {
-      // Search matches name, contractor, status, or contract code
       const q = search.toLowerCase();
       const matchesText =
         w.name.toLowerCase().includes(q) ||
         w.contractNumber.toLowerCase().includes(q) ||
         w.contractorName.toLowerCase().includes(q);
-
-      // Status filter match
       const matchesStatus = statusFilter === "all" || w.status === statusFilter;
-
       return matchesText && matchesStatus;
     })
     .sort((a, b) => {
@@ -1591,10 +1489,9 @@ export default function App() {
     });
 
   // ==============================================================
-  // RENDERIZAÇÃO DA TELA (DIVIDIDA ENTRE LOGIN E APLICATIVO)
+  // RENDERIZAÇÃO DA TELA
   // ==============================================================
 
-  // 1. TELA DE CARREGAMENTO INICIAL DO LOGIN
   if (isAuthLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
@@ -1603,7 +1500,6 @@ export default function App() {
     );
   }
 
-  // 2. TELA DE LOGIN (Mostra só se o usuário NÃO estiver logado)
   if (!session) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
@@ -1667,10 +1563,8 @@ export default function App() {
     );
   }
 
-  // 2.5. TELA DE BLOQUEIO / AGUARDANDO APROVAÇÃO
-  // Descobre qual o email logado e checa se ele é você (Admin) ou se está na Lista Branca
   const emailLogado = session?.user?.email;
-  const isSuperAdmin = emailLogado === currentUserEmail; // O email master que você definiu
+  const isSuperAdmin = emailLogado === currentUserEmail; 
   const isApproved = isSuperAdmin || (state.authorizedUsers && state.authorizedUsers.includes(emailLogado));
 
   if (session && !isApproved) {
@@ -1689,7 +1583,7 @@ export default function App() {
           </p>
           <button 
             onClick={() => supabase.auth.signOut()}
-            className="mt-4 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition"
+            className="mt-4 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition cursor-pointer"
           >
             Sair e Voltar para Login
           </button>
@@ -1698,11 +1592,9 @@ export default function App() {
     );
   }
 
-  // 3. TELA DO APLICATIVO (Mostra só se o usuário estiver LOGADO)
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col items-stretch" id="applet-root">
       
-      {/* Top Application Header */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs" id="applet-header">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start md:items-center gap-3">
@@ -1718,7 +1610,6 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2.5">
-            {/* Supabase connection status indicator */}
             {state.supabaseStatus && (
               <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] uppercase font-mono tracking-wider font-extrabold border transition ${
                 state.supabaseStatus.connected && state.supabaseStatus.tableExists
@@ -1738,7 +1629,6 @@ export default function App() {
               </div>
             )}
 
-            {/* Sync connection status bubble */}
             <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold font-mono transition ${
               errorHeader 
                 ? "bg-rose-50 text-rose-600 border border-rose-200"
@@ -1754,7 +1644,6 @@ export default function App() {
               </span>
             </div>
             
-            {/* Quick Logout Button */}
             <button
               onClick={() => supabase.auth.signOut()}
               className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition cursor-pointer"
@@ -1778,13 +1667,12 @@ export default function App() {
         </div>
       </header>
 
-      {/* Network Alert Band */}
       {errorHeader && (
         <div className="bg-rose-600 text-white text-xs font-semibold py-2 px-4 shadow text-center flex items-center justify-center gap-2">
           <AlertTriangle className="w-4 h-4 animate-bounce" />
           <span>{errorHeader}</span>
           <button 
-            onClick={() => loadState(true)} 
+            onClick={() => loadDirectSupabaseState()} 
             className="underline hover:text-rose-100 font-bold ml-2 flex items-center gap-1"
           >
             <RefreshCw className="w-3 h-3" /> Forçar Reconexão
@@ -1792,7 +1680,6 @@ export default function App() {
         </div>
       )}
 
-      {/* Loading Canvas Gate */}
       {loading ? (
         <main className="flex-grow flex flex-col items-center justify-center p-8 text-slate-500">
           <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mb-3" />
@@ -1817,10 +1704,8 @@ export default function App() {
           />
         </main>
       ) : (
-        /* Main application Workspace */
         <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 flex flex-col items-stretch">
           
-          {/* Section: Contract and Overall Metrics Summary */}
           <ContractOverview
             contractName={state.contractName}
             supervisorCompany={state.supervisorCompany}
@@ -1836,7 +1721,6 @@ export default function App() {
             onGenerateReport={handleGenerateConsolidatedReport}
           />
 
-          {/* Supabase Status and Table Creation Guidance */}
           {state.supabaseStatus && (!state.supabaseStatus.tableExists || state.supabaseStatus.rlsEnabled || !state.supabaseStatus.connected) && (
             <div className="bg-amber-50/70 border border-amber-200 rounded-2xl p-5 space-y-4 shadow-xs text-slate-800" id="supabase-guidance">
               <div className="flex items-start gap-3">
@@ -1854,21 +1738,11 @@ export default function App() {
                       ? "A sincronização com o Supabase foi interrompida porque o recurso RLS (Row Level Security) está ativo no banco e bloqueou as gravações anônimas."
                       : "Sua conexão com o Supabase foi estabelecida com sucesso. Contudo, a tabela contract_state ainda não foi criada no banco de dados."}
                   </p>
-                  <p className="text-xs text-slate-655 leading-relaxed font-semibold">
-                    {state.supabaseStatus.rlsEnabled 
-                      ? "Para resolver isso e habilitar a gravação instantânea de dados, desative o recurso RLS no painel do Supabase."
-                      : "Para habilitar o salvamento em nuvem e a sincronização em tempo real de cards, obras, aditivos e logs no Supabase, certifique-se de que a tabela contract_state esteja criada."}
-                  </p>
                 </div>
-              </div>
-
-              <div className="text-[11px] text-amber-700 font-medium leading-normal">
-                Nota: O sistema está atualmente usando o armazenamento local. Assim que resolver as permissões de tabela no Supabase, a sincronização em nuvem se tornará ativa automaticamente!
               </div>
             </div>
           )}
 
-          {/* Section: Dashboard interactive filters and sorting */}
           <DashboardFilters
             search={search}
             onSearchChange={setSearch}
@@ -1910,10 +1784,7 @@ export default function App() {
             </div>
           )}
 
-          {/* Core Content Grid Workspace Split: Left Side Obras, Right Side Updates log */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-            
-            {/* Left Workspace: Works Cards Grid (takes 3 of 3 cols) */}
             <div className="lg:col-span-3 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-3xs">
                 <h2 className="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -1986,7 +1857,6 @@ export default function App() {
         </main>
       )}
 
-      {/* Persistent Applet Footer */}
       <footer className="bg-white border-t border-slate-200 mt-auto py-6" id="applet-footer">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-end gap-4 text-xs text-slate-400">
           <div className="flex gap-4">
@@ -2000,7 +1870,6 @@ export default function App() {
         </div>
       </footer>
 
-      {/* Dual interaction form modal overlay */}
       <WorkModal
         isOpen={isModalOpen}
         onClose={() => {

@@ -18,6 +18,7 @@ import {
   FileText
 } from "lucide-react";
 import WeeklyReportModal from "./WeeklyReportModal";
+import AdditiveTimeline from "./AdditiveTimeline";
 
 interface ContractOverviewProps {
   contractName: string;
@@ -509,65 +510,12 @@ export default function ContractOverview({
       </div>
 
       {/* Contract Additive Board Overview Section (Lists all detailed additives on home page card) */}
-      <div className="bg-slate-950 px-6 py-4.5 border-t border-slate-850 flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 flex items-center gap-1.5">
-            <Layers className="w-4 h-4 text-amber-500" />
-            Quadro de Termos Aditivos de Supervisão ({contractAdditives.length})
-          </span>
-        </div>
-        
-        {contractAdditives && contractAdditives.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {contractAdditives.map((add) => {
-              const typeLabels: Record<string, string> = {
-                financeiro: "Financeiro",
-                prazo: "Prazo (Tempo)",
-                misto: "Misto"
-              };
-              const typeColors: Record<string, string> = {
-                financeiro: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
-                prazo: "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20",
-                misto: "bg-purple-500/10 text-purple-400 border border-purple-500/20"
-              };
-              return (
-                <div key={add.id} className="bg-slate-900 border border-slate-800 rounded-xl p-3 flex flex-col justify-between gap-2 shadow-xs transition duration-150 hover:border-slate-700">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-bold text-slate-200">{add.number}</span>
-                    <span className={`text-[9px] font-extrabold px-2 py-0.5 rounded-full ${typeColors[add.type] || "bg-slate-800 text-slate-450"}`}>
-                      {typeLabels[add.type] || add.type}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-slate-400 leading-relaxed font-sans min-h-[32px] line-clamp-2">
-                    {add.description || "Sem descrição cadastrada."}
-                  </p>
-                  <div className="flex items-center justify-between text-[10px] text-slate-500 font-medium pt-1.5 border-t border-slate-850">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-slate-600" />
-                      {formatDate(add.signatureDate)}
-                    </span>
-                    <div className="flex items-center gap-2">
-                      {add.value !== undefined && add.value > 0 && (
-                        <span className="text-emerald-400 font-bold font-mono">+{formatCurrency(add.value)}</span>
-                      )}
-                      {add.days !== undefined && add.days > 0 && (
-                        <span className="text-cyan-400 font-bold font-mono text-[10px] bg-cyan-400/10 px-1 py-0.2 rounded border border-cyan-400/15">
-                          +{add.days}d
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="bg-slate-900/50 rounded-xl p-6 text-center text-xs text-slate-500 border border-slate-850">
-            Nenhum termo aditivo de prazo ou financeiro cadastrado para este contrato.
-          </div>
-        )}
-
-        <div className="flex justify-end pt-3 border-t border-slate-900 mt-2">
+      <AdditiveTimeline
+        additives={contractAdditives}
+        contractStartDate={contractStartDate}
+      />
+      
+      <div className="flex justify-end pt-3 border-t border-slate-900 mt-2 px-6">
           <button
             onClick={() => setIsReportModalOpen(true)}
             className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition cursor-pointer flex items-center gap-1.5 shadow-md"
@@ -575,7 +523,6 @@ export default function ContractOverview({
             <FileText className="w-4 h-4" />
             <span>Gerar Relatório Consolidado</span>
           </button>
-        </div>
       </div>
       
       <WeeklyReportModal 
