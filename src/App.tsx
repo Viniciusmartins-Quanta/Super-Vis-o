@@ -253,46 +253,14 @@ export default function App() {
   const loadState = async (showLoadingIndicator = false) => {
     if (showLoadingIndicator) setLoading(true);
     setIsSyncing(true);
+    setUseDirectSupabaseMode(true);
     
     try {
-      let success = false;
-      let data: DatabaseState | null = null;
-      let attempts = 2; // Keep attempts short to fallback faster
-      let lastError: any = null;
-
-      while (attempts > 0 && !success) {
-        try {
-          // Timeout of 5 seconds
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 5000);
-
-          const res = await fetch("/api/contract", { signal: controller.signal });
-          clearTimeout(timeoutId);
-          
-          if (!res.ok) throw new Error("Falha ao consultar estado no servidor.");
-          data = (await res.json()) as DatabaseState;
-          success = true;
-        } catch (err) {
-          lastError = err;
-          attempts--;
-          console.warn("loadState attempt failed:", err);
-          if (attempts > 0) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-          }
-        }
-      }
-
-      if (success && data) {
-        setState(data);
-        setErrorHeader("");
-        setUseDirectSupabaseMode(false);
-      } else {
-        console.warn("Backend API not responding/offline. Falling back to direct client-side Supabase connection.");
-        setUseDirectSupabaseMode(true);
-        await loadDirectSupabaseState();
-      }
+      await loadDirectSupabaseState();
+      setErrorHeader("");
     } catch (err) {
       console.error("Critical error in loadState:", err);
+      setErrorHeader("Falha na sincronização.");
     } finally {
       if (showLoadingIndicator) setLoading(false);
       setIsSyncing(false);
@@ -1404,13 +1372,9 @@ export default function App() {
   // Update notes of a specific log entry
   const handleUpdateLogNotes = async (logId: string, notes: string) => {
     try {
-      const res = await fetch(`/api/logs/${logId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes })
-      });
-      if (!res.ok) throw new Error("Erro ao atualizar boletim de medição.");
-      await loadState();
+      const { error } = await supabase.from("medicoes_logs").update({ notes }).eq("id", logId);
+      if (error) throw error;
+      await loadDirectSupabaseState();
       setErrorHeader("");
     } catch (err) {
       console.error(err);
@@ -1427,13 +1391,22 @@ export default function App() {
     progressImages?: string[]
   ) => {
     try {
-      const res = await fetch(`/api/logs/${logId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ notes, newProgress, coverImage, progressImages })
-      });
-      if (!res.ok) throw new Error("Erro ao atualizar lançamento.");
-      await loadState();
+      const { error: logError } = await supabase.from("medicoes_logs").update({ 
+        notes, 
+        new_progress: newProgress, 
+        cover_image: coverImage || null, 
+        progress_images: progressImages || [] 
+      }).eq("id", logId);
+      
+      if (logError) throw logError;
+
+      // Atualiza o progresso geral da obra
+      const logEntry = state.logs.find((l) => l.id === logId);
+      if (logEntry) {
+        await supabase.from("obras").update({ progress: newProgress }).eq("id", logEntry.workId);
+      }
+
+      await loadDirectSupabaseState();
       setErrorHeader("");
     } catch (err) {
       console.error(err);
@@ -1443,11 +1416,9 @@ export default function App() {
 
   const handleDeleteLog = async (logId: string) => {
     try {
-      const res = await fetch(`/api/logs/${logId}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Erro ao excluir boletim.");
-      await loadState();
+      const { error } = await supabase.from("medicoes_logs").delete().eq("id", logId);
+      if (error) throw error;
+      await loadDirectSupabaseState();
       setErrorHeader("");
     } catch (err) {
       console.error(err);
@@ -1458,11 +1429,12 @@ export default function App() {
   // Delete a work entry
   const handleDeleteWork = async (workId: string) => {
     try {
-      const res = await fetch(`/api/works/${workId}?deleterName=${encodeURIComponent(activeUser.name)}&deleterRole=${encodeURIComponent(activeUser.role)}`, {
-        method: "DELETE"
-      });
-      if (!res.ok) throw new Error("Falha ao remover obra.");
-      await loadState();
+      // Exclui a obra do banco (os logs vinculados devem sumir sozinhos se houver CASCADE no banco)
+      const { error } = await supabase.from("obras").delete().eq("id", workId);
+      if (error) throw error;
+      
+      await loadDirectSupabaseState();
+      setSelectedWorkId(null); // Volta para a tela inicial
       setErrorHeader("");
     } catch (err) {
       console.error(err);
@@ -1472,11 +1444,8 @@ export default function App() {
 
   // Move a work up or down in sequence order
   const handleMoveWork = async (workId: string, direction: "up" | "down") => {
-    // 1. Map existing works to include numerical orders sequentially
     const sorted = [...state.works].map((w, index) => {
-      if (w.order === undefined) {
-        return { ...w, order: index };
-      }
+      if (w.order === undefined) return { ...w, order: index };
       return w;
     }).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -1493,20 +1462,16 @@ export default function App() {
       sorted[idx + 1] = temp;
     }
 
-    const updatedWorks = sorted.map((w, i) => ({
-      ...w,
-      order: i
-    }));
+    const updatedWorks = sorted.map((w, i) => ({ ...w, order: i }));
+    
+    // Atualiza a tela instantaneamente
+    setState({ ...state, works: updatedWorks });
 
     try {
-      const orderedIds = updatedWorks.map(w => w.id);
-      const res = await fetch("/api/works-reorder", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ orderedIds })
-      });
-      if (!res.ok) throw new Error("Erro ao reordenar obras no servidor.");
-      await loadState();
+      // Salva a nova ordem no Supabase
+      for (const work of updatedWorks) {
+        await supabase.from("obras").update({ order_index: work.order }).eq("id", work.id);
+      }
       setErrorHeader("");
     } catch (err) {
       console.error(err);
