@@ -1919,18 +1919,34 @@ export default function WorkDetail({
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start" id="detail-aditivos-tab">
           {/* Aditamentos List Timeline (takes 2 cols) */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex justify-between items-center bg-transparent">
-              <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest">
-                Cronologia de Adições & Marcos Técnicos
-              </h3>
+            <div className="flex justify-between items-center mb-6">
+                <div>
+                  <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest">
+                    Cronologia de Adições & Marcos Técnicos
+                  </h3>
+                </div>
+                
+                {/* Image upload for chronology */}
+                <div className="border border-slate-300 border-dashed rounded-lg p-3 w-64 text-center cursor-pointer hover:bg-slate-50 transition" onClick={() => document.getElementById('timeline-image-input')?.click()}>
+                  <input id="timeline-image-input" type="file" accept="image/*" className="hidden" onChange={handleTimelineImageChange} />
+                  {work.timelineImage ? (
+                    <img src={work.timelineImage} alt="Cronograma da Obra" className="max-h-24 mx-auto" />
+                  ) : (
+                    <div className="text-slate-400 text-xs">
+                      <ImageIcon className="mx-auto mb-1 h-5 w-5" />
+                      Clique para adicionar Imagem da Cronologia
+                    </div>
+                  )}
+                </div>
+              </div>
+              
               <button
                 onClick={() => setShowAddAdditive(!showAddAdditive)}
-                className="flex items-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-2xs cursor-pointer"
+                className="flex items-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold px-3 py-1.5 rounded-xl text-xs transition shadow-2xs cursor-pointer mb-6"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Registrar Aditivo</span>
               </button>
-            </div>
 
             {/* List */}
             {currentAdditives.length === 0 ? (
@@ -1970,7 +1986,7 @@ export default function WorkDetail({
                         {add.description}
                       </p>
                       
-                      <div className="grid grid-cols-2 gap-3 text-[11px] bg-slate-50 p-3 rounded-lg border border-slate-100">
+                      <div className="grid grid-cols-4 gap-3 text-[11px] bg-slate-50 p-3 rounded-lg border border-slate-100">
                         {add.value !== undefined && add.value !== null && (
                           <div className="flex flex-col">
                             <span className="text-slate-450 font-bold uppercase">Valor Aditivado</span>
@@ -1983,12 +1999,14 @@ export default function WorkDetail({
                             <span className="text-blue-700 font-extrabold">{add.days} meses</span>
                           </div>
                         )}
-                        {add.signatureDate && (
-                          <div className="flex flex-col">
-                            <span className="text-slate-450 font-bold uppercase">Assinatura</span>
-                            <span className="text-slate-700 font-mono font-bold">{formatDate(add.signatureDate)}</span>
-                          </div>
-                        )}
+                        <div className="flex flex-col">
+                          <span className="text-slate-450 font-bold uppercase">Data Assinatura</span>
+                          <span className="text-slate-700 font-mono font-bold">{add.signatureDate ? formatDate(add.signatureDate) : 'N/A'}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-slate-450 font-bold uppercase">Data Vigência</span>
+                          <span className="text-slate-700 font-mono font-bold">{add.newVigenciaDate ? formatDate(add.newVigenciaDate) : 'N/A'}</span>
+                        </div>
                       </div>
                     </div>
 
@@ -2236,14 +2254,7 @@ export default function WorkDetail({
               </form>
             )}
 
-            {/* Quick Context Card */}
-            <div className="bg-slate-900 text-white p-5 rounded-2xl border border-slate-800 space-y-3 shadow-xs">
-              <span className="text-[9px] text-amber-500 uppercase tracking-widest font-extrabold block">Parâmetros de Auditoria</span>
-              <h4 className="text-xs font-bold leading-snug">Metodologia e Registros</h4>
-              <p className="text-[11px] text-slate-300 leading-relaxed font-light">
-                Qualquer aditivo contratual lançado será inserido e recalculado nos cards principais e históricos operacionais de forma automática, garantindo conformidade nos relatórios do TCE e na transparência pública.
-              </p>
-            </div>
+            {/* Quick Context Card REMOVED */}
           </div>
       )}
 
