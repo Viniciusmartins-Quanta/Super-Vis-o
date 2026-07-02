@@ -1959,75 +1959,85 @@ export default function WorkDetail({
               </div>
             ) : (
               <div className="space-y-4">
-                {currentAdditives.map((add, index) => (
-                  <div
-                    key={add.id}
-                    className="bg-white border border-slate-200 rounded-xl p-4.5 flex gap-4 items-start shadow-2xs relative group hover:border-amber-300 transition"
-                  >
-                    <div className="p-2.5 bg-amber-50 text-amber-700 rounded-xl font-bold text-xs uppercase shadow-2xs">
-                      #{index + 1}
-                    </div>
-                    
-                    <div className="flex-grow space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-900 text-sm">{add.number}</span>
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase uppercase-wide tracking-wider ${
-                          add.type === "financeiro" 
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100" 
-                            : add.type === "prazo"
-                              ? "bg-blue-50 text-blue-700 border border-blue-100"
-                              : "bg-purple-50 text-purple-700 border border-purple-100"
-                        }`}>
-                          Aditivo de {add.type === "financeiro" ? "Valor" : add.type === "prazo" ? "Prazo" : "Vigência Misto"}
-                        </span>
+                {currentAdditives.map((add, index) => {
+                  const cleanedNumber = add.number ? add.number.replace(/Março\s*\/\s*/gi, "").replace(/Março\s*/gi, "") : "";
+                  const cleanedDescription = add.description ? add.description.replace(/Março\s*\/\s*/gi, "").replace(/Março\s*/gi, "") : "";
+                  return (
+                    <div
+                      key={add.id}
+                      className="bg-white border border-slate-200 rounded-xl p-4.5 flex gap-4 items-start shadow-2xs relative group hover:border-amber-300 transition"
+                    >
+                      <div className="p-2.5 bg-amber-50 text-amber-700 rounded-xl font-bold text-xs uppercase shadow-2xs">
+                        #{index + 1}
                       </div>
-
-                      <p className="text-xs text-slate-500 font-medium leading-relaxed mb-2">
-                        {add.description}
-                      </p>
                       
-                      <div className="grid grid-cols-4 gap-3 text-[11px] bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        {add.value !== undefined && add.value !== null && (
+                      <div className="flex-grow space-y-1">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 text-sm">{cleanedNumber}</span>
+                          <span className={`px-2 py-0.5 rounded text-[9px] font-extrabold uppercase uppercase-wide tracking-wider ${
+                            add.type === "financeiro" 
+                              ? "bg-emerald-50 text-emerald-700 border border-emerald-100" 
+                              : add.type === "prazo"
+                                ? "bg-blue-50 text-blue-700 border border-blue-100"
+                                : "bg-purple-50 text-purple-700 border border-purple-100"
+                          }`}>
+                            Aditivo de {add.type === "financeiro" ? "Valor" : add.type === "prazo" ? "Prazo" : "Vigência Misto"}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-slate-500 font-medium leading-relaxed mb-2">
+                          {cleanedDescription}
+                        </p>
+                        
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px] bg-slate-50 p-3 rounded-lg border border-slate-100">
                           <div className="flex flex-col">
                             <span className="text-slate-450 font-bold uppercase">Valor Aditivado</span>
-                            <span className="text-emerald-700 font-extrabold">{formatCurrency(add.value)}</span>
+                            <span className="text-emerald-700 font-extrabold">
+                              {add.value !== undefined && add.value !== null ? formatCurrency(add.value) : "R$ 0,00"}
+                            </span>
                           </div>
-                        )}
-                        {add.days && (
                           <div className="flex flex-col">
                             <span className="text-slate-450 font-bold uppercase">Prazo Aditivado</span>
-                            <span className="text-blue-700 font-extrabold">{add.days} meses</span>
+                            <span className="text-blue-700 font-extrabold">
+                              {add.days ? `${add.days} meses` : "N/A"}
+                            </span>
                           </div>
-                        )}
-                        <div className="flex flex-col">
-                          <span className="text-slate-450 font-bold uppercase">Data de Execução</span>
-                          <span className="text-slate-700 font-mono font-bold">{add.signatureDate ? formatDate(add.signatureDate) : 'N/A'}</span>
-                        </div>
-                        <div className="flex flex-col">
-                          <span className="text-slate-450 font-bold uppercase">Data de Vigência Contratual</span>
-                          <span className="text-slate-700 font-mono font-bold">{add.newVigenciaDate ? formatDate(add.newVigenciaDate) : 'N/A'}</span>
+                          <div className="flex flex-col">
+                            <span className="text-slate-450 font-bold uppercase">Data de Execução</span>
+                            <span className="text-slate-700 font-mono font-bold">
+                              {add.signatureDate ? formatDate(add.signatureDate) : "N/A"}
+                            </span>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-slate-450 font-bold uppercase">Data de Vigência Contratual</span>
+                            <span className="text-slate-700 font-mono font-bold">
+                              {add.newVigenciaDate ? formatDate(add.newVigenciaDate) : "N/A"}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex gap-1.5 self-start md:opacity-0 group-hover:opacity-100 transition">
-                      <button
-                        onClick={() => handleEditAdditiveClick(add)}
-                        className="p-2 bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-600 border border-slate-200 rounded-lg hover:border-amber-200 transition cursor-pointer"
-                        title="Editar Aditivo"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        onClick={() => handleDeleteAdditive(add.id)}
-                        className="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 rounded-lg hover:border-rose-200 transition cursor-pointer"
-                        title="Excluir Aditivo"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                      <div className="flex gap-1.5 self-start md:opacity-0 group-hover:opacity-100 transition">
+                        <button
+                          type="button"
+                          onClick={() => handleEditAdditiveClick(add)}
+                          className="p-2 bg-slate-50 hover:bg-amber-50 text-slate-400 hover:text-amber-600 border border-slate-200 rounded-lg hover:border-amber-200 transition cursor-pointer"
+                          title="Editar Aditivo"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteAdditive(add.id)}
+                          className="p-2 bg-slate-50 hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 rounded-lg hover:border-rose-200 transition cursor-pointer"
+                          title="Excluir Aditivo"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -2253,26 +2263,16 @@ export default function WorkDetail({
                 </div>
               </form>
             )}
-
-            {/* Quick Context Card REMOVED */}
           </div>
       )}
 
       {activeTab === "lancamentos" && (
         <div className="animate-fade-in" id="detail-lancamentos-tab">
             <div className="flex justify-between items-center mb-6">
-                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                <h3 className="text-sm font-extrabold text-slate-800 uppercase tracking-widest flex items-center gap-2 font-sans">
                   <Logs className="w-4.5 h-4.5 text-amber-500" />
                   <span>Relatórios Semanais de Campo</span>
                 </h3>
-                <button
-                    type="button"
-                    onClick={() => setIsActivityModalOpen(true)}
-                    className="bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs px-4 py-2 rounded-xl shadow-2xs hover:shadow-xs transition duration-200 flex items-center gap-2 cursor-pointer"
-                >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>Novo Relatório</span>
-                </button>
             </div>
 
           {workLogs.length === 0 ? (
@@ -2307,22 +2307,22 @@ export default function WorkDetail({
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
               {/* Left Column: Quick Action Box */}
-              <div className="lg:col-span-1 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-3xs">
-                <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center text-amber-500">
-                  <Logs className="w-6 h-6" />
+              <div className="lg:col-span-4 bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-3xs">
+                <div className="w-14 h-14 bg-amber-100/60 text-amber-650 rounded-2xl flex items-center justify-center shadow-3xs border border-amber-200/30">
+                  <Logs className="w-6.5 h-6.5" />
                 </div>
-                <div className="space-y-1">
-                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider">Registrar Nova Atividade</h4>
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-extrabold text-slate-900 uppercase tracking-widest font-sans">Registrar Nova Atividade</h4>
+                  <p className="text-[11.5px] text-slate-500 font-medium leading-relaxed">
                     Insira as informações semanais, avanço físico consolidado, fotos de progresso e observações de campo.
                   </p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setIsActivityModalOpen(true)}
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs py-3 rounded-xl shadow-2xs hover:shadow-xs transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
+                  className="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs py-3.5 rounded-2xl shadow-sm hover:shadow transition duration-200 flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <PlusCircle className="w-4.5 h-4.5" />
                   <span>Lançar Atividade Semanal</span>
@@ -2330,20 +2330,20 @@ export default function WorkDetail({
               </div>
 
               {/* Right Column: Weekly Logs list */}
-              <div className="lg:col-span-2 space-y-4">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Histórico de Lançamentos ({workLogs.length})</h4>
+              <div className="lg:col-span-8 space-y-4">
+                <h4 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest block font-sans">Histórico de Lançamentos ({workLogs.length})</h4>
                 
                 <div className="space-y-4">
                   {workLogs.map((log) => {
                     const parsed = parseWeeklyReport(log.notes);
                     return (
-                      <div key={log.id} className="bg-white border border-slate-200 rounded-2xl p-5 shadow-2xs hover:shadow-xs transition space-y-4">
+                      <div key={log.id} className="bg-white border border-slate-200 rounded-3xl p-6 shadow-3xs hover:shadow-2xs transition duration-200 space-y-4">
                         {/* Log Card Header */}
                         <div className="flex justify-between items-start gap-4">
                           <div className="space-y-1">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className="font-extrabold text-slate-900 text-sm">Lançamento de Atividade Semanal</span>
-                              <span className="bg-amber-100 text-amber-800 text-[10px] font-mono font-black px-2 py-0.5 rounded-full">
+                              <span className="font-extrabold text-slate-900 text-sm font-sans">Lançamento de Atividade Semanal</span>
+                              <span className="bg-amber-50 text-amber-700 text-[10px] font-mono font-black px-2.5 py-0.5 rounded-full border border-amber-200/50 shadow-3xs">
                                 {log.newProgress}% avanço
                               </span>
                             </div>
@@ -2353,14 +2353,14 @@ export default function WorkDetail({
                           </div>
                           
                           {/* Action Buttons */}
-                          <div className="flex items-center gap-1.5 shrink-0">
+                          <div className="flex items-center gap-2 shrink-0">
                             <button
                               type="button"
                               onClick={() => {
                                 setEditingLog(log);
                                 setIsActivityModalOpen(true);
                               }}
-                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-lg transition cursor-pointer"
+                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-xl transition cursor-pointer shadow-3xs"
                               title="Editar Lançamento"
                             >
                               <Edit3 className="w-3.5 h-3.5" />
@@ -2368,7 +2368,7 @@ export default function WorkDetail({
                             <button
                               type="button"
                               onClick={() => handleExportPDF(log)}
-                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-lg transition cursor-pointer"
+                              className="p-2 text-slate-400 hover:text-amber-600 hover:bg-slate-50 border border-slate-200 hover:border-amber-200 rounded-xl transition cursor-pointer shadow-3xs"
                               title="Exportar PDF do boletim"
                             >
                               <FileText className="w-3.5 h-3.5" />
@@ -2381,7 +2381,7 @@ export default function WorkDetail({
                                     onDeleteLog(log.id);
                                   }
                                 }}
-                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-slate-50 border border-slate-200 hover:border-rose-200 rounded-lg transition cursor-pointer"
+                                className="p-2 text-slate-400 hover:text-rose-650 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-xl transition cursor-pointer shadow-3xs"
                                 title="Excluir Relatório"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -2391,8 +2391,8 @@ export default function WorkDetail({
                         </div>
 
                         {/* Content details */}
-                        <div className="text-xs text-slate-600 space-y-3 pt-3 border-t border-slate-100">
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px] text-slate-500">
+                        <div className="text-xs text-slate-600 space-y-4 pt-3.5 border-t border-slate-100">
+                          <div className="flex flex-wrap gap-x-5 gap-y-1.5 font-mono text-[11px] text-slate-500">
                             <div>Período: <span className="font-extrabold text-slate-700">{parsed.period}</span></div>
                             {parsed.isStandardReport && (
                               <>
@@ -2403,11 +2403,11 @@ export default function WorkDetail({
                           </div>
 
                           {parsed.isStandardReport ? (
-                            <div className="space-y-3">
+                            <div className="space-y-3.5 pt-1.5">
                               {parsed.weeklyActivities && parsed.weeklyActivities.length > 0 && (
                                 <div className="space-y-1">
-                                  <span className="font-bold text-slate-800 block">Atividades Executadas na Semana:</span>
-                                  <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-slate-600">
+                                  <span className="font-extrabold text-slate-800 block text-xs tracking-wide">• Atividades Executadas na Semana:</span>
+                                  <ul className="list-disc list-inside space-y-1 pl-2 text-slate-600 leading-relaxed text-[12.5px]">
                                     {parsed.weeklyActivities.map((act, i) => (
                                       <li key={i}>{act}</li>
                                     ))}
@@ -2417,8 +2417,8 @@ export default function WorkDetail({
                               
                               {parsed.nextWeekActivities && parsed.nextWeekActivities.length > 0 && (
                                 <div className="space-y-1">
-                                  <span className="font-bold text-slate-800 block">Próxima Semana:</span>
-                                  <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-slate-500">
+                                  <span className="font-extrabold text-slate-800 block text-xs tracking-wide">• Próxima Semana:</span>
+                                  <ul className="list-disc list-inside space-y-1 pl-2 text-slate-550 leading-relaxed text-[12.5px]">
                                     {parsed.nextWeekActivities.map((act, i) => (
                                       <li key={i}>{act}</li>
                                     ))}
@@ -2428,8 +2428,8 @@ export default function WorkDetail({
 
                               {parsed.observations && parsed.observations.length > 0 && (
                                 <div className="space-y-1">
-                                  <span className="font-bold text-rose-700 block">Observações / Apontamentos:</span>
-                                  <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-rose-600">
+                                  <span className="font-extrabold text-rose-700 block text-xs tracking-wide">• Observações / Apontamentos:</span>
+                                  <ul className="list-disc list-inside space-y-1 pl-2 text-rose-600 leading-relaxed font-semibold text-[12.5px]">
                                     {parsed.observations.map((act, i) => (
                                       <li key={i}>{act}</li>
                                     ))}
@@ -2443,17 +2443,17 @@ export default function WorkDetail({
 
                           {/* Image Gallery */}
                           {(log.coverImage || (log.progressImages && log.progressImages.length > 0)) && (
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-3">
                               {log.coverImage && (
-                                <div className="relative group/img rounded-lg overflow-hidden border border-slate-200 bg-slate-50 aspect-video">
-                                  <img src={log.coverImage} referrerPolicy="no-referrer" className="w-full h-full object-cover" alt="Foto Capa" />
-                                  <span className="absolute bottom-1 left-1 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded">Capa</span>
+                                <div className="relative group/img rounded-xl overflow-hidden border border-slate-200 bg-slate-50 aspect-video shadow-3xs">
+                                  <img src={log.coverImage} referrerPolicy="no-referrer" className="w-full h-full object-cover transition duration-200 group-hover/img:scale-105" alt="Foto Capa" />
+                                  <span className="absolute bottom-1.5 left-1.5 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">Capa</span>
                                 </div>
                               )}
                               {log.progressImages?.map((imgUrl, idx) => (
-                                <div key={idx} className="relative group/img rounded-lg overflow-hidden border border-slate-200 bg-slate-50 aspect-video">
-                                  <img src={imgUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover" alt={`Foto Progresso ${idx + 1}`} />
-                                  <span className="absolute bottom-1 left-1 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded font-sans font-medium">Foto {idx + 1}</span>
+                                <div key={idx} className="relative group/img rounded-xl overflow-hidden border border-slate-200 bg-slate-50 aspect-video shadow-3xs">
+                                  <img src={imgUrl} referrerPolicy="no-referrer" className="w-full h-full object-cover transition duration-200 group-hover/img:scale-105" alt={`Foto Progresso ${idx + 1}`} />
+                                  <span className="absolute bottom-1.5 left-1.5 bg-slate-900/85 text-white text-[8px] font-bold px-1.5 py-0.5 rounded font-mono uppercase tracking-wider">Foto {idx + 1}</span>
                                 </div>
                               ))}
                             </div>
