@@ -659,4 +659,293 @@ export default function App() {
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
       @page { size: A4; margin: 0; }
-      body { margin: 0; padding: 0;
+      body { margin: 0; padding: 0; background-color: #cbd5e1; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; display: flex; flex-direction: column; align-items: center; }
+      
+      .cover-page {
+        width: 210mm; height: 297mm; position: relative; background-color: white; page-break-after: always; break-after: page; z-index: 10; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+      }
+
+      .watermark-bg {
+        position: fixed; top: 0; left: 0; width: 210mm; height: 297mm;
+        background-image: url('/timbrado.jpg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; z-index: -1;
+      }
+
+      .main-print-table { width: 210mm; border-collapse: collapse; border: none; margin: 0 auto; background-color: transparent; }
+      .main-print-table thead tr td { height: 15mm; border: none; padding: 0; } 
+      .main-print-table tfoot tr td { height: 35mm; border: none; padding: 0; } 
+      .main-print-table tbody tr td { padding: 0 15mm; border: none; vertical-align: top; }
+
+      .section-tbody { page-break-inside: auto; break-inside: auto; }
+      .break-before { page-break-before: always; break-before: page; }
+      
+      .black-grid-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000000; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; line-height: 1.4; background-color: white; }
+      .black-grid-table td, .black-grid-table th { border: 1px solid #000000; padding: 4px 8px; color: #000000;}
+      .black-grid-table tr { page-break-inside: avoid; break-inside: avoid; }
+
+      @media print { 
+        body { background-color: white; } 
+        .cover-page { box-shadow: none; }
+      }
+    </style>
+</head>
+<body>
+  ${coverPageHtml}
+  <div class="watermark-bg"></div>
+  <table class="main-print-table">
+    <thead><tr><td></td></tr></thead>
+    ${contentHtml}
+    <tfoot><tr><td></td></tr></tfoot>
+  </table>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => { setTimeout(() => { window.print(); }, 500); });
+  </script>
+</body>
+</html>
+    `.trim();
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(pdfHtml); printWindow.document.close();
+    } else {
+      alert("Habilite permissões para popups no seu navegador para gerar o visualizador de impressão do PDF.");
+    }
+  };
+
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-black text-slate-800">Painel de Obras</h1>
+            <p className="text-sm text-slate-500 mt-1">Acesso restrito ao escritório</p>
+          </div>
+
+          <form onSubmit={isRegisterMode ? handleSignUp : handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
+              <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-amber-500" placeholder="seu@email.com" required />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Senha (Mín. 6 caracteres)</label>
+              <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-amber-500" placeholder="••••••••" required />
+            </div>
+
+            {authError && (
+              <div className={`text-xs p-3 rounded-lg text-center font-semibold ${authError.includes('✅') ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'}`}>
+                {authError}
+              </div>
+            )}
+
+            <button type="submit" className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-extrabold py-3 rounded-lg transition cursor-pointer">
+              {isRegisterMode ? "Criar Conta" : "Entrar no Sistema"}
+            </button>
+          </form>
+
+          <div className="mt-6 text-center">
+            <button onClick={() => { setIsRegisterMode(!isRegisterMode); setAuthError(""); }} className="text-xs text-slate-500 hover:text-slate-800 font-bold underline cursor-pointer">
+              {isRegisterMode ? "Já tenho uma conta. Fazer Login" : "Não tem conta? Solicitar Acesso"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (session && !isApproved) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col justify-center items-center p-4">
+        <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center space-y-4">
+          <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-2">
+            <AlertTriangle className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-black text-slate-800">Acesso em Análise</h2>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            A sua conta foi vinculada ao email <strong>{emailLogado}</strong> com sucesso, mas você ainda não possui permissão para ver as obras.
+          </p>
+          <p className="text-xs text-slate-500 bg-slate-50 p-3 rounded border border-slate-200">
+            Peça ao administrador do sistema para incluir seu email na lista de acessos autorizados. Assim que ele fizer isso, a sua tela será liberada automaticamente.
+          </p>
+          <button onClick={() => supabase.auth.signOut()} className="mt-4 w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition cursor-pointer">
+            Sair e Voltar para Login
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-slate-50 flex flex-col items-stretch" id="applet-root">
+      <header className="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-xs" id="applet-header">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-3 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-start md:items-center gap-3">
+            <div className="p-2 bg-amber-500 rounded-xl text-slate-900 shadow-sm animate-pulse-slow flex-shrink-0">
+              <Construction className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] uppercase tracking-wider font-extrabold text-amber-600 block leading-none">CODEMAR CT-026/2025</span>
+              <h1 className="text-xs sm:text-sm md:text-base font-bold text-slate-800 leading-tight">
+                Assessoramento, Gerenciamento, Fiscalização Técnica, Supervisão e Controle de Qualidade de Obras
+              </h1>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5">
+            {state.supabaseStatus && (
+              <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] uppercase font-mono tracking-wider font-extrabold border transition ${
+                state.supabaseStatus.connected && state.supabaseStatus.tableExists ? (state.supabaseStatus.rlsEnabled ? "bg-amber-100 text-amber-800 border-amber-300 animate-pulse" : "bg-teal-50 text-teal-700 border-teal-200") : "bg-rose-50 text-rose-700 border-rose-200"
+              }`} title={state.supabaseStatus.error || "Supabase sincronizado com sucesso"}>
+                <Cloud className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{state.supabaseStatus.connected && state.supabaseStatus.tableExists ? (state.supabaseStatus.rlsEnabled ? "Supabase RLS Blq" : "Supabase OK") : "Supabase Local"}</span>
+              </div>
+            )}
+
+            <div className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-[10px] font-bold font-mono transition ${ errorHeader ? "bg-rose-50 text-rose-600 border border-rose-200" : isSyncing ? "bg-amber-50 text-amber-600 border border-amber-200/50" : "bg-emerald-50 text-emerald-600 border border-emerald-200/50" }`}>
+              <span className={`w-2 h-2 rounded-full ${errorHeader ? "bg-rose-500 animate-ping" : isSyncing ? "bg-amber-500 animate-spin" : "bg-emerald-500"}`} />
+              <span className="hidden sm:inline">{errorHeader ? "Sem rede" : isSyncing ? "Sincronizando..." : "Sincronizado"}</span>
+            </div>
+            
+            <button onClick={() => supabase.auth.signOut()} className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition cursor-pointer" title="Sair do Sistema">
+              <LogOut className="w-4 h-4" />
+            </button>
+
+            {canEdit && (
+              <button onClick={() => { setEditingWork(null); setIsModalOpen(true); }} className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-xs px-4.5 py-2.5 rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer" id="add-obra-top-btn">
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Adicionar Obra</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {errorHeader && (
+        <div className="bg-rose-600 text-white text-xs font-semibold py-2 px-4 shadow text-center flex items-center justify-center gap-2">
+          <AlertTriangle className="w-4 h-4 animate-bounce" />
+          <span>{errorHeader}</span>
+          <button onClick={() => loadDirectSupabaseState()} className="underline hover:text-rose-100 font-bold ml-2 flex items-center gap-1"><RefreshCw className="w-3 h-3" /> Forçar Reconexão</button>
+        </div>
+      )}
+
+      {loading ? (
+        <main className="flex-grow flex flex-col items-center justify-center p-8 text-slate-500">
+          <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mb-3" />
+          <p className="text-sm font-semibold">Carregando painel de supervisão...</p>
+        </main>
+      ) : selectedWorkId && state.works.find((w: any) => w.id === selectedWorkId) ? (
+        <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 flex flex-col items-stretch">
+          <WorkDetail
+            work={state.works.find((w: any) => w.id === selectedWorkId)!}
+            allLogs={state.logs}
+            activeUser={activeUser}
+            onBack={() => setSelectedWorkId(null)}
+            onUpdateWork={handleSaveWork}
+            onEditClick={(w) => {
+              if(!canEdit) return alert("Apenas leitura.");
+              setEditingWork(w);
+              setIsModalOpen(true);
+            }}
+            onLaunchMeasurement={handleLaunchMeasurement}
+            onUpdateLogNotes={handleUpdateLogNotes}
+            onUpdateLog={handleUpdateLog}
+            onDeleteLog={handleDeleteLog}
+          />
+        </main>
+      ) : (
+        <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 md:py-8 space-y-6 flex flex-col items-stretch">
+          
+          <ContractOverview
+            contractName={state.contractName}
+            supervisorCompany={state.supervisorCompany}
+            contractValue={state.contractValue}
+            contractStartDate={state.contractStartDate}
+            contractEndDate={state.contractEndDate}
+            contractAdditives={state.contractAdditives}
+            works={state.works}
+            logs={state.logs}
+            onUpdateSettings={handleUpdateSettings}
+            reportWeek={reportWeek}
+            setReportWeek={setReportWeek}
+            onGenerateReport={handleGenerateConsolidatedReport}
+          />
+
+          <DashboardFilters search={search} onSearchChange={setSearch} statusFilter={statusFilter} onStatusFilterChange={setStatusFilter} sortBy={sortBy} onSortByChange={setSortBy} activeUser={activeUser} onActiveUserChange={setActiveUser} onResetData={handleResetData} />
+          
+          {isSuperAdmin && (
+            <button onClick={() => setIsAccessControlOpen(true)} className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-bold hover:bg-slate-700 transition cursor-pointer shadow-sm">
+              <Users className="w-4 h-4" /> Gerenciar Usuários (Permissões)
+            </button>
+          )}
+
+          {isAccessControlOpen && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden">
+                <div className="flex justify-between items-center p-4 border-b">
+                  <h3 className="font-bold text-slate-800">Controle de Permissões de Acesso</h3>
+                  <button onClick={() => setIsAccessControlOpen(false)} className="text-slate-400 hover:text-slate-600"><X className="w-5 h-5" /></button>
+                </div>
+                <div className="p-4 bg-slate-50">
+                  <UserAccessControl authorizedUsers={state.authorizedUsers || []} readonlyUsers={state.readonlyUsers || []} onUpdateAccess={handleUpdateAccess} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+            <div className="lg:col-span-3 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-3xs">
+                <h2 className="text-base md:text-lg font-bold text-slate-800 flex items-center gap-2">
+                  <CheckSquare className="w-5 h-5 text-amber-500" /> Grade de Obras sob Supervisão
+                </h2>
+                <div className="flex items-center gap-2.5 self-end sm:self-auto">
+                  {canEdit && (
+                    <button onClick={handleToggleReorderMode} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer border ${isReorderMode ? "bg-amber-500 text-slate-900 border-amber-600 shadow-sm" : "bg-white hover:bg-slate-50 text-slate-700 border-slate-200"}`}>
+                      <Sliders className="w-3.5 h-3.5" /> <span>{isReorderMode ? "Concluir Ordenação" : "Reorganizar Sequência"}</span>
+                    </button>
+                  )}
+                  <span className="text-xs text-slate-500 font-medium">Exibindo {filteredWorks.length} de {state.works.length} obras</span>
+                </div>
+              </div>
+
+              {filteredWorks.length === 0 ? (
+                <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center text-slate-450 space-y-3">
+                  <ClipboardList className="w-12 h-12 text-slate-300 mx-auto" />
+                  <div><h3 className="font-bold text-slate-700">Nenhuma obra localizada</h3></div>
+                  {canEdit && (
+                    <button onClick={() => { setEditingWork(null); setIsModalOpen(true); }} className="mt-2 inline-flex items-center gap-1 bg-amber-500 hover:bg-amber-400 text-slate-900 font-extrabold text-xs px-4 py-2 rounded-xl transition cursor-pointer"><Plus className="w-3.5 h-3.5" /><span>Adicionar Primeira Obra</span></button>
+                  )}
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5" id="obras-grid-container">
+                  {filteredWorks.map((work: any) => (
+                    <WorkCard key={work.id} work={work} activeUser={activeUser} isReorderMode={isReorderMode} onMoveUp={() => handleMoveWork(work.id, "up")} onMoveDown={() => handleMoveWork(work.id, "down")} onLaunchMeasurement={handleLaunchMeasurement} onEditClick={(w) => { if(!canEdit) return alert("Apenas leitura."); setEditingWork(w); setIsModalOpen(true); }} onDeleteClick={handleDeleteWork} onViewDetail={(w) => setSelectedWorkId(w.id)} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
+      )}
+
+      <footer className="bg-white border-t border-slate-200 mt-auto py-6" id="applet-footer">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-end gap-4 text-xs text-slate-400">
+          <div className="flex gap-4">
+            <span className="font-mono bg-slate-50 px-2.5 py-1 rounded border border-slate-250">Dispositivo: Navegador</span>
+            <span className="text-emerald-500 font-semibold flex items-center gap-1">● Cripto-Sincronizado (Nível: {canEdit ? "Editor" : "Leitor"})</span>
+          </div>
+        </div>
+      </footer>
+
+      {canEdit && (
+        <WorkModal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); setEditingWork(null); }} onSave={handleSaveWork} editingWork={editingWork} activeUser={activeUser} />
+      )}
+    </div>
+  );
+}
