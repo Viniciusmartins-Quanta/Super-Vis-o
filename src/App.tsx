@@ -349,6 +349,8 @@ export default function App() {
 
   const handleGenerateConsolidatedReport = () => {
     if (!reportWeek) return alert("Por favor, selecione uma semana para o relatório.");
+
+    // Funções auxiliares (Moeda, Extenso, Datas)
     function valorParaExtenso(valor: number): string {
       if (valor === 0) return "Zero reais";
       const unidades = ["", "Um", "Dois", "Três", "Quatro", "Cinco", "Seis", "Sete", "Oito", "Nove"];
@@ -469,76 +471,69 @@ export default function App() {
       return result;
     };
 
-    let currentPage = 1;
-
-    // A capa continua com altura fixa
+    // 1. CAPA (Isolada com tamanho fixo e fundo próprio)
     const coverPageHtml = `
-      <div class="page cover-page relative" style="height: 297mm; overflow: hidden; padding: 20mm;">
-        <div class="absolute inset-0 z-0">
-          <img src="/cover.jpg" class="w-full h-full object-cover" alt="Capa" />
+      <div class="cover-page">
+        <div style="position: absolute; inset: 0; z-index: -1;">
+          <img src="/cover.jpg" style="width: 100%; height: 100%; object-fit: cover;" alt="Capa" />
         </div>
-        <div class="page-content relative z-10 flex flex-col justify-end h-full">
-          <div class="mb-[30mm] select-none text-left">
-            <h1 style="font-family: Arial, sans-serif; font-size: 26pt; font-weight: bold; color: black; line-height: 1.25; margin: 0 0 6mm 0; text-transform: uppercase;">
-              RELATÓRIO SEMANAL DE<br/> GERENCIAMENTO E FISCALIZAÇÃO<br/> TÉCNICA DE OBRAS
-            </h1>
-            <div style="font-family: Arial, sans-serif; font-size: 16pt; font-weight: bold; color: black; margin: 0 0 6mm 0;">
-              ${periodFormatted}
-            </div>
-            <div style="font-family: 'Aptos Narrow', 'Aptos', sans-serif; font-size: 12pt; font-weight: bold; color: #f97316; margin: 0 0 5mm 0; text-transform: uppercase;">
-              TERMO DE CONTRATO Nº 26/2025
-            </div>
-            <p style="font-family: Calibri, sans-serif; font-size: 16pt; font-weight: bold; color: black; line-height: 1.35; max-width: 630px; margin: 0;">
-              Empresa especializada em engenharia para realização de serviços técnicos de Assessoramento, Gerenciamento, Supervisão, Fiscalização Técnica e Controle Tecnológico das obras que serão desenvolvidas no município de Maricá/RJ, no âmbito da CODEMAR.
-            </p>
+        <div style="position: absolute; bottom: 0; left: 0; width: 100%; padding: 20mm; box-sizing: border-box;">
+          <h1 style="font-family: Arial, sans-serif; font-size: 26pt; font-weight: bold; color: black; line-height: 1.25; margin: 0 0 6mm 0; text-transform: uppercase;">
+            RELATÓRIO SEMANAL DE<br/>
+            GERENCIAMENTO E FISCALIZAÇÃO<br/>
+            TÉCNICA DE OBRAS
+          </h1>
+          <div style="font-family: Arial, sans-serif; font-size: 16pt; font-weight: bold; color: black; margin: 0 0 6mm 0;">
+            ${periodFormatted}
           </div>
-          <div class="page-footer">${currentPage++}</div>
+          <div style="font-family: 'Aptos Narrow', 'Aptos', sans-serif; font-size: 12pt; font-weight: bold; color: #f97316; margin: 0 0 5mm 0; text-transform: uppercase;">
+            TERMO DE CONTRATO Nº 26/2025
+          </div>
+          <p style="font-family: Calibri, sans-serif; font-size: 16pt; font-weight: bold; color: black; line-height: 1.35; max-width: 630px; margin: 0;">
+            Empresa especializada em engenharia para realização de serviços técnicos de Assessoramento, Gerenciamento, Supervisão, Fiscalização Técnica e Controle Tecnológico das obras que serão desenvolvidas no município de Maricá/RJ, no âmbito da CODEMAR.
+          </p>
         </div>
-      </div>
-    `;
-    
-    // ATENÇÃO NA ENGENHARIA DA NOVA TABELA DE LAYOUT <table class="print-layout-table">
-    const summaryPageHtml = `
-      <div class="page watermark-page">
-        <table class="print-layout-table">
-          <thead><tr><td></td></tr></thead>
-          <tbody><tr><td>
-            <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-              <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">FICHA TÉCNICA DO CONTRATO DE SUPERVISÃO</h2>
-            </div>
-            <table class="black-grid-table" style="margin-bottom: 20px;">
-              <tbody>
-                <tr><td style="font-weight: bold; width: 45%;">Contrato de Supervisão:</td><td style="font-weight: bold;">${state.contractName}</td></tr>
-                <tr><td style="font-weight: bold;">Empresa Supervisora:</td><td>${state.supervisorCompany}</td></tr>
-                <tr><td style="font-weight: bold;">Início do Contrato:</td><td>${formatDate(state.contractStartDate)}</td></tr>
-                <tr><td style="font-weight: bold;">Término do Contrato:</td><td>${formatDate(state.contractEndDate)}</td></tr>
-                <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.contractValue)}</td></tr>
-              </tbody>
-            </table>
-            <div style="font-family: Arial, sans-serif; font-size: 10pt; font-weight: bold; color: black; margin-bottom: 8px; text-transform: uppercase; border-left: 3px solid #f97316; padding-left: 8px;">RESUMO DAS OBRAS ATIVAS NA SEMANA</div>
-            <table class="black-grid-table">
-              <thead><tr style="background-color: #f3f4f6;"><th style="font-weight: bold; text-align: left; width: 35%;">Obra</th><th style="font-weight: bold; text-align: left; width: 25%;">Construtora</th><th style="font-weight: bold; text-align: center; width: 15%;">Progresso</th><th style="font-weight: bold; text-align: center; width: 25%;">Boletim da Semana</th></tr></thead>
-              <tbody>
-                ${activeWorks.map((work:any) => {
-                  const logsForWork = state.logs.filter((log:any) => {
-                    let logDate = new Date(log.timestamp); const parsed = parsePeriodDates(log.notes); 
-                    if (parsed) {logDate = parsed.start;} 
-                    return getISOWeekString(logDate) === reportWeek && log.workId === work.id; 
-                  }); 
-                  const sortedLogs = [...logsForWork].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); 
-                  const latestLog = sortedLogs[0]; const progressVal = latestLog ? latestLog.newProgress : work.progress; 
-                  return `<tr><td style="font-weight: bold;">${work.name}</td><td>${work.contractorName || "N/A"}</td><td style="text-align: center; font-weight: bold;">${progressVal}%</td><td style="text-align: center;">${latestLog ? `<span style="color: #059669; font-weight: bold;">✔ Registrado</span>` : `<span style="color: #dc2626; font-style: italic;">Não registrado</span>`}</td></tr>`; 
-                }).join("")}
-              </tbody>
-            </table>
-          </td></tr></tbody>
-          <tfoot><tr><td></td></tr></tfoot>
-        </table>
-        <div class="page-footer">${currentPage++}</div>
       </div>
     `;
 
-    let worksDetailHtml = "";
+    // 2. CONSTRUÇÃO DO CONTEÚDO DINÂMICO
+    let contentHtml = "";
+
+    // -- Resumo do Contrato --
+    contentHtml += `<tbody class="section-tbody"><tr><td>`;
+    contentHtml += `
+      <div style="background-color: #f97316; border: 0.3mm solid black; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+        <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">FICHA TÉCNICA DO CONTRATO DE SUPERVISÃO</h2>
+      </div>
+      <table class="black-grid-table" style="margin-bottom: 20px;">
+        <tbody>
+          <tr><td style="font-weight: bold; width: 45%;">Contrato de Supervisão:</td><td style="font-weight: bold;">${state.contractName}</td></tr>
+          <tr><td style="font-weight: bold;">Empresa Supervisora:</td><td>${state.supervisorCompany}</td></tr>
+          <tr><td style="font-weight: bold;">Início do Contrato:</td><td>${formatDate(state.contractStartDate)}</td></tr>
+          <tr><td style="font-weight: bold;">Término do Contrato:</td><td>${formatDate(state.contractEndDate)}</td></tr>
+          <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.contractValue)}</td></tr>
+        </tbody>
+      </table>
+      <div style="font-family: Arial, sans-serif; font-size: 10pt; font-weight: bold; color: black; margin-bottom: 8px; text-transform: uppercase; border-left: 3px solid #f97316; padding-left: 8px;">RESUMO DAS OBRAS ATIVAS NA SEMANA</div>
+      <table class="black-grid-table">
+        <thead><tr style="background-color: #f3f4f6;"><th style="font-weight: bold; text-align: left; width: 35%;">Obra</th><th style="font-weight: bold; text-align: left; width: 25%;">Construtora</th><th style="font-weight: bold; text-align: center; width: 15%;">Progresso</th><th style="font-weight: bold; text-align: center; width: 25%;">Boletim da Semana</th></tr></thead>
+        <tbody>
+          ${activeWorks.map((work:any) => {
+            const logsForWork = state.logs.filter((log:any) => {
+              let logDate = new Date(log.timestamp); const parsed = parsePeriodDates(log.notes); 
+              if (parsed) {logDate = parsed.start;} 
+              return getISOWeekString(logDate) === reportWeek && log.workId === work.id; 
+            }); 
+            const sortedLogs = [...logsForWork].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()); 
+            const latestLog = sortedLogs[0]; const progressVal = latestLog ? latestLog.newProgress : work.progress; 
+            return `<tr><td style="font-weight: bold;">${work.name}</td><td>${work.contractorName || "N/A"}</td><td style="text-align: center; font-weight: bold;">${progressVal}%</td><td style="text-align: center;">${latestLog ? `<span style="color: #059669; font-weight: bold;">✔ Registrado</span>` : `<span style="color: #dc2626; font-style: italic;">Não registrado</span>`}</td></tr>`; 
+          }).join("")}
+        </tbody>
+      </table>
+    `;
+    contentHtml += `</td></tr></tbody>`;
+
+    // -- Loop nas Obras --
     activeWorks.forEach((work:any) => {
       const logsForWork = state.logs.filter((log:any) => { let logDate = new Date(log.timestamp); const parsed = parsePeriodDates(log.notes); if (parsed) logDate = parsed.start; return getISOWeekString(logDate) === reportWeek && log.workId === work.id; });
       const sortedLogs = [...logsForWork].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
@@ -566,115 +561,165 @@ export default function App() {
       if (log) {
         const parsed = parseWeeklyReport(log.notes);
         
-        // Ficha Técnica da Obra
-        worksDetailHtml += `
-          <div class="page watermark-page">
-            <table class="print-layout-table">
-              <thead><tr><td></td></tr></thead>
-              <tbody><tr><td>
-                <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">${work.name}</h2></div>
-                <div class="border border-black flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm; height: 70mm;">${log.coverImage ? `<img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa" />` : `<div class="text-center font-mono"><span class="text-3xl block">📷</span><h4 class="text-xs font-black uppercase mt-1">Nenhuma foto de capa enviada</h4></div>`}</div>
-                <table class="black-grid-table" style="margin-top: 5px;">
-                  <tbody>
-                    <tr><td style="font-weight: bold; width: 45%;">Contrato N°:</td><td style="font-weight: bold;">${work.contractNumber}</td></tr>
-                    <tr><td style="font-weight: bold;">Concorrência Pública:</td><td>${biddingNumber}</td></tr>
-                    <tr><td style="font-weight: bold;">Proc. Administrativo:</td><td>${adminProcess}</td></tr>
-                    <tr><td style="font-weight: bold;">Assinatura Contrato:</td><td>${signingDate}</td></tr>
-                    <tr><td style="font-weight: bold;">Publicação no JOM:</td><td>${publicationDateJom}</td></tr>
-                    <tr><td style="font-weight: bold;">Ordem de Início:</td><td>${startOrderDate}</td></tr>
-                    <tr><td style="font-weight: bold;">Empresa Vencedora:</td><td style="text-transform: uppercase;">${work.contractorName}</td></tr>
-                    <tr><td style="font-weight: bold;">Prazo Vigência:</td><td>${termDaysVigencia}</td></tr>
-                    <tr><td style="font-weight: bold;">Prazo Execução:</td><td>${termDaysExecucao}</td></tr>
-                    <tr><td style="font-weight: bold;">Início de Atividades:</td><td>${formatDate(work.startDate)}</td></tr>
-                    <tr><td style="font-weight: bold;">Valor Total Inicial:</td><td style="font-weight: bold;">${formatCurrency(work.biddedValue)} <span style="font-size: 8pt; font-weight: normal; font-style: italic;">(${parsedValueExtenso})</span></td></tr>
-                    ${additivesTableRows}
-                  </tbody>
-                </table>
-              </td></tr></tbody>
-              <tfoot><tr><td></td></tr></tfoot>
-            </table>
-            <div class="page-footer">${currentPage++}</div>
-          </div>
+        // Ficha Técnica (Quebra a página antes)
+        contentHtml += `<tbody class="section-tbody break-before"><tr><td>`;
+        contentHtml += `
+          <div style="background-color: #f97316; border: 0.3mm solid black; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">${work.name}</h2></div>
+          <div class="border border-black flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm; height: 70mm;">${log.coverImage ? `<img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />` : `<div class="border border-slate-200 bg-white/90 shadow-sm rounded-none px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4"><span class="text-slate-405 text-3xl block">📷</span><div><span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block">FOTO DE CAPA DA OBRA</span></div></div>`}</div>
+          <table class="black-grid-table" style="margin-top: 5px;">
+            <tbody>
+              <tr><td style="font-weight: bold; width: 45%;">Contrato N°:</td><td style="font-weight: bold;">${work.contractNumber}</td></tr>
+              <tr><td style="font-weight: bold;">Concorrência Pública:</td><td>${biddingNumber}</td></tr>
+              <tr><td style="font-weight: bold;">Proc. Administrativo:</td><td>${adminProcess}</td></tr>
+              <tr><td style="font-weight: bold;">Assinatura Contrato:</td><td>${signingDate}</td></tr>
+              <tr><td style="font-weight: bold;">Publicação no JOM:</td><td>${publicationDateJom}</td></tr>
+              <tr><td style="font-weight: bold;">Ordem de Início:</td><td>${startOrderDate}</td></tr>
+              <tr><td style="font-weight: bold;">Empresa Vencedora:</td><td style="text-transform: uppercase;">${work.contractorName}</td></tr>
+              <tr><td style="font-weight: bold;">Prazo Vigência:</td><td>${termDaysVigencia}</td></tr>
+              <tr><td style="font-weight: bold;">Prazo Execução:</td><td>${termDaysExecucao}</td></tr>
+              <tr><td style="font-weight: bold;">Início de Atividades:</td><td>${formatDate(work.startDate)}</td></tr>
+              <tr><td style="font-weight: bold;">Valor Total Inicial:</td><td style="font-weight: bold;">${formatCurrency(work.biddedValue)} <span style="font-size: 8pt; font-weight: normal; font-style: italic;">(${parsedValueExtenso})</span></td></tr>
+              ${additivesTableRows}
+            </tbody>
+          </table>
         `;
+        contentHtml += `</td></tr></tbody>`;
 
-        // Cronograma
-        worksDetailHtml += `
-          <div class="page watermark-page">
-            <table class="print-layout-table">
-              <thead><tr><td></td></tr></thead>
-              <tbody><tr><td>
-                <div><h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-l-2 border-orange-500 pl-2">CRONOLOGIA DA OBRA — ${work.name}</h3></div>
-                ${work.timelineImage ? `<div class="mt-4 text-center"><img src="${work.timelineImage}" alt="Cronograma da Obra" style="max-width: 100%; max-height: 200mm; object-fit: contain;" /></div>` : `<div class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-none text-slate-500 text-xs text-center">Inserir cronologia da obra aqui.</div>`}
-              </td></tr></tbody>
-              <tfoot><tr><td></td></tr></tfoot>
-            </table>
-            <div class="page-footer">${currentPage++}</div>
-          </div>
+        // Cronologia (Quebra a página antes)
+        contentHtml += `<tbody class="section-tbody break-before"><tr><td>`;
+        contentHtml += `
+          <div><h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-l-2 border-orange-500 pl-2">CRONOLOGIA DA OBRA — ${work.name}</h3></div>
+          ${work.timelineImage ? `<div class="mt-4"><img src="${work.timelineImage}" alt="Cronograma da Obra" style="max-width: 100%; max-height: 200mm; object-fit: contain; margin: 0 auto; display: block;" /></div>` : `<div class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-none text-slate-500 text-xs text-center">Inserir cronologia da obra aqui.</div>`}
         `;
+        contentHtml += `</td></tr></tbody>`;
 
-        // Atividades de Fiscalização (A TABELA QUE CRESCE!)
-        worksDetailHtml += `
-          <div class="page watermark-page">
-            <table class="print-layout-table">
-              <thead><tr><td></td></tr></thead>
-              <tbody><tr><td>
-                <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 6px 10px; text-align: center; margin-bottom: 8px;"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">ATIVIDADES DE FISCALIZAÇÃO — ${work.name}</h2></div>
-                <table class="black-grid-table">
-                  <tbody>
-                    <tr><td style="font-weight: bold; width: 42%;">% Físico executado:</td><td style="font-weight: bold;">${log.newProgress}%</td></tr>
-                    <tr><td style="font-weight: bold;">Situação do Aditivo:</td><td>${parsed.sitacaoAditivo || "N/A"}</td></tr>
-                    <tr><td style="font-weight: bold;">Informação Relevante:</td><td>${parsed.relevantInfo || "N/A"}</td></tr>
-                    <tr><td style="font-weight: bold;">Atividades de Infraestrutura de Dados:</td><td>${parsed.infraDados || "N/A"}</td></tr>
-                    <tr><td style="font-weight: bold;">Status aumento de carga (Enel):</td><td>${parsed.enelStatus || "N/A"}</td></tr>
-                    <tr><td style="font-weight: bold;">Status da Subestação Elétrica:</td><td>${parsed.substationStatus || "N/A"}</td></tr>
-                    <tr><td style="font-weight: bold; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td><td style="vertical-align: top; padding: 4px 8px;"><ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.weeklyActivities.map(act => `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${act}</li>`).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade descrita.</li>`}</ul></td></tr>
-                    <tr><td style="font-weight: bold; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td><td style="vertical-align: top; padding: 4px 8px;"><ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.nextWeekActivities.map(act => `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${act}</li>`).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade programada.</li>`}</ul></td></tr>
-                    <tr><td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td><td style="vertical-align: top; padding: 4px 8px;"><ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.observations.map(obs => { const cleaned = obs.trim(); if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); return `<li style="margin-top: 4px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt;"><strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>${content}</li>`; } return `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${cleaned}</li>`; }).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhum apontamento crítico.</li>`}</ul></td></tr>
-                  </tbody>
-                </table>
-              </td></tr></tbody>
-              <tfoot><tr><td></td></tr></tfoot>
-            </table>
-            <div class="page-footer">${currentPage++}</div>
-          </div>
+        // Atividades (A TABELA QUE VAI CRESCER INFINITAMENTE, Quebra a página antes)
+        contentHtml += `<tbody class="section-tbody break-before"><tr><td>`;
+        contentHtml += `
+          <div style="background-color: #f97316; border: 0.3mm solid black; padding: 6px 10px; text-align: center; margin-bottom: 8px;"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">ATIVIDADES DE FISCALIZAÇÃO — ${work.name}</h2></div>
+          <table class="black-grid-table">
+            <tbody>
+              <tr><td style="font-weight: bold; width: 42%;">% Físico executado:</td><td style="font-weight: bold;">${log.newProgress}%</td></tr>
+              <tr><td style="font-weight: bold;">Situação do Aditivo:</td><td>${parsed.sitacaoAditivo || "N/A"}</td></tr>
+              <tr><td style="font-weight: bold;">Informação Relevante:</td><td>${parsed.relevantInfo || "N/A"}</td></tr>
+              <tr><td style="font-weight: bold;">Atividades de Infraestrutura de Dados:</td><td>${parsed.infraDados || "N/A"}</td></tr>
+              <tr><td style="font-weight: bold;">Status aumento de carga (Enel):</td><td>${parsed.enelStatus || "N/A"}</td></tr>
+              <tr><td style="font-weight: bold;">Status da Subestação Elétrica:</td><td>${parsed.substationStatus || "N/A"}</td></tr>
+              <tr>
+                <td style="font-weight: bold; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
+                <td style="vertical-align: top; padding: 4px 8px;">
+                  <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.weeklyActivities.map(act => `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${act}</li>`).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade descrita.</li>`}</ul>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
+                <td style="vertical-align: top; padding: 4px 8px;">
+                  <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.nextWeekActivities.map(act => `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${act}</li>`).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade programada.</li>`}</ul>
+                </td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td>
+                <td style="vertical-align: top; padding: 4px 8px;">
+                  <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.observations.map(obs => { const cleaned = obs.trim(); if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); return `<li style="margin-top: 4px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt;"><strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>${content}</li>`; } return `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${cleaned}</li>`; }).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhum apontamento crítico.</li>`}</ul>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         `;
+        contentHtml += `</td></tr></tbody>`;
 
-        // Fotos da Semana
-        worksDetailHtml += `
-          <div class="page watermark-page">
-            <table class="print-layout-table">
-              <thead><tr><td></td></tr></thead>
-              <tbody><tr><td>
-                <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">FOTOS DA SEMANA — ${work.name}:</div>
-                <div class="avoid-page-break" style="border: 0.3mm solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
-                  <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[0] ? `<img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 1" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-01 (Vazio)</div></div>`}</div>
-                  <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[1] ? `<img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 2" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-02 (Vazio)</div></div>`}</div>
-                  <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[2] ? `<img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 3" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-03 (Vazio)</div></div>`}</div>
-                  <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 4" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-04 (Vazio)</div></div>`}</div>
-                </div>
-              </td></tr></tbody>
-              <tfoot><tr><td></td></tr></tfoot>
-            </table>
-            <div class="page-footer">${currentPage++}</div>
+        // Fotos da Semana (Quebra a página antes para garantir que não separem)
+        contentHtml += `<tbody class="section-tbody break-before"><tr><td>`;
+        contentHtml += `
+          <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">FOTOS DA SEMANA — ${work.name}:</div>
+          <div style="border: 0.3mm solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
+            <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[0] ? `<img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 1" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-01 (Vazio)</div></div>`}</div>
+            <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[1] ? `<img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 2" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-02 (Vazio)</div></div>`}</div>
+            <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[2] ? `<img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 3" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-03 (Vazio)</div></div>`}</div>
+            <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 4" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-04 (Vazio)</div></div>`}</div>
           </div>
         `;
+        contentHtml += `</td></tr></tbody>`;
 
       } else {
-        worksDetailHtml += `
-          <div class="page watermark-page">
-            <table class="print-layout-table">
-              <thead><tr><td></td></tr></thead>
-              <tbody><tr><td>
-                <div style="background-color: #e2e8f0; border: 0.3mm solid black; border-radius: 0px; padding: 6px 10px; text-align: center; margin-bottom: 20px;"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">OBRA: ${work.name}</h2></div>
-                <div style="border: 1px dashed #cbd5e1; padding: 40px; text-align: center; border-radius: 8px; margin-top: 40px; font-family: Calibri, sans-serif; color: #64748b;"><div style="font-size: 24pt; margin-bottom: 12px;">📋</div><div style="font-size: 11pt; font-weight: bold; color: #334155; margin-bottom: 8px;">Sem lançamentos registrados para esta obra na semana</div><div style="font-size: 9.5pt;">Esta obra encontra-se ativa no contrato de gerenciamento, mas não recebeu boletins de fiscalização de atividades ou de progresso na semana selecionada (${periodFormatted}).</div></div>
-              </td></tr></tbody>
-              <tfoot><tr><td></td></tr></tfoot>
-            </table>
-            <div class="page-footer">${currentPage++}</div>
-          </div>
+        contentHtml += `<tbody class="section-tbody break-before"><tr><td>`;
+        contentHtml += `
+          <div style="background-color: #e2e8f0; border: 0.3mm solid black; border-radius: 0px; padding: 6px 10px; text-align: center; margin-bottom: 20px;"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">OBRA: ${work.name}</h2></div>
+          <div style="border: 1px dashed #cbd5e1; padding: 40px; text-align: center; border-radius: 8px; margin-top: 40px; font-family: Calibri, sans-serif; color: #64748b;"><div style="font-size: 24pt; margin-bottom: 12px;">📋</div><div style="font-size: 11pt; font-weight: bold; color: #334155; margin-bottom: 8px;">Sem lançamentos registrados para esta obra na semana</div><div style="font-size: 9.5pt;">Esta obra encontra-se ativa no contrato de gerenciamento, mas não recebeu boletins de fiscalização de atividades ou de progresso na semana selecionada (${periodFormatted}).</div></div>
         `;
+        contentHtml += `</td></tr></tbody>`;
       }
     });
+
+    const pdfHtml = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatorio_Consolidado_Semanal_${reportWeek}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+      @page { size: A4; margin: 0; }
+      body { margin: 0; padding: 0; background-color: #cbd5e1; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      
+      /* A Capa é isolada e tem fundo próprio */
+      .cover-page {
+        width: 210mm; height: 297mm; position: relative; background-color: white; page-break-after: always; break-after: page; z-index: 10; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+      }
+
+      /* A mágica do fundo infinito para as demais páginas */
+      .watermark-bg {
+        position: fixed; top: 0; left: 0; width: 210mm; height: 297mm;
+        background-image: url('/timbrado.jpg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; z-index: -1;
+      }
+
+      /* Tabela invisível que molda o layout para proteger o rodapé */
+      .main-print-table { width: 210mm; border-collapse: collapse; border: none; margin: 0 auto; background-color: transparent; }
+      .main-print-table thead tr td { height: 15mm; border: none; padding: 0; } /* Espaço em branco no topo */
+      .main-print-table tfoot tr td { height: 35mm; border: none; padding: 0; } /* Espaço em branco no rodapé (Protege a logo da Quanta) */
+      .main-print-table tbody tr td { padding: 0 15mm; border: none; vertical-align: top; }
+
+      /* Classes utilitárias */
+      .section-tbody { page-break-inside: auto; break-inside: auto; }
+      .break-before { page-break-before: always; break-before: page; }
+      
+      /* Tabela de Dados Visível */
+      .black-grid-table { border-collapse: collapse; width: 100%; border: 1.3px solid #000000; font-family: 'Calibri', 'Arial', sans-serif; font-size: 8.8pt; line-height: 1.3; background-color: white; }
+      .black-grid-table td, .black-grid-table th { border: 1px solid #000000; padding: 3px 7px; color: #000000;}
+      .black-grid-table tr { page-break-inside: avoid; break-inside: avoid; }
+
+      @media print { 
+        body { background-color: white; } 
+        .cover-page { box-shadow: none; }
+      }
+    </style>
+</head>
+<body>
+  ${coverPageHtml}
+  
+  <div class="watermark-bg"></div>
+  
+  <table class="main-print-table">
+    <thead><tr><td></td></tr></thead>
+    ${contentHtml}
+    <tfoot><tr><td></td></tr></tfoot>
+  </table>
+
+  <script>
+    window.addEventListener('DOMContentLoaded', () => { setTimeout(() => { window.print(); }, 500); });
+  </script>
+</body>
+</html>
+    `.trim();
+
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(pdfHtml); printWindow.document.close();
+    } else {
+      alert("Habilite permissões para popups no seu navegador para gerar o visualizador de impressão do PDF.");
+    }
+  };
 
     const pdfHtml = `
 <!DOCTYPE html>
