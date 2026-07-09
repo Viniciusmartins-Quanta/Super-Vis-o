@@ -1250,6 +1250,54 @@ export default function App() {
     }
   };
 
+  const getLogStartDate = (notesText: string, timestamp: string): number => {
+    if (notesText) {
+      const periodMatch = notesText.match(/(?:Período|Period):\s*\*?([^\n\r*]+)/i);
+      if (periodMatch) {
+        const periodStr = periodMatch[1].trim();
+        const dateMatch = periodStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (dateMatch) {
+          const [_, day, month, year] = dateMatch;
+          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).getTime();
+        }
+      }
+    }
+    return new Date(timestamp || 0).getTime();
+  };
+
+  const updateWorkProgressToMostRecent = async (workId: string) => {
+    try {
+      const { data: logsData } = await supabase
+        .from("medicoes_logs")
+        .select("*")
+        .eq("work_id", workId);
+        
+      const logs = logsData || [];
+      if (logs.length === 0) {
+        return;
+      }
+      
+      const sortedLogs = [...logs].sort((a, b) => {
+        const aTime = getLogStartDate(a.notes || "", a.timestamp || "");
+        const bTime = getLogStartDate(b.notes || "", b.timestamp || "");
+        if (aTime !== bTime) {
+          return bTime - aTime; // descending
+        }
+        return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
+      });
+      
+      const mostRecentLog = sortedLogs[0];
+      const targetProgress = mostRecentLog.new_progress ?? 0;
+      
+      await supabase
+        .from("obras")
+        .update({ progress: targetProgress })
+        .eq("id", workId);
+    } catch (err) {
+      console.error("Erro ao sincronizar progresso mais recente:", err);
+    }
+  };
+
   const handleLaunchMeasurement = async (
     workId: string,
     newProgress: number,
@@ -1262,13 +1310,6 @@ export default function App() {
     try {
       const obraAtual = state.works.find(w => w.id === workId);
       const oldProgress = obraAtual ? obraAtual.progress : 0;
-
-      const { error: updateError } = await supabase
-        .from("obras")
-        .update({ progress: newProgress })
-        .eq("id", workId);
-
-      if (updateError) throw updateError;
 
       const { error: insertError } = await supabase
         .from("medicoes_logs")
@@ -1286,6 +1327,7 @@ export default function App() {
 
       if (insertError) throw insertError;
 
+      await updateWorkProgressToMostRecent(workId);
       await loadDirectSupabaseState();
       setErrorHeader("");
 
@@ -1297,8 +1339,13 @@ export default function App() {
 
   const handleUpdateLogNotes = async (logId: string, notes: string) => {
     try {
+      const logEntry = state.logs.find((l) => l.id === logId);
+      if (!logEntry) throw new Error("Log não encontrado.");
+
       const { error } = await supabase.from("medicoes_logs").update({ notes }).eq("id", logId);
       if (error) throw error;
+
+      await updateWorkProgressToMostRecent(logEntry.workId);
       await loadDirectSupabaseState();
       setErrorHeader("");
     } catch (err) {
@@ -1315,6 +1362,9 @@ export default function App() {
     progressImages?: string[]
   ) => {
     try {
+      const logEntry = state.logs.find((l) => l.id === logId);
+      if (!logEntry) throw new Error("Log não encontrado.");
+
       const { error: logError } = await supabase.from("medicoes_logs").update({ 
         notes, 
         new_progress: newProgress, 
@@ -1324,11 +1374,7 @@ export default function App() {
       
       if (logError) throw logError;
 
-      const logEntry = state.logs.find((l) => l.id === logId);
-      if (logEntry) {
-        await supabase.from("obras").update({ progress: newProgress }).eq("id", logEntry.workId);
-      }
-
+      await updateWorkProgressToMostRecent(logEntry.workId);
       await loadDirectSupabaseState();
       setErrorHeader("");
     } catch (err) {
@@ -1339,8 +1385,14 @@ export default function App() {
 
   const handleDeleteLog = async (logId: string) => {
     try {
+      const logEntry = state.logs.find((l) => l.id === logId);
+      if (!logEntry) throw new Error("Log não encontrado.");
+      const workId = logEntry.workId;
+
       const { error } = await supabase.from("medicoes_logs").delete().eq("id", logId);
       if (error) throw error;
+
+      await updateWorkProgressToMostRecent(workId);
       await loadDirectSupabaseState();
       setErrorHeader("");
     } catch (err) {
@@ -1427,8 +1479,13 @@ export default function App() {
         signing_date: workData.signingDate || null,
         publication_date_jom: workData.publicationDateJom || null,
         start_order_date: workData.startOrderDate || null,
-        start_date: workData.physicalStartDate || null,
-        additives: workData.additives || [],
+        
+        // CORREÇÃO CRÍTICA 1: Aceita os dois nomes que o modal possa enviar
+        start_date: workData.physicalStartDate || workData.startDate || null,
+        
+        // CORREÇÃO CRÍTICA 2: Impede que o modal envie 'undefined' e apague o array
+        additives: workData.additives ? workData.additives : (editingWork ? editingWork.additives : []),
+        
         timeline_image: workData.timelineImage || null
       };
 

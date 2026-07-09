@@ -987,8 +987,32 @@ export default function WorkDetail({
 
   const statusStyle = getStatusColor(work.status);
 
-  // Filter logs specifically belonging to this work
-  const workLogs = allLogs.filter((log) => log.workId === work.id);
+  // Filter logs specifically belonging to this work and sort chronologically (newest week on top)
+  const getLogStartDate = (notesText: string, timestamp: string): number => {
+    if (notesText) {
+      const periodMatch = notesText.match(/(?:Período|Period):\s*\*?([^\n\r*]+)/i);
+      if (periodMatch) {
+        const periodStr = periodMatch[1].trim();
+        const dateMatch = periodStr.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+        if (dateMatch) {
+          const [_, day, month, year] = dateMatch;
+          return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).getTime();
+        }
+      }
+    }
+    return new Date(timestamp || 0).getTime();
+  };
+
+  const workLogs = allLogs
+    .filter((log) => log.workId === work.id)
+    .sort((a, b) => {
+      const aTime = getLogStartDate(a.notes, a.timestamp);
+      const bTime = getLogStartDate(b.notes, b.timestamp);
+      if (aTime !== bTime) {
+        return bTime - aTime; // descending (newest on top)
+      }
+      return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
+    });
 
   // Calculation for additives finance metrics
   const originalValue = work.biddedValue;

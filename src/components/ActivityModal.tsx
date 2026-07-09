@@ -53,20 +53,14 @@ export default function ActivityModal({
   // 8. INFORMAÇÃO RELEVANTE
   const [relevantInfo, setRelevantInfo] = useState("N/A");
 
-  // 9. ATIVIDADES DA SEMANA (Array of items)
-  const [weeklyActivities, setWeeklyActivities] = useState<string[]>([
-    "Alocação de forma e armadura nos trechos..."
-  ]);
+  // 9. ATIVIDADES DA SEMANA (String/Textarea)
+  const [weeklyActivities, setWeeklyActivities] = useState("");
 
-  // 10. ATIVIDADES DA PRÓXIMA SEMANA (Array of items)
-  const [nextWeekActivities, setNextWeekActivities] = useState<string[]>([
-    "Concretagem integral dos blocos da viga de coroamento..."
-  ]);
+  // 10. ATIVIDADES DA PRÓXIMA SEMANA (String/Textarea)
+  const [nextWeekActivities, setNextWeekActivities] = useState("");
 
-  // 11. OBSERVAÇÕES E APONTAMENTOS IMPORTANTES (Array of items)
-  const [importantNotes, setImportantNotes] = useState<string[]>([
-    "Identificadas trincas superficiais na passarela..."
-  ]);
+  // 11. OBSERVAÇÕES E APONTAMENTOS IMPORTANTES (String/Textarea)
+  const [importantNotes, setImportantNotes] = useState("");
 
   // 12. FOTOS
   const [coverImage, setCoverImage] = useState<string>("");
@@ -164,13 +158,13 @@ export default function ActivityModal({
       };
 
       const wActs = extractSectionBullets("Atividades da Semana");
-      setWeeklyActivities(wActs.length > 0 ? wActs : [""]);
+      setWeeklyActivities(wActs.join("\n"));
 
       const nActs = extractSectionBullets("Atividades da Próxima Semana");
-      setNextWeekActivities(nActs.length > 0 ? nActs : [""]);
+      setNextWeekActivities(nActs.join("\n"));
 
       const obs = extractSectionBullets("Observações & Apontamentos importantes");
-      setImportantNotes(obs.length > 0 ? obs : [""]);
+      setImportantNotes(obs.join("\n"));
 
       setCoverImage(existingLog.coverImage || "");
       
@@ -190,9 +184,9 @@ export default function ActivityModal({
       setEnelStatus("N/A");
       setSubstationStatus("N/A");
       setRelevantInfo("N/A");
-      setWeeklyActivities(["Alocação de forma e armadura nos trechos..."]);
-      setNextWeekActivities(["Concretagem integral dos blocos da viga de coroamento..."]);
-      setImportantNotes(["Identificadas trincas superficiais na passarela..."]);
+      setWeeklyActivities("Alocação de forma e armadura nos trechos...");
+      setNextWeekActivities("Concretagem integral dos blocos da viga de coroamento...");
+      setImportantNotes("Identificadas trincas superficiais na passarela...");
       setCoverImage("");
       setProgressImages(["", "", "", ""]);
     }
@@ -200,29 +194,7 @@ export default function ActivityModal({
 
   if (!isOpen) return null;
 
-  // Add/Remove item helpers
-  const handleAddItem = (setter: React.Dispatch<React.SetStateAction<string[]>>) => {
-    setter((prev) => [...prev, ""]);
-  };
 
-  const handleUpdateItem = (
-    index: number,
-    val: string,
-    setter: React.Dispatch<React.SetStateAction<string[]>>
-  ) => {
-    setter((prev) => {
-      const copy = [...prev];
-      copy[index] = val;
-      return copy;
-    });
-  };
-
-  const handleRemoveItem = (
-    index: number,
-    setter: React.Dispatch<React.SetStateAction<string[]>>
-  ) => {
-    setter((prev) => prev.filter((_, i) => i !== index));
-  };
 
   const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -293,13 +265,13 @@ export default function ActivityModal({
 🔹 **Informação Relevante:** ${relevantInfo || "N/A"}
 
 🚧 **Atividades da Semana:**
-${weeklyActivities.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• Nenhuma cadastrada"}
+${weeklyActivities.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${a}`).join("\n") || "• Nenhuma cadastrada"}
 
 🔮 **Atividades da Próxima Semana:**
-${nextWeekActivities.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• Nenhuma cadastrada"}
+${nextWeekActivities.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${a}`).join("\n") || "• Nenhuma cadastrada"}
 
 ⚠️ **Observações & Apontamentos importantes:**
-${importantNotes.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• Nenhum apontamento cadastrado"}
+${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${a}`).join("\n") || "• Nenhum apontamento cadastrado"}
       `.trim();
 
       const finalProgressImages = progressImages.filter(img => img !== "");
@@ -496,121 +468,49 @@ ${importantNotes.filter(a => a.trim()).map(a => `• ${a}`).join("\n") || "• N
             />
           </div>
 
-          {/* Dynamic Item list structures from the image */}
+          {/* Dynamic Item list structures from the image changed to spacious textareas */}
           <div className="border-t border-slate-100 pt-5 space-y-6">
             
-            {/* 9. ATIVIDADES DA SEMANA (_/_/_ A _/_/_) WITH PURPLE BADGE ADD BUTTON */}
+            {/* 9. ATIVIDADES DA SEMANA */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-750 font-sans">
-                  ATIVIDADES DA SEMANA:
-                </label>
-                <button
-                  type="button"
-                  onClick={() => handleAddItem(setWeeklyActivities)}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100/70 px-2.5 py-1 rounded-lg transition"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>+ Adicionar Item</span>
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                {weeklyActivities.map((act, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={act}
-                      onChange={(e) => handleUpdateItem(idx, e.target.value, setWeeklyActivities)}
-                      placeholder="Ex: Alocação de forma e armadura nos trechos..."
-                      className="flex-grow bg-slate-50 border border-slate-350 focus:border-indigo-400 focus:bg-white focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800 transition"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(idx, setWeeklyActivities)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition duration-150"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <label className="block text-xs font-bold text-slate-750 font-sans">
+                ATIVIDADES DA SEMANA:
+              </label>
+              <textarea
+                value={weeklyActivities}
+                onChange={(e) => setWeeklyActivities(e.target.value)}
+                placeholder="Insira as atividades realizadas na semana, uma por linha..."
+                rows={5}
+                className="w-full bg-slate-50 border border-slate-300 focus:border-indigo-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
+              />
             </div>
 
-            {/* 10. ATIVIDADES DA PRÓXIMA SEMANA WITH EMERALD BADGE ADD BUTTON */}
+            {/* 10. ATIVIDADES DA PRÓXIMA SEMANA */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-755">
-                  ATIVIDADES DA PRÓXIMA SEMANA:
-                </label>
-                <button
-                  type="button"
-                  onClick={() => handleAddItem(setNextWeekActivities)}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100/70 px-2.5 py-1 rounded-lg transition"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>+ Adicionar Item</span>
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                {nextWeekActivities.map((act, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={act}
-                      onChange={(e) => handleUpdateItem(idx, e.target.value, setNextWeekActivities)}
-                      placeholder="Ex: Concretagem integral dos blocos da viga de coroamento..."
-                      className="flex-grow bg-slate-50 border border-slate-350 focus:border-emerald-400 focus:bg-white focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800 transition"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(idx, setNextWeekActivities)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition duration-150"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <label className="block text-xs font-bold text-slate-755 font-sans">
+                ATIVIDADES DA PRÓXIMA SEMANA:
+              </label>
+              <textarea
+                value={nextWeekActivities}
+                onChange={(e) => setNextWeekActivities(e.target.value)}
+                placeholder="Insira as atividades planejadas para a próxima semana, uma por linha..."
+                rows={5}
+                className="w-full bg-slate-50 border border-slate-300 focus:border-emerald-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
+              />
             </div>
 
-            {/* 11. OBSERVAÇÕES E APONTAMENTOS IMPORTANTES WITH ROSE BADGE ADD BUTTON */}
+            {/* 11. OBSERVAÇÕES E APONTAMENTOS IMPORTANTES */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="block text-xs font-bold text-slate-755">
-                  OBSERVAÇÕES E APONTAMENTOS IMPORTANTES:
-                </label>
-                <button
-                  type="button"
-                  onClick={() => handleAddItem(setImportantNotes)}
-                  className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 bg-rose-50 hover:bg-rose-100/70 px-2.5 py-1 rounded-lg transition"
-                >
-                  <Plus className="w-3 h-3" />
-                  <span>+ Adicionar Item</span>
-                </button>
-              </div>
-
-              <div className="space-y-2">
-                {importantNotes.map((act, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      value={act}
-                      onChange={(e) => handleUpdateItem(idx, e.target.value, setImportantNotes)}
-                      placeholder="Ex: Identificadas trincas superficiais na passarela..."
-                      className="flex-grow bg-slate-50 border border-slate-350 focus:border-rose-400 focus:bg-white focus:outline-none rounded-lg px-3 py-2 text-xs text-slate-800 transition"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveItem(idx, setImportantNotes)}
-                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition duration-150"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+              <label className="block text-xs font-bold text-slate-755 font-sans">
+                OBSERVAÇÕES E APONTAMENTOS IMPORTANTES:
+              </label>
+              <textarea
+                value={importantNotes}
+                onChange={(e) => setImportantNotes(e.target.value)}
+                placeholder="Insira as observações e apontamentos importantes, um por linha..."
+                rows={5}
+                className="w-full bg-slate-50 border border-slate-300 focus:border-rose-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
+              />
             </div>
 
           </div>
