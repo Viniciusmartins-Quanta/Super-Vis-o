@@ -605,15 +605,26 @@ export default function WorkDetail({
       }
       @media print {
         body {
-          background-color: white;
+          display: block !important;
+          background-color: transparent !important;
           margin: 0;
           padding: 0;
         }
+        html {
+          background-color: transparent !important;
+        }
         .page {
+          background-color: transparent !important;
           margin: 0;
           box-shadow: none;
           page-break-after: always;
           break-after: page;
+        }
+        .cover-page {
+          background-color: white !important;
+        }
+        .watermark-page {
+          background-image: none !important;
         }
         .expandable-page {
           page-break-inside: auto;
@@ -631,8 +642,14 @@ export default function WorkDetail({
       }
       
       .watermark-bg {
-        position: fixed; top: 0; left: 0; width: 210mm; height: 297mm;
-        background-image: url('/timbrado.jpg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; z-index: -1;
+        position: fixed;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 210mm;
+        height: 297mm;
+        z-index: -100;
+        pointer-events: none;
       }
 
       .main-print-table { width: 210mm; border-collapse: collapse; border: none; margin: 0 auto; background-color: transparent; }
@@ -661,7 +678,9 @@ export default function WorkDetail({
     </style>
 </head>
 <body>
-  <div class="watermark-bg"></div>
+  <div class="watermark-bg">
+    <img src="/timbrado.jpg" style="width: 210mm; height: 297mm; display: block;" />
+  </div>
 
 
   <!-- PAGE 1: COVER CARD (CAPA) -->
