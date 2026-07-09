@@ -634,13 +634,13 @@ export default function WorkDetail({
         width: 100%;
         border: 1.5px solid #000000;
         font-family: 'Calibri', 'Arial', sans-serif;
-        font-size: 9.2pt;
+        font-size: 9pt;
         color: #000000;
-        line-height: 1.4;
+        line-height: 1.3;
       }
       .black-grid-table td, .black-grid-table th {
         border: 1px solid #000000;
-        padding: 2px 8px;
+        padding: 3px 8px;
         color: #000000;
       }
     </style>

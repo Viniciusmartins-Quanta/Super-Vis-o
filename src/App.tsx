@@ -680,13 +680,13 @@ export default function App() {
 
       .page-break { page-break-before: always; break-before: page; }
       
-      .black-grid-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000000; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; line-height: 1.4; background-color: white; }
-      .black-grid-table th { border: 1px solid #000000; padding: 4px 8px; color: #000000;}
+      .black-grid-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000000; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9pt; line-height: 1.3; background-color: white; }
+      .black-grid-table th { border: 1px solid #000000; padding: 3px 8px; color: #000000;}
       
       /* A MÁGICA QUE PERMITE A TABELA QUEBRAR DE PÁGINA: */
       .black-grid-table td, .black-grid-table tr { 
           border: 1px solid #000000; 
-          padding: 4px 8px; 
+          padding: 3px 8px; 
           color: #000000;
           page-break-inside: auto !important; 
           break-inside: auto !important; 
