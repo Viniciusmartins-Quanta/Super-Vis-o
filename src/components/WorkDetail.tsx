@@ -547,7 +547,22 @@ export default function WorkDetail({
     <style>
       @page {
         size: A4;
+        margin: 0 0 15mm 0;
+        @bottom-left {
+          content: "Página " counter(page);
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9px;
+          color: #94a3b8;
+          font-weight: bold;
+          padding-left: 15mm;
+          padding-bottom: 10mm;
+        }
+      }
+      @page :first {
         margin: 0;
+        @bottom-left {
+          content: "";
+        }
       }
       body {
         margin: 0;
@@ -710,8 +725,6 @@ export default function WorkDetail({
         </p>
       </div>
 
-      <!-- PAGE FOOTER -->
-      <div class="page-footer">1</div>
     </div>
   </div>
 
@@ -797,7 +810,6 @@ export default function WorkDetail({
         </table>
       </div>
       
-      <div class="page-footer">2</div>
     </div>
   </div>
 
@@ -824,7 +836,6 @@ export default function WorkDetail({
         `}
       </div>
       
-      <div class="page-footer">3</div>
     </div>
   </div>
 

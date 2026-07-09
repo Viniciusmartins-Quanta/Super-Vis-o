@@ -657,7 +657,25 @@ export default function App() {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-      @page { size: A4; margin: 0; }
+      @page {
+        size: A4;
+        margin: 0 0 15mm 0;
+        @bottom-left {
+          content: "Página " counter(page);
+          font-family: 'JetBrains Mono', monospace;
+          font-size: 9px;
+          color: #94a3b8;
+          font-weight: bold;
+          padding-left: 15mm;
+          padding-bottom: 10mm;
+        }
+      }
+      @page :first {
+        margin: 0;
+        @bottom-left {
+          content: "";
+        }
+      }
       body { margin: 0; padding: 0; background-color: #cbd5e1; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; display: flex; flex-direction: column; align-items: center; }
       
       .cover-page {
