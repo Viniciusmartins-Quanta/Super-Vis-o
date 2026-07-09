@@ -629,6 +629,19 @@ export default function WorkDetail({
          -webkit-box-orient: vertical;  
         overflow: hidden;
       }
+      
+      .watermark-bg {
+        position: fixed; top: 0; left: 0; width: 210mm; height: 297mm;
+        background-image: url('/timbrado.jpg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; z-index: -1;
+      }
+
+      .main-print-table { width: 210mm; border-collapse: collapse; border: none; margin: 0 auto; background-color: transparent; }
+      .main-print-table thead tr td { height: 15mm; border: none; padding: 0; } 
+      .main-print-table tfoot tr td { height: 35mm; border: none; padding: 0; } 
+      .main-print-table tbody tr td { padding: 0 15mm; border: none; vertical-align: top; }
+
+      .page-break { page-break-before: always; break-before: page; }
+
       .black-grid-table {
         border-collapse: collapse;
         width: 100%;
@@ -642,10 +655,13 @@ export default function WorkDetail({
         border: 1px solid #000000;
         padding: 3px 8px;
         color: #000000;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
       }
     </style>
 </head>
 <body>
+  <div class="watermark-bg"></div>
 
 
   <!-- PAGE 1: COVER CARD (CAPA) -->
@@ -795,160 +811,184 @@ export default function WorkDetail({
 
 
   <!-- PAGE 4: ATIVIDADES DA SEMANA (MEDICAO SEMANAL) -->
-  <div class="page watermark-page border border-slate-100">
-    
-    <div class="flex-grow my-4 flex flex-col justify-start">
-      <table class="black-grid-table">
-        <tbody>
-          <tr>
-            <td style="font-weight: bold; width: 42%;">% Físico executado - ${work.name}:</td>
-            <td style="font-weight: bold;">${log.newProgress}%</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Situação do Aditivo:</td>
-            <td>${parsed.sitacaoAditivo || "N/A"}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Informação Relevante:</td>
-            <td>${parsed.relevantInfo || "N/A"}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Atividades de Infraestrutura de Dados:</td>
-            <td>${parsed.infraDados || "N/A"}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Status aumento de carga (Enel):</td>
-            <td>${parsed.enelStatus || "N/A"}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold;">Status da Subestação Elétrica:</td>
-            <td>${parsed.substationStatus || "N/A"}</td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold; vertical-align: top;">Atividades da semana: ${parsed.period}</td>
-            <td style="vertical-align: top; padding: 0 8px 8px 8px;">
-              <ul style="list-style-type: none; margin: 0; padding: 0;">
-                ${parsed.weeklyActivities.map(act => `
-                  <li style="margin-top: 6px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                    <span style="position: absolute; left: 0; top: 0;">•</span>
-                    ${act}
-                  </li>
-                `).join("") || `<li style="margin-top: 6px; font-style: italic; color: #777;">Nenhuma atividade descrita para a semana registrada.</li>`}
-              </ul>
-            </td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold; vertical-align: top;">Atividades da próxima semana: ${getNextWeekPeriod(parsed.period)}</td>
-            <td style="vertical-align: top; padding: 0 8px 8px 8px;">
-              <ul style="list-style-type: none; margin: 0; padding: 0;">
-                ${parsed.nextWeekActivities.map(act => `
-                  <li style="margin-top: 6px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                    <span style="position: absolute; left: 0; top: 0;">•</span>
-                    ${act}
-                  </li>
-                `).join("") || `<li style="margin-top: 6px; font-style: italic; color: #777;">Nenhuma atividade programada de frentes futuras.</li>`}
-              </ul>
-            </td>
-          </tr>
-          <tr>
-            <td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td>
-            <td style="vertical-align: top; padding: 0 8px 8px 8px;">
-              <ul style="list-style-type: none; margin: 0; padding: 0;">
-                ${parsed.observations.map(obs => {
-                  const cleaned = obs.trim();
-                  if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) {
-                    const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim();
+  <table class="main-print-table">
+    <thead><tr><td></td></tr></thead>
+    <tbody>
+      <!-- Sub-table 1: Metadata parameters -->
+      <tr><td>
+        <table class="black-grid-table" style="page-break-inside: avoid; break-inside: avoid;">
+          <tbody>
+            <tr>
+              <td style="font-weight: bold; width: 42%;">% Físico executado - ${work.name}:</td>
+              <td style="font-weight: bold;">${log.newProgress}%</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Situação do Aditivo:</td>
+              <td>${parsed.sitacaoAditivo || "N/A"}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Informação Relevante:</td>
+              <td>${parsed.relevantInfo || "N/A"}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Atividades de Infraestrutura de Dados:</td>
+              <td>${parsed.infraDados || "N/A"}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Status aumento de carga (Enel):</td>
+              <td>${parsed.enelStatus || "N/A"}</td>
+            </tr>
+            <tr>
+              <td style="font-weight: bold;">Status da Subestação Elétrica:</td>
+              <td>${parsed.substationStatus || "N/A"}</td>
+            </tr>
+          </tbody>
+        </table>
+      </td></tr>
+
+      <!-- Sub-table 2: Atividades da semana -->
+      <tr><td>
+        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: avoid; break-inside: avoid;">
+          <tbody>
+            <tr>
+              <td style="font-weight: bold; width: 42%; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
+              <td style="vertical-align: top; padding: 4px 8px;">
+                <ul style="list-style-type: none; margin: 0; padding: 0;">
+                  ${parsed.weeklyActivities.map(act => `
+                    <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                      <span style="position: absolute; left: 0; top: 0;">•</span>
+                      ${act}
+                    </li>
+                  `).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade descrita para a semana registrada.</li>`}
+                </ul>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td></tr>
+
+      <!-- Sub-table 3: Atividades da próxima semana -->
+      <tr><td>
+        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: avoid; break-inside: avoid;">
+          <tbody>
+            <tr>
+              <td style="font-weight: bold; width: 42%; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
+              <td style="vertical-align: top; padding: 4px 8px;">
+                <ul style="list-style-type: none; margin: 0; padding: 0;">
+                  ${parsed.nextWeekActivities.map(act => `
+                    <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                      <span style="position: absolute; left: 0; top: 0;">•</span>
+                      ${act}
+                    </li>
+                  `).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade programada de frentes futuras.</li>`}
+                </ul>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td></tr>
+
+      <!-- Sub-table 4: Observações e apontamentos importantes -->
+      <tr><td>
+        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: auto; break-inside: auto;">
+          <tbody>
+            <tr>
+              <td style="font-weight: bold; width: 42%; vertical-align: top;">Observações e apontamentos importantes:</td>
+              <td style="vertical-align: top; padding: 4px 8px;">
+                <ul style="list-style-type: none; margin: 0; padding: 0;">
+                  ${parsed.observations.map(obs => {
+                    const cleaned = obs.trim();
+                    if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) {
+                      const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim();
+                      return `
+                        <li style="margin-top: 4px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt;">
+                          <strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>
+                          ${content}
+                        </li>
+                      `;
+                    }
                     return `
-                      <li style="margin-top: 6px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt;">
-                        <strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>
-                        ${content}
+                      <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                        <span style="position: absolute; left: 0; top: 0;">•</span>
+                        ${cleaned}
                       </li>
                     `;
-                  }
-                  return `
-                    <li style="margin-top: 6px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                      <span style="position: absolute; left: 0; top: 0;">•</span>
-                      ${cleaned}
-                    </li>
-                  `;
-                }).join("") || `<li style="margin-top: 6px; font-style: italic; color: #777;">Nenhum apontamento crítico de fiscalização registrado no período semanal.</li>`}
-              </ul>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-    
-    <div class="flex justify-start items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
-      <span>4</span>
-    </div>
-  </div>
+                  }).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhum apontamento crítico de fiscalização registrado no período semanal.</li>`}
+                </ul>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </td></tr>
+    </tbody>
+    <tfoot><tr><td></td></tr></tfoot>
+  </table>
 
 
   <!-- PAGE 5: REGISTRO FOTOGRÁFICO DE MARCOS (FOTOS DA OBRA) -->
-  <div class="page watermark-page border border-slate-100">
-    
-    <div class="flex-grow my-5 flex flex-col justify-start">
-      <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">
-        FOTOS DA SEMANA:
-      </div>
-      
-      <!-- Thick 1.5px solid black border enclosing 4 photos beautifully -->
-      <div style="border: 0.3mm solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
-        <!-- PHOTO 1 -->
-        <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
-          ${log.progressImages && log.progressImages[0] ? `
-            <img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 1" />
-          ` : `
-            <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
-              <div>📷</div>
-              <div>F-01 (Vazio)</div>
-            </div>
-          `}
+  <div class="page-break"></div>
+  <table class="main-print-table">
+    <thead><tr><td></td></tr></thead>
+    <tbody>
+      <tr><td>
+        <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">
+          FOTOS DA SEMANA:
         </div>
+        
+        <!-- Thick 1.5px solid black border enclosing 4 photos beautifully -->
+        <div style="border: 0.3mm solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
+          <!-- PHOTO 1 -->
+          <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
+            ${log.progressImages && log.progressImages[0] ? `
+              <img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 1" />
+            ` : `
+              <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
+                <div>📷</div>
+                <div>F-01 (Vazio)</div>
+              </div>
+            `}
+          </div>
 
-        <!-- PHOTO 2 -->
-        <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
-          ${log.progressImages && log.progressImages[1] ? `
-            <img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 2" />
-          ` : `
-            <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
-              <div>📷</div>
-              <div>F-02 (Vazio)</div>
-            </div>
-          `}
-        </div>
+          <!-- PHOTO 2 -->
+          <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
+            ${log.progressImages && log.progressImages[1] ? `
+              <img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 2" />
+            ` : `
+              <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
+                <div>📷</div>
+                <div>F-02 (Vazio)</div>
+              </div>
+            `}
+          </div>
 
-        <!-- PHOTO 3 -->
-        <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
-          ${log.progressImages && log.progressImages[2] ? `
-            <img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 3" />
-          ` : `
-            <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
-              <div>📷</div>
-              <div>F-03 (Vazio)</div>
-            </div>
-          `}
-        </div>
+          <!-- PHOTO 3 -->
+          <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
+            ${log.progressImages && log.progressImages[2] ? `
+              <img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 3" />
+            ` : `
+              <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
+                <div>📷</div>
+                <div>F-03 (Vazio)</div>
+              </div>
+            `}
+          </div>
 
-        <!-- PHOTO 4 -->
-        <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
-          ${log.progressImages && log.progressImages[3] ? `
-            <img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 4" />
-          ` : `
-            <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
-              <div>📷</div>
-              <div>F-04 (Vazio)</div>
-            </div>
-          `}
+          <!-- PHOTO 4 -->
+          <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
+            ${log.progressImages && log.progressImages[3] ? `
+              <img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 4" />
+            ` : `
+              <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
+                <div>📷</div>
+                <div>F-04 (Vazio)</div>
+              </div>
+            `}
+          </div>
         </div>
-      </div>
-    </div>
-    
-    <div class="flex justify-start items-center text-[8.5px] text-slate-500 font-bold select-none font-mono mb-1">
-      <span>5</span>
-    </div>
-  </div>
+      </td></tr>
+    </tbody>
+    <tfoot><tr><td></td></tr></tfoot>
+  </table>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {

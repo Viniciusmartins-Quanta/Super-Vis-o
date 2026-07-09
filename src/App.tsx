@@ -593,10 +593,21 @@ export default function App() {
 
         // Atividades (Pode quebrar em várias páginas)
         contentHtml += `<div class="page-break"></div>`;
-        contentHtml += `<table class="main-print-table"><thead><tr><td></td></tr></thead><tbody><tr><td>`;
+        contentHtml += `<table class="main-print-table">`;
+        contentHtml += `<thead><tr><td></td></tr></thead>`;
+        contentHtml += `<tbody>`;
+
+        // Row 1: Orange Header banner
+        contentHtml += `<tr><td>`;
         contentHtml += `
           <div style="background-color: #f97316; border: 0.3mm solid black; padding: 6px 10px; text-align: center; margin-bottom: 8px;"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">ATIVIDADES DE FISCALIZAÇÃO — ${work.name}</h2></div>
-          <table class="black-grid-table">
+        `;
+        contentHtml += `</td></tr>`;
+
+        // Row 2: Metadata parameters
+        contentHtml += `<tr><td>`;
+        contentHtml += `
+          <table class="black-grid-table" style="page-break-inside: avoid; break-inside: avoid;">
             <tbody>
               <tr><td style="font-weight: bold; width: 42%;">% Físico executado:</td><td style="font-weight: bold;">${log.newProgress}%</td></tr>
               <tr><td style="font-weight: bold;">Situação do Aditivo:</td><td>${parsed.sitacaoAditivo || "N/A"}</td></tr>
@@ -604,20 +615,50 @@ export default function App() {
               <tr><td style="font-weight: bold;">Atividades de Infraestrutura de Dados:</td><td>${parsed.infraDados || "N/A"}</td></tr>
               <tr><td style="font-weight: bold;">Status aumento de carga (Enel):</td><td>${parsed.enelStatus || "N/A"}</td></tr>
               <tr><td style="font-weight: bold;">Status da Subestação Elétrica:</td><td>${parsed.substationStatus || "N/A"}</td></tr>
+            </tbody>
+          </table>
+        `;
+        contentHtml += `</td></tr>`;
+
+        // Row 3: Atividades da semana
+        contentHtml += `<tr><td>`;
+        contentHtml += `
+          <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: avoid; break-inside: avoid;">
+            <tbody>
               <tr>
-                <td style="font-weight: bold; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
+                <td style="font-weight: bold; width: 42%; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
                 <td style="vertical-align: top; padding: 4px 8px;">
                   <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.weeklyActivities.map(act => `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${act}</li>`).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade descrita.</li>`}</ul>
                 </td>
               </tr>
+            </tbody>
+          </table>
+        `;
+        contentHtml += `</td></tr>`;
+
+        // Row 4: Atividades da próxima semana
+        contentHtml += `<tr><td>`;
+        contentHtml += `
+          <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: avoid; break-inside: avoid;">
+            <tbody>
               <tr>
-                <td style="font-weight: bold; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
+                <td style="font-weight: bold; width: 42%; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
                 <td style="vertical-align: top; padding: 4px 8px;">
                   <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.nextWeekActivities.map(act => `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${act}</li>`).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade programada.</li>`}</ul>
                 </td>
               </tr>
+            </tbody>
+          </table>
+        `;
+        contentHtml += `</td></tr>`;
+
+        // Row 5: Observações e apontamentos importantes
+        contentHtml += `<tr><td>`;
+        contentHtml += `
+          <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: auto; break-inside: auto;">
+            <tbody>
               <tr>
-                <td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td>
+                <td style="font-weight: bold; width: 42%; vertical-align: top;">Observações e apontamentos importantes:</td>
                 <td style="vertical-align: top; padding: 4px 8px;">
                   <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.observations.map(obs => { const cleaned = obs.trim(); if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); return `<li style="margin-top: 4px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt;"><strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>${content}</li>`; } return `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${cleaned}</li>`; }).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhum apontamento crítico.</li>`}</ul>
                 </td>
@@ -625,7 +666,11 @@ export default function App() {
             </tbody>
           </table>
         `;
-        contentHtml += `</td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table>`;
+        contentHtml += `</td></tr>`;
+
+        contentHtml += `</tbody>`;
+        contentHtml += `<tfoot><tr><td></td></tr></tfoot>`;
+        contentHtml += `</table>`;
 
         // Fotos da Semana (Força uma folha nova antes)
         contentHtml += `<div class="page-break"></div>`;
