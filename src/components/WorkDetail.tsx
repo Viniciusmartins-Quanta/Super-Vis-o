@@ -465,6 +465,7 @@ export default function WorkDetail({
     }).join("");
 
     // Prepare Additives row blocks for unified page 2 contract table
+    let cumulativeValue = Number(work.biddedValue);
     let additivesTableRows = "";
     if (work.additives && work.additives.length > 0) {
       additivesTableRows = work.additives.map((add, idx) => {
@@ -480,6 +481,13 @@ export default function WorkDetail({
           lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} meses</span>`);
         } else if (add.type === "prazo" || add.type === "misto") {
           lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
+        }
+        
+        if (add.type === "financeiro" || add.type === "misto") {
+          const val = Number(add.value || 0);
+          cumulativeValue += val;
+          lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(val)}</span>`);
+          lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(cumulativeValue)}</span>`);
         }
         
         if (add.newVigenciaDate) {

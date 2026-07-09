@@ -482,13 +482,26 @@ export default function App() {
       
       const biddingNumber = work.biddingNumber || "39/2022"; const adminProcess = work.adminProcess || "4200/2022"; const signingDate = work.signingDate ? formatDate(work.signingDate) : formatDate(work.startDate); const publicationDateJom = work.publicationDateJom ? formatDate(work.publicationDateJom) : formatDate(work.startDate); const startOrderDate = work.startOrderDate ? formatDate(work.startOrderDate) : formatDate(work.startDate); const termDaysVigencia = work.termDaysVigencia || "8 meses"; const termDaysExecucao = work.termDaysExecucao || "8 meses"; const parsedValueExtenso = valorParaExtenso(work.biddedValue);
       
+      let cumulativeValue = Number(work.biddedValue);
       let additivesTableRows = "";
       if (work.additives && work.additives.length > 0) {
         additivesTableRows = work.additives.map((add:any, idx:number) => {
           const orderWord = `${idx + 1}º ADITIVO`; const publishJomDate = add.description ? (add.description.match(/JOM de (\d{2}\/\d{2}\/\d{4})/i)?.[1] || formatDate(add.signatureDate)) : formatDate(add.signatureDate);
           const lines = [`Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`, `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`];
-          if (add.days) lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} dias</span>`); else if (add.type === "prazo" || add.type === "misto") lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
-          if (add.value !== undefined && add.value !== null) { lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(add.value)}</span>`); if (add.type === "financeiro" || add.type === "misto") lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(work.biddedValue + add.value)}</span>`); }
+          
+          if (add.days) {
+            lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} meses</span>`);
+          } else if (add.type === "prazo" || add.type === "misto") {
+            lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
+          }
+          
+          if (add.type === "financeiro" || add.type === "misto") {
+            const val = Number(add.value || 0);
+            cumulativeValue += val;
+            lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(val)}</span>`);
+            lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(cumulativeValue)}</span>`);
+          }
+          
           if (add.newVigenciaDate) lines.push(`Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
           if (add.newExecucaoDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newExecucaoDate)}</span>`); else if (add.newVigenciaDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
           const rowspan = lines.length;
