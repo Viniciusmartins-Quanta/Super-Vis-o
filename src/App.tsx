@@ -693,29 +693,61 @@ export default function App() {
         pointer-events: none;
       }
 
-      .main-print-table { width: 210mm; border-collapse: collapse; border: none; margin: 0 auto; background-color: transparent; }
+      .main-print-table {
+        width: 210mm;
+        border-collapse: collapse;
+        border: none;
+        margin: 20px auto;
+        background-color: white;
+        background-image: url('/timbrado.jpg');
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        min-height: 296.8mm;
+        box-sizing: border-box;
+      }
       .main-print-table thead tr td { height: 15mm; border: none; padding: 0; } 
       .main-print-table tfoot tr td { height: 35mm; border: none; padding: 0; } 
       .main-print-table tbody tr td { padding: 0 15mm; border: none; vertical-align: top; }
 
       .page-break { page-break-before: always; break-before: page; }
       
-      .black-grid-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000000; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; line-height: 1.4; background-color: white; }
+      .black-grid-table { 
+          border-collapse: collapse; 
+          width: 100%; 
+          border: 1.5px solid #000000; 
+          font-family: 'Calibri', 'Arial', sans-serif; 
+          font-size: 9.2pt; 
+          line-height: 1.4; 
+          background-color: white; 
+          page-break-inside: auto !important; 
+          break-inside: auto !important; 
+      }
       .black-grid-table th { border: 1px solid #000000; padding: 4px 8px; color: #000000;}
       
-      /* A MÁGICA QUE PERMITE A TABELA QUEBRAR DE PÁGINA: */
-      .black-grid-table td, .black-grid-table tr { 
+      .black-grid-table tr {
+          page-break-inside: avoid !important;
+          break-inside: avoid-page !important;
+      }
+      .black-grid-table td { 
           border: 1px solid #000000; 
           padding: 4px 8px; 
           color: #000000;
-          page-break-inside: auto !important; 
-          break-inside: auto !important; 
       }
 
       @media print { 
         body { display: block !important; background-color: transparent !important; }
         html { background-color: transparent !important; }
         .cover-page { box-shadow: none; }
+        .main-print-table {
+          background-color: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          margin: 0 auto !important;
+          min-height: 0 !important;
+          page-break-after: auto;
+          break-after: auto;
+        }
       }
     </style>
 </head>

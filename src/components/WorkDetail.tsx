@@ -647,6 +647,15 @@ export default function WorkDetail({
         .no-print {
           display: none;
         }
+        .main-print-table {
+          background-color: transparent !important;
+          background-image: none !important;
+          box-shadow: none !important;
+          margin: 0 auto !important;
+          min-height: 0 !important;
+          page-break-after: auto;
+          break-after: auto;
+        }
       }
       /* Custom line clamp helpers */
       .line-clamp-3 {
@@ -667,7 +676,19 @@ export default function WorkDetail({
         pointer-events: none;
       }
 
-      .main-print-table { width: 210mm; border-collapse: collapse; border: none; margin: 0 auto; background-color: transparent; }
+      .main-print-table {
+        width: 210mm;
+        border-collapse: collapse;
+        border: none;
+        margin: 20px auto;
+        background-color: white;
+        background-image: url('/timbrado.jpg');
+        background-size: 100% 100%;
+        background-repeat: no-repeat;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        min-height: 296.8mm;
+        box-sizing: border-box;
+      }
       .main-print-table thead tr td { height: 15mm; border: none; padding: 0; } 
       .main-print-table tfoot tr td { height: 35mm; border: none; padding: 0; } 
       .main-print-table tbody tr td { padding: 0 15mm; border: none; vertical-align: top; }
@@ -682,13 +703,17 @@ export default function WorkDetail({
         font-size: 9pt;
         color: #000000;
         line-height: 1.3;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
+      }
+      .black-grid-table tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid-page !important;
       }
       .black-grid-table td, .black-grid-table th {
         border: 1px solid #000000;
         padding: 3px 8px;
         color: #000000;
-        page-break-inside: auto !important;
-        break-inside: auto !important;
       }
     </style>
 </head>
@@ -730,123 +755,132 @@ export default function WorkDetail({
 
 
   <!-- PAGE 2: FICHA TÉCNICA CONTRATUAL (DETALHES DO CONTRATO) -->
-  <div class="page watermark-page border border-slate-100">
-    <div class="page-content">
-      <div class="flex-grow my-4 flex flex-col justify-start">
-        <!-- Contract Title banner with background orange, black Arial 11pt bold text -->
-        <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-          <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">
-            ${work.name}
-          </h2>
-        </div>
-        
-        <!-- Space for the cover photo of the week (using log.coverImage if loaded, else fallback blueprint design) -->
-        <div class="border border-black h-[70mm] flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm;">
-          ${log.coverImage ? `
-            <img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />
-          ` : `
-            <div class="border border-slate-200 bg-white/90 shadow-sm rounded-none px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4">
-              <span class="text-slate-405 text-3xl block">📷</span>
-              <div>
-                <span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block">FOTO DE CAPA DA OBRA</span>
-                <h4 class="text-xs font-black text-slate-800 uppercase mt-1">Supervisão de Execução Técnica</h4>
-                <p class="text-[9.5px] text-slate-450 mt-1 font-sans">Nenhuma foto de capa enviada para este boletim semanal</p>
+  <div class="page-break"></div>
+  <table class="main-print-table">
+    <thead><tr><td></td></tr></thead>
+    <tbody>
+      <tr><td>
+        <div class="flex-grow my-4 flex flex-col justify-start">
+          <!-- Contract Title banner with background orange, black Arial 11pt bold text -->
+          <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+            <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">
+              ${work.name}
+            </h2>
+          </div>
+          
+          <!-- Space for the cover photo of the week (using log.coverImage if loaded, else fallback blueprint design) -->
+          <div class="border border-black h-[70mm] flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm;">
+            ${log.coverImage ? `
+              <img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />
+            ` : `
+              <div class="border border-slate-200 bg-white/90 shadow-sm rounded-none px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4">
+                <span class="text-slate-405 text-3xl block">📷</span>
+                <div>
+                  <span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block">FOTO DE CAPA DA OBRA</span>
+                  <h4 class="text-xs font-black text-slate-800 uppercase mt-1">Supervisão de Execução Técnica</h4>
+                  <p class="text-[9.5px] text-slate-450 mt-1 font-sans">Nenhuma foto de capa enviada para este boletim semanal</p>
+                </div>
               </div>
-            </div>
-          `}
-        </div>
+            `}
+          </div>
 
-        <!-- Contract Parameter Table perfectly resembling example -->
-        <table class="black-grid-table" style="margin-top: 5px;">
-          <tbody>
-            <tr>
-              <td style="font-weight: bold; width: 45%;">Contrato N°:</td>
-              <td style="font-weight: bold;">${work.contractNumber}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Concorrência Pública:</td>
-              <td>${biddingNumber}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Proc. Administrativo:</td>
-              <td>${adminProcess}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Assinatura Contrato:</td>
-              <td>${signingDate}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Publicação no JOM:</td>
-              <td>${publicationDateJom}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Ordem de Início:</td>
-              <td>${startOrderDate}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Empresa Vencedora:</td>
-              <td style="text-transform: uppercase;">${work.contractorName}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Prazo Vigência:</td>
-              <td>${termDaysVigencia}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Prazo Execução:</td>
-              <td>${termDaysExecucao}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Início de Atividades:</td>
-              <td>${formatDate(work.startDate)}</td>
-            </tr>
-            <tr>
-              <td style="font-weight: bold;">Valor Total Inicial:</td>
-              <td style="font-weight: bold;">
-                ${formatCurrency(work.biddedValue)} <span style="font-size: 8pt; font-weight: normal; font-style: italic;">(${parsedValueExtenso})</span>
-              </td>
-            </tr>
-            ${additivesTableRows}
-          </tbody>
-        </table>
-      </div>
-      
-    </div>
-  </div>
+          <!-- Contract Parameter Table perfectly resembling example -->
+          <table class="black-grid-table" style="margin-top: 5px;">
+            <tbody>
+              <tr>
+                <td style="font-weight: bold; width: 45%;">Contrato N°:</td>
+                <td style="font-weight: bold;">${work.contractNumber}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Concorrência Pública:</td>
+                <td>${biddingNumber}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Proc. Administrativo:</td>
+                <td>${adminProcess}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Assinatura Contrato:</td>
+                <td>${signingDate}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Publicação no JOM:</td>
+                <td>${publicationDateJom}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Ordem de Início:</td>
+                <td>${startOrderDate}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Empresa Vencedora:</td>
+                <td style="text-transform: uppercase;">${work.contractorName}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Prazo Vigência:</td>
+                <td>${termDaysVigencia}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Prazo Execução:</td>
+                <td>${termDaysExecucao}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Início de Atividades:</td>
+                <td>${formatDate(work.startDate)}</td>
+              </tr>
+              <tr>
+                <td style="font-weight: bold;">Valor Total Inicial:</td>
+                <td style="font-weight: bold;">
+                  ${formatCurrency(work.biddedValue)} <span style="font-size: 8pt; font-weight: normal; font-style: italic;">(${parsedValueExtenso})</span>
+                </td>
+              </tr>
+              ${additivesTableRows}
+            </tbody>
+          </table>
+        </div>
+      </td></tr>
+    </tbody>
+    <tfoot><tr><td></td></tr></tfoot>
+  </table>
 
 
   <!-- PAGE 3: CONTRATUAL TIMELINE & CHRONOLOGY CHRONOGRAM -->
-  <div class="page watermark-page border border-slate-100">
-    <div class="page-content">
-      <div class="flex-grow my-4 flex flex-col justify-start">
-        <div>
-          <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-l-2 border-orange-500 pl-2">
-            CRONOLOGIA DA OBRA
-          </h3>
-        </div>
+  <div class="page-break"></div>
+  <table class="main-print-table">
+    <thead><tr><td></td></tr></thead>
+    <tbody>
+      <tr><td>
+        <div class="flex-grow my-4 flex flex-col justify-start">
+          <div>
+            <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-l-2 border-orange-500 pl-2">
+              CRONOLOGIA DA OBRA
+            </h3>
+          </div>
 
-        <!-- Place for User inserted Chronology -->
-        ${work.timelineImage ? `
-          <div class="mt-4">
-            <img src="${work.timelineImage}" alt="Cronograma da Obra" class="max-w-full h-auto" />
-          </div>
-        ` : `
-          <div class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-none text-slate-500 text-xs text-center">
-            Inserir cronologia da obra aqui.
-          </div>
-        `}
-      </div>
-      
-    </div>
-  </div>
+          <!-- Place for User inserted Chronology -->
+          ${work.timelineImage ? `
+            <div class="mt-4">
+              <img src="${work.timelineImage}" alt="Cronograma da Obra" class="max-w-full h-auto" style="max-height: 200mm; object-fit: contain; margin: 0 auto; display: block;" />
+            </div>
+          ` : `
+            <div class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-none text-slate-500 text-xs text-center">
+              Inserir cronologia da obra aqui.
+            </div>
+          `}
+        </div>
+      </td></tr>
+    </tbody>
+    <tfoot><tr><td></td></tr></tfoot>
+  </table>
 
 
   <!-- PAGE 4: ATIVIDADES DA SEMANA (MEDICAO SEMANAL) -->
+  <div class="page-break"></div>
   <table class="main-print-table">
     <thead><tr><td></td></tr></thead>
     <tbody>
       <!-- Sub-table 1: Metadata parameters -->
       <tr><td>
-        <table class="black-grid-table" style="page-break-inside: avoid; break-inside: avoid;">
+        <table class="black-grid-table" style="page-break-inside: auto; break-inside: auto;">
           <tbody>
             <tr>
               <td style="font-weight: bold; width: 42%;">% Físico executado - ${work.name}:</td>
@@ -878,7 +912,7 @@ export default function WorkDetail({
 
       <!-- Sub-table 2: Atividades da semana -->
       <tr><td>
-        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: avoid; break-inside: avoid;">
+        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: auto; break-inside: auto;">
           <tbody>
             <tr>
               <td style="font-weight: bold; width: 42%; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
@@ -899,7 +933,7 @@ export default function WorkDetail({
 
       <!-- Sub-table 3: Atividades da próxima semana -->
       <tr><td>
-        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: avoid; break-inside: avoid;">
+        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: auto; break-inside: auto;">
           <tbody>
             <tr>
               <td style="font-weight: bold; width: 42%; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
