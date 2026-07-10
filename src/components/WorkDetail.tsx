@@ -698,11 +698,11 @@ export default function WorkDetail({
       .black-grid-table {
         border-collapse: collapse;
         width: 100%;
-        border: 1.5px solid #000000;
+        border: 1.8px solid #000000;
         font-family: 'Calibri', 'Arial', sans-serif;
         font-size: 9pt;
         color: #000000;
-        line-height: 1.3;
+        line-height: 1.45;
         page-break-inside: auto !important;
         break-inside: auto !important;
       }
@@ -711,8 +711,8 @@ export default function WorkDetail({
         break-inside: avoid-page !important;
       }
       .black-grid-table td, .black-grid-table th {
-        border: 1px solid #000000;
-        padding: 3px 8px;
+        border: 1.2px solid #000000;
+        padding: 4px 9px;
         color: #000000;
       }
     </style>

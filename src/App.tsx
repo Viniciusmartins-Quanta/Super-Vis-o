@@ -715,23 +715,23 @@ export default function App() {
       .black-grid-table { 
           border-collapse: collapse; 
           width: 100%; 
-          border: 1.5px solid #000000; 
+          border: 1.8px solid #000000; 
           font-family: 'Calibri', 'Arial', sans-serif; 
           font-size: 9.2pt; 
-          line-height: 1.4; 
+          line-height: 1.55; 
           background-color: white; 
           page-break-inside: auto !important; 
           break-inside: auto !important; 
       }
-      .black-grid-table th { border: 1px solid #000000; padding: 4px 8px; color: #000000;}
+      .black-grid-table th { border: 1.2px solid #000000; padding: 5px 9px; color: #000000;}
       
       .black-grid-table tr {
           page-break-inside: avoid !important;
           break-inside: avoid-page !important;
       }
       .black-grid-table td { 
-          border: 1px solid #000000; 
-          padding: 4px 8px; 
+          border: 1.2px solid #000000; 
+          padding: 5px 9px; 
           color: #000000;
       }
 
