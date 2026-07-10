@@ -852,7 +852,7 @@ export default function WorkDetail({
         <div class="flex-grow my-4 flex flex-col justify-start">
           <div>
             <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-l-2 border-orange-500 pl-2">
-              CRONOLOGIA DA OBRA
+              CRONOLOGIA DA OBRA — ${work.name}
             </h3>
           </div>
 
@@ -887,7 +887,7 @@ export default function WorkDetail({
         <table class="black-grid-table">
           <tbody>
             <tr>
-              <td style="font-weight: bold; width: 42%;">% Físico executado - ${work.name}:</td>
+              <td style="font-weight: bold; width: 42%;">% Físico executado:</td>
               <td style="font-weight: bold;">${log.newProgress}%</td>
             </tr>
             <tr>
@@ -976,7 +976,7 @@ export default function WorkDetail({
     <tbody>
       <tr><td>
         <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">
-          FOTOS DA SEMANA:
+          FOTOS DA SEMANA — ${work.name}:
         </div>
         
         <!-- Thick 1.5px solid black border enclosing 4 photos beautifully -->
