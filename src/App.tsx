@@ -557,12 +557,13 @@ export default function App() {
 
       if (log) {
         const parsed = parseWeeklyReport(log.notes);
+        const coverHeight = (work.additives && work.additives.length > 2) ? "35mm" : "50mm";
         
         // Ficha Técnica (Quebra a página antes)
         contentHtml += `<div class="page-break"></div><table class="main-print-table"><thead><tr><td></td></tr></thead><tbody><tr><td>`;
         contentHtml += `
           <div style="background-color: #f97316; border: 0.3mm solid black; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">${work.name}</h2></div>
-          <div class="border border-black flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm; height: 70mm;">${log.coverImage ? `<img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />` : `<div class="border border-slate-200 bg-white/90 shadow-sm rounded-none px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4"><span class="text-slate-405 text-3xl block">📷</span><div><span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block">FOTO DE CAPA DA OBRA</span></div></div>`}</div>
+          <div class="border border-black flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm; height: ${coverHeight};">${log.coverImage ? `<img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />` : `<div class="border border-slate-200 bg-white/90 shadow-sm rounded-none px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4"><span class="text-slate-405 text-3xl block">📷</span><div><span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block">FOTO DE CAPA DA OBRA</span></div></div>`}</div>
           <table class="black-grid-table" style="margin-top: 5px;">
             <tbody>
               <tr><td style="font-weight: bold; width: 45%;">Contrato N°:</td><td style="font-weight: bold;">${work.contractNumber}</td></tr>
@@ -713,26 +714,30 @@ export default function App() {
       .page-break { page-break-before: always; break-before: page; }
       
       .black-grid-table { 
-          border-collapse: collapse; 
-          width: 100%; 
-          border: 1.8px solid #000000; 
+          border-collapse: collapse !important; 
+          width: 100% !important; 
+          border: 1.5px solid #000000 !important; 
           font-family: 'Calibri', 'Arial', sans-serif; 
-          font-size: 9.2pt; 
-          line-height: 1.55; 
+          font-size: 8.5pt; 
+          line-height: 1.25; 
           background-color: white; 
           page-break-inside: auto !important; 
           break-inside: auto !important; 
       }
-      .black-grid-table th { border: 1.2px solid #000000; padding: 5px 9px; color: #000000;}
+      .black-grid-table th { 
+          border: 1.5px solid #000000 !important; 
+          padding: 4px 8px !important; 
+          color: #000000 !important;
+      }
       
       .black-grid-table tr {
-          page-break-inside: avoid !important;
-          break-inside: avoid-page !important;
+          page-break-inside: auto !important;
+          break-inside: auto !important;
       }
       .black-grid-table td { 
-          border: 1.2px solid #000000; 
-          padding: 5px 9px; 
-          color: #000000;
+          border: 1.5px solid #000000 !important; 
+          padding: 4px 8px !important; 
+          color: #000000 !important;
       }
 
       @media print { 

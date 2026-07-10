@@ -524,6 +524,8 @@ export default function WorkDetail({
     }
 
 
+    const coverHeight = (work.additives && work.additives.length > 2) ? "35mm" : "50mm";
+
     // Build whole HTML payload structure
     const pdfHtml = `
 <!DOCTYPE html>
@@ -696,24 +698,24 @@ export default function WorkDetail({
       .page-break { page-break-before: always; break-before: page; }
 
       .black-grid-table {
-        border-collapse: collapse;
-        width: 100%;
-        border: 1.8px solid #000000;
+        border-collapse: collapse !important;
+        width: 100% !important;
+        border: 1.5px solid #000000 !important;
         font-family: 'Calibri', 'Arial', sans-serif;
-        font-size: 9pt;
+        font-size: 8.5pt;
         color: #000000;
-        line-height: 1.45;
+        line-height: 1.25;
         page-break-inside: auto !important;
         break-inside: auto !important;
       }
       .black-grid-table tr {
-        page-break-inside: avoid !important;
-        break-inside: avoid-page !important;
+        page-break-inside: auto !important;
+        break-inside: auto !important;
       }
       .black-grid-table td, .black-grid-table th {
-        border: 1.2px solid #000000;
-        padding: 4px 9px;
-        color: #000000;
+        border: 1.5px solid #000000 !important;
+        padding: 4px 8px !important;
+        color: #000000 !important;
       }
     </style>
 </head>
@@ -769,7 +771,7 @@ export default function WorkDetail({
           </div>
           
           <!-- Space for the cover photo of the week (using log.coverImage if loaded, else fallback blueprint design) -->
-          <div class="border border-black h-[70mm] flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm;">
+          <div class="border border-black flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm; height: ${coverHeight};">
             ${log.coverImage ? `
               <img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />
             ` : `
