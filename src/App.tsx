@@ -690,17 +690,6 @@ export default function App() {
         width: 210mm; height: 297mm; position: relative; background-color: white; page-break-after: always; break-after: page; z-index: 10; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); border: 1px solid #cbd5e1;
       }
 
-      .watermark-bg {
-        position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 210mm;
-        height: 297mm;
-        z-index: -100;
-        pointer-events: none;
-      }
-
       .main-print-table {
         width: 210mm;
         border-collapse: collapse;
@@ -752,12 +741,11 @@ export default function App() {
         html { background-color: transparent !important; }
         .cover-page { box-shadow: none !important; border: none !important; margin: 0 !important; }
         .main-print-table {
-          background-color: transparent !important;
-          background-image: none !important;
+          background-color: white !important;
           box-shadow: none !important;
           border: none !important;
           margin: 0 auto !important;
-          min-height: 0 !important;
+          min-height: 296.8mm !important;
           page-break-after: auto;
           break-after: auto;
         }
@@ -766,10 +754,6 @@ export default function App() {
 </head>
 <body>
   ${coverPageHtml}
-  
-  <div class="watermark-bg">
-    <img src="/timbrado.jpg" style="width: 210mm; height: 297mm; display: block;" />
-  </div>
   
   ${contentHtml}
 

@@ -641,12 +641,11 @@ export default function WorkDetail({
           display: none;
         }
         .main-print-table {
-          background-color: transparent !important;
-          background-image: none !important;
+          background-color: white !important;
           box-shadow: none !important;
           border: none !important;
           margin: 0 auto !important;
-          min-height: 0 !important;
+          min-height: 296.8mm !important;
           page-break-after: auto;
           break-after: auto;
         }
@@ -659,17 +658,6 @@ export default function WorkDetail({
         overflow: hidden;
       }
       
-      .watermark-bg {
-        position: fixed;
-        top: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 210mm;
-        height: 297mm;
-        z-index: -100;
-        pointer-events: none;
-      }
-
       .main-print-table {
         width: 210mm;
         border-collapse: collapse;
@@ -712,9 +700,6 @@ export default function WorkDetail({
     </style>
 </head>
 <body>
-  <div class="watermark-bg">
-    <img src="/timbrado.jpg" style="width: 210mm; height: 297mm; display: block;" />
-  </div>
 
 
   <!-- PAGE 1: COVER CARD (CAPA) -->
