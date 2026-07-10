@@ -500,26 +500,14 @@ export default function WorkDetail({
           lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
         }
 
-        const rowspan = lines.length;
-
-        return lines.map((line, lineIdx) => {
-          if (lineIdx === 0) {
-            return `
-              <tr>
-                <td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif;">
-                  ${orderWord}
-                </td>
-                <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">${line}</td>
-              </tr>
-            `;
-          } else {
-            return `
-              <tr>
-                <td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">${line}</td>
-              </tr>
-            `;
-          }
-        }).join("");
+        return `
+          <tr>
+            <td style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif;">
+              ${orderWord}
+            </td>
+            <td style="font-family: Calibri, sans-serif; font-size: 9.2pt; line-height: 1.35; padding: 4px 8px;">${lines.join("<br/>")}</td>
+          </tr>
+        `;
       }).join("");
     }
 
@@ -568,15 +556,15 @@ export default function WorkDetail({
       }
       body {
         margin: 0;
-        padding: 20px 0;
-        background-color: #cbd5e1;
+        padding: 20mm 0;
+        background-color: #e2e8f0;
         font-family: 'Inter', sans-serif;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 20px;
+        gap: 15mm;
       }
       .page {
         width: 210mm;
@@ -593,6 +581,7 @@ export default function WorkDetail({
         flex-direction: column;
         justify-content: space-between;
         padding: 20mm 20mm 15mm 20mm;
+        border: 1px solid #cbd5e1;
       }
       .expandable-page {
         height: auto !important;
@@ -624,16 +613,18 @@ export default function WorkDetail({
         body {
           display: block !important;
           background-color: transparent !important;
-          margin: 0;
-          padding: 0;
+          margin: 0 !important;
+          padding: 0 !important;
+          gap: 0 !important;
         }
         html {
           background-color: transparent !important;
         }
         .page {
           background-color: transparent !important;
-          margin: 0;
-          box-shadow: none;
+          margin: 0 !important;
+          box-shadow: none !important;
+          border: none !important;
           page-break-after: always;
           break-after: page;
         }
@@ -653,6 +644,7 @@ export default function WorkDetail({
           background-color: transparent !important;
           background-image: none !important;
           box-shadow: none !important;
+          border: none !important;
           margin: 0 auto !important;
           min-height: 0 !important;
           page-break-after: auto;
@@ -681,8 +673,8 @@ export default function WorkDetail({
       .main-print-table {
         width: 210mm;
         border-collapse: collapse;
-        border: none;
-        margin: 20px auto;
+        border: 1px solid #cbd5e1;
+        margin: 0 auto;
         background-color: white;
         background-image: url('/timbrado.jpg');
         background-size: 100% 100%;

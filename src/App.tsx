@@ -540,18 +540,25 @@ export default function App() {
       
       let additivesTableRows = "";
       if (work.additives && work.additives.length > 0) {
+        let cumulativeValue = Number(work.biddedValue);
         additivesTableRows = work.additives.map((add:any, idx:number) => {
           const orderWord = `${idx + 1}º ADITIVO`; const publishJomDate = add.description ? (add.description.match(/JOM de (\d{2}\/\d{2}\/\d{4})/i)?.[1] || formatDate(add.signatureDate)) : formatDate(add.signatureDate);
-          const lines = [`Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`, `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`];
+          const lines = [
+            `Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`,
+            `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`
+          ];
           if (add.days) lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} dias</span>`); else if (add.type === "prazo" || add.type === "misto") lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
-          if (add.value !== undefined && add.value !== null) { lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(add.value)}</span>`); if (add.type === "financeiro" || add.type === "misto") lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(work.biddedValue + add.value)}</span>`); }
+          
+          if (add.type === "financeiro" || add.type === "misto" || (add.value !== undefined && add.value !== null)) {
+            const val = Number(add.value || 0);
+            cumulativeValue += val;
+            lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(val)}</span>`);
+            lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(cumulativeValue)}</span>`);
+          }
           if (add.newVigenciaDate) lines.push(`Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
           if (add.newExecucaoDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newExecucaoDate)}</span>`); else if (add.newVigenciaDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
-          const rowspan = lines.length;
-          return lines.map((line, lineIdx) => {
-            if (lineIdx === 0) return `<tr><td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif;">${orderWord}</td><td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">${line}</td></tr>`;
-            else return `<tr><td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">${line}</td></tr>`;
-          }).join("");
+          
+          return `<tr><td style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif;">${orderWord}</td><td style="font-family: Calibri, sans-serif; font-size: 9.2pt; line-height: 1.35; padding: 4px 8px;">${lines.join("<br/>")}</td></tr>`;
         }).join("");
       }
 
@@ -677,10 +684,10 @@ export default function App() {
           content: "";
         }
       }
-      body { margin: 0; padding: 0; background-color: #cbd5e1; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; display: flex; flex-direction: column; align-items: center; }
+      body { margin: 0; padding: 20mm 0; background-color: #e2e8f0; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; display: flex; flex-direction: column; align-items: center; gap: 15mm; }
       
       .cover-page {
-        width: 210mm; height: 297mm; position: relative; background-color: white; page-break-after: always; break-after: page; z-index: 10; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+        width: 210mm; height: 297mm; position: relative; background-color: white; page-break-after: always; break-after: page; z-index: 10; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); border: 1px solid #cbd5e1;
       }
 
       .watermark-bg {
@@ -697,8 +704,8 @@ export default function App() {
       .main-print-table {
         width: 210mm;
         border-collapse: collapse;
-        border: none;
-        margin: 20px auto;
+        border: 1px solid #cbd5e1;
+        margin: 0 auto;
         background-color: white;
         background-image: url('/timbrado.jpg');
         background-size: 100% 100%;
@@ -741,13 +748,14 @@ export default function App() {
       }
 
       @media print { 
-        body { display: block !important; background-color: transparent !important; }
+        body { display: block !important; background-color: transparent !important; margin: 0 !important; padding: 0 !important; gap: 0 !important; }
         html { background-color: transparent !important; }
-        .cover-page { box-shadow: none; }
+        .cover-page { box-shadow: none !important; border: none !important; margin: 0 !important; }
         .main-print-table {
           background-color: transparent !important;
           background-image: none !important;
           box-shadow: none !important;
+          border: none !important;
           margin: 0 auto !important;
           min-height: 0 !important;
           page-break-after: auto;
