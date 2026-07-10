@@ -878,9 +878,13 @@ export default function WorkDetail({
   <table class="main-print-table">
     <thead><tr><td></td></tr></thead>
     <tbody>
-      <!-- Sub-table 1: Metadata parameters -->
       <tr><td>
-        <table class="black-grid-table" style="page-break-inside: auto; break-inside: auto;">
+        <div style="background-color: #f97316; border: 0.3mm solid black; padding: 6px 10px; text-align: center; margin-bottom: 8px;">
+          <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">
+            ATIVIDADES DE FISCALIZAÇÃO — ${work.name}
+          </h2>
+        </div>
+        <table class="black-grid-table">
           <tbody>
             <tr>
               <td style="font-weight: bold; width: 42%;">% Físico executado - ${work.name}:</td>
@@ -906,16 +910,8 @@ export default function WorkDetail({
               <td style="font-weight: bold;">Status da Subestação Elétrica:</td>
               <td>${parsed.substationStatus || "N/A"}</td>
             </tr>
-          </tbody>
-        </table>
-      </td></tr>
-
-      <!-- Sub-table 2: Atividades da semana -->
-      <tr><td>
-        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: auto; break-inside: auto;">
-          <tbody>
             <tr>
-              <td style="font-weight: bold; width: 42%; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
+              <td style="font-weight: bold; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
               <td style="vertical-align: top; padding: 4px 8px;">
                 <ul style="list-style-type: none; margin: 0; padding: 0;">
                   ${parsed.weeklyActivities.map(act => `
@@ -927,16 +923,8 @@ export default function WorkDetail({
                 </ul>
               </td>
             </tr>
-          </tbody>
-        </table>
-      </td></tr>
-
-      <!-- Sub-table 3: Atividades da próxima semana -->
-      <tr><td>
-        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: auto; break-inside: auto;">
-          <tbody>
             <tr>
-              <td style="font-weight: bold; width: 42%; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
+              <td style="font-weight: bold; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
               <td style="vertical-align: top; padding: 4px 8px;">
                 <ul style="list-style-type: none; margin: 0; padding: 0;">
                   ${parsed.nextWeekActivities.map(act => `
@@ -948,16 +936,8 @@ export default function WorkDetail({
                 </ul>
               </td>
             </tr>
-          </tbody>
-        </table>
-      </td></tr>
-
-      <!-- Sub-table 4: Observações e apontamentos importantes -->
-      <tr><td>
-        <table class="black-grid-table" style="margin-top: -1.5px; page-break-inside: auto; break-inside: auto;">
-          <tbody>
             <tr>
-              <td style="font-weight: bold; width: 42%; vertical-align: top;">Observações e apontamentos importantes:</td>
+              <td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td>
               <td style="vertical-align: top; padding: 4px 8px;">
                 <ul style="list-style-type: none; margin: 0; padding: 0;">
                   ${parsed.observations.map(obs => {
