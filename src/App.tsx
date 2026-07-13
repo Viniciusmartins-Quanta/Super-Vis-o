@@ -665,36 +665,72 @@ export default function App() {
     <title>${isSingle ? `Relatorio_${targetWorks[0]?.name}` : 'Relatorio_Consolidado'}_${reportWeek}</title>
     <style>
       @page { size: A4 portrait; margin: 0; }
-      html, body { width: 100%; height: 100%; margin: 0; padding: 0; background-color: white; font-family: Arial, sans-serif; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-      
-      /* Fundo da marca d'água (repetido em todas as páginas) */
-      .bg-timbrado {
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -10;
+      html, body { 
+        margin: 0; padding: 0; font-family: Arial, sans-serif; 
+        -webkit-print-color-adjust: exact !important; 
+        print-color-adjust: exact !important; 
       }
-      .bg-timbrado img { width: 100%; height: 100%; object-fit: cover; }
       
-      /* Capa isolada por cima de tudo */
-      .capa { width: 100vw; height: 100vh; position: relative; page-break-after: always; z-index: 10; background-color: white; overflow: hidden; }
+      /* =========================================
+         TELA DE PREVIEW (VISUALIZAÇÃO NO NAVEGADOR)
+         ========================================= */
+      @media screen {
+        body { 
+          background-color: #cbd5e1; padding: 20px; 
+          display: flex; flex-direction: column; align-items: center; 
+        }
+        .capa { 
+          width: 210mm; height: 297mm; position: relative; 
+          background-color: white; overflow: hidden; 
+          box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; flex-shrink: 0;
+        }
+        .relatorio-container { 
+          width: 210mm; min-height: 297mm; 
+          background-color: white; box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+          background-image: url('/timbrado.jpg'); 
+          background-size: 210mm 297mm; 
+          background-repeat: repeat-y; 
+          background-position: top center;
+        }
+        .bg-timbrado-print { display: none; } /* Esconde o fundo fixo na tela */
+      }
+
+      /* =========================================
+         CONFIGURAÇÃO EXATA PARA O PDF (IMPRESSÃO)
+         ========================================= */
+      @media print {
+        body { background-color: white; display: block; }
+        .capa { 
+          width: 100vw; height: 100vh; position: relative; 
+          page-break-after: always; z-index: 10; background-color: white; overflow: hidden; 
+        }
+        .relatorio-container { 
+          width: 100%; display: block; background: none; box-shadow: none; 
+        }
+        .bg-timbrado-print { 
+          display: block; position: fixed; top: 0; left: 0; 
+          width: 100vw; height: 100vh; z-index: -10; 
+        }
+        .bg-timbrado-print img { width: 100%; height: 100%; object-fit: cover; }
+      }
+
+      /* Elementos da Capa */
       .capa-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
       .capa-content { position: absolute; bottom: 20mm; left: 20mm; right: 20mm; z-index: 11; }
       
-      /* Tabela Mestra que protege o Cabeçalho e o Rodapé da Quanta */
+      /* Tabela Mestra (Protege margens superior e inferior na impressão) */
       .master-table { width: 100%; border-collapse: collapse; border: none; }
       .master-thead td { height: 25mm; border: none; padding: 0; } 
       .master-tfoot td { height: 32mm; border: none; padding: 0; } 
       .master-tbody td { padding: 0 15mm; border: none; vertical-align: top; }
       
       /* Tabelas de Dados e Quebras */
-      .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 8.8pt; }
-      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 2px 8px; page-break-inside: auto; }
+      .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.5pt; }
+      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 6px 8px; page-break-inside: auto; }
       .tabela-dados tr { page-break-inside: avoid; page-break-after: auto; }
       
       .quebra-pagina { page-break-before: always; }
       .titulo-secao { background-color: #f97316; border: 1px solid #000; padding: 7px; text-align: center; font-weight: bold; font-size: 11pt; text-transform: uppercase; margin-bottom: 12px; }
-
-      @media print { 
-        body { background-color: white; } 
-      }
     </style>
 </head>
 <body>
@@ -717,21 +753,24 @@ export default function App() {
     </div>
   </div>
   
-  <div class="bg-timbrado"><img src="/timbrado.jpg" /></div>
+  <!-- Imagem de fundo que repete APENAS na Impressão do PDF -->
+  <div class="bg-timbrado-print"><img src="/timbrado.jpg" /></div>
   
-  <table class="master-table">
-    <thead class="master-thead"><tr><td></td></tr></thead>
-    <tfoot class="master-tfoot"><tr><td></td></tr></tfoot>
-    <tbody class="master-tbody"><tr><td>
-       ${contentHtml}
-    </td></tr></tbody>
-  </table>
+  <!-- Container que imita a folha A4 APENAS na Tela -->
+  <div class="relatorio-container">
+    <table class="master-table">
+      <thead class="master-thead"><tr><td></td></tr></thead>
+      <tfoot class="master-tfoot"><tr><td></td></tr></tfoot>
+      <tbody class="master-tbody"><tr><td>
+         ${contentHtml}
+      </td></tr></tbody>
+    </table>
+  </div>
 
   <script>
     window.onload = () => { 
         setTimeout(() => { 
             window.print(); 
-            setTimeout(() => { window.close(); }, 500);
         }, 500); 
     };
   </script>
@@ -747,6 +786,7 @@ export default function App() {
       alert("Habilite permissões para popups no seu navegador para gerar o PDF.");
     }
   };
+  
   // =========================================================================
 
   if (isAuthLoading) {

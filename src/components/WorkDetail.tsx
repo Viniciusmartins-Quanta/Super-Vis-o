@@ -61,6 +61,7 @@ interface WorkDetailProps {
     progressImages?: string[]
   ) => Promise<void>;
   onDeleteLog?: (logId: string) => Promise<void>;
+  onGenerateReport: () => void; 
 }
 
 export default function WorkDetail({
@@ -73,7 +74,8 @@ export default function WorkDetail({
   onLaunchMeasurement,
   onUpdateLogNotes,
   onUpdateLog,
-  onDeleteLog
+  onDeleteLog,
+  onGenerateReport
 }: WorkDetailProps) {
   const [activeTab, setActiveTab] = useState<
     "ficha" | "aditivos" | "lancamentos" | "drive" | "revisoes" | "logs"
@@ -1858,7 +1860,7 @@ export default function WorkDetail({
                               <Edit3 className="w-3.5 h-3.5" />
                             </button>
                             <button
-                              onClick={() => handleExportPDF(log)}
+                              onClick={onGenerateReport}
                               className="p-1 text-slate-400 hover:text-amber-600 bg-white border border-slate-200 hover:border-amber-200 rounded-md transition cursor-pointer"
                               title="Exportar PDF do boletim"
                             >
@@ -2526,7 +2528,7 @@ export default function WorkDetail({
 
                       <button
                         type="button"
-                        onClick={() => handleExportPDF(selectedLog)}
+                        onClick={onGenerateReport} 
                         className="p-1.5 px-3.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200/60 rounded-xl transition cursor-pointer text-[11px] font-black flex items-center gap-1.5"
                         title="Exportar PDF do boletim"
                       >
