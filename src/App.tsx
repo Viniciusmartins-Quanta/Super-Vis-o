@@ -495,9 +495,11 @@ export default function App() {
 
     // 2. CONSTRUÇÃO DO CONTEÚDO DINÂMICO
     let contentHtml = "";
+    let isFirstTbody = true;
 
     // -- Resumo do Contrato --
-    contentHtml += `<div class="page-break"></div><table class="main-print-table"><thead><tr><td></td></tr></thead><tbody><tr><td>`;
+    contentHtml += `<tbody style="${isFirstTbody ? '' : 'page-break-before: always; break-before: page;'}"><tr><td>`;
+    isFirstTbody = false;
     contentHtml += `
       <div style="background-color: #f97316; border: 0.3mm solid black; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
         <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">FICHA TÉCNICA DO CONTRATO DE SUPERVISÃO</h2>
@@ -528,7 +530,7 @@ export default function App() {
         </tbody>
       </table>
     `;
-    contentHtml += `</td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table>`;
+    contentHtml += `</td></tr></tbody>`;
 
     // -- Loop nas Obras --
     activeWorks.forEach((work:any) => {
@@ -540,37 +542,29 @@ export default function App() {
       
       let additivesTableRows = "";
       if (work.additives && work.additives.length > 0) {
-        let cumulativeValue = Number(work.biddedValue);
         additivesTableRows = work.additives.map((add:any, idx:number) => {
           const orderWord = `${idx + 1}º ADITIVO`; const publishJomDate = add.description ? (add.description.match(/JOM de (\d{2}\/\d{2}\/\d{4})/i)?.[1] || formatDate(add.signatureDate)) : formatDate(add.signatureDate);
-          const lines = [
-            `Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`,
-            `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`
-          ];
+          const lines = [`Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`, `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`];
           if (add.days) lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} dias</span>`); else if (add.type === "prazo" || add.type === "misto") lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
-          
-          if (add.type === "financeiro" || add.type === "misto" || (add.value !== undefined && add.value !== null)) {
-            const val = Number(add.value || 0);
-            cumulativeValue += val;
-            lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(val)}</span>`);
-            lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(cumulativeValue)}</span>`);
-          }
+          if (add.value !== undefined && add.value !== null) { lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(add.value)}</span>`); if (add.type === "financeiro" || add.type === "misto") lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(work.biddedValue + add.value)}</span>`); }
           if (add.newVigenciaDate) lines.push(`Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
           if (add.newExecucaoDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newExecucaoDate)}</span>`); else if (add.newVigenciaDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
-          
-          return `<tr><td style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif;">${orderWord}</td><td style="font-family: Calibri, sans-serif; font-size: 9.2pt; line-height: 1.35; padding: 4px 8px;">${lines.join("<br/>")}</td></tr>`;
+          const rowspan = lines.length;
+          return lines.map((line, lineIdx) => {
+            if (lineIdx === 0) return `<tr><td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif;">${orderWord}</td><td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">${line}</td></tr>`;
+            else return `<tr><td style="font-family: Calibri, sans-serif; font-size: 9.2pt;">${line}</td></tr>`;
+          }).join("");
         }).join("");
       }
 
       if (log) {
         const parsed = parseWeeklyReport(log.notes);
-        const coverHeight = (work.additives && work.additives.length > 2) ? "35mm" : "50mm";
         
-        // Ficha Técnica (Quebra a página antes)
-        contentHtml += `<div class="page-break"></div><table class="main-print-table"><thead><tr><td></td></tr></thead><tbody><tr><td>`;
+        // Ficha Técnica 
+        contentHtml += `<tbody style="page-break-before: always; break-before: page;"><tr><td>`;
         contentHtml += `
           <div style="background-color: #f97316; border: 0.3mm solid black; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">${work.name}</h2></div>
-          <div class="border border-black flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm; height: ${coverHeight};">${log.coverImage ? `<img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />` : `<div class="border border-slate-200 bg-white/90 shadow-sm rounded-none px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4"><span class="text-slate-405 text-3xl block">📷</span><div><span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block">FOTO DE CAPA DA OBRA</span></div></div>`}</div>
+          <div class="border border-black flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm; height: 100mm;">${log.coverImage ? `<img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />` : `<div class="border border-slate-200 bg-white/90 shadow-sm rounded-none px-10 py-8 max-w-sm text-center border-dashed font-mono space-y-4"><span class="text-slate-405 text-3xl block">📷</span><div><span class="text-[8px] uppercase tracking-widest text-slate-400 font-extrabold block">FOTO DE CAPA DA OBRA</span></div></div>`}</div>
           <table class="black-grid-table" style="margin-top: 5px;">
             <tbody>
               <tr><td style="font-weight: bold; width: 45%;">Contrato N°:</td><td style="font-weight: bold;">${work.contractNumber}</td></tr>
@@ -588,21 +582,22 @@ export default function App() {
             </tbody>
           </table>
         `;
-        contentHtml += `</td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table>`;
+        contentHtml += `</td></tr></tbody>`;
 
-        // Cronologia (Quebra a página antes)
-        contentHtml += `<div class="page-break"></div><table class="main-print-table"><thead><tr><td></td></tr></thead><tbody><tr><td>`;
+        // Cronologia 
+        contentHtml += `<tbody style="page-break-before: always; break-before: page;"><tr><td>`;
         contentHtml += `
           <div><h3 class="text-xs font-black text-slate-800 uppercase tracking-widest border-l-2 border-orange-500 pl-2">CRONOLOGIA DA OBRA — ${work.name}</h3></div>
           ${work.timelineImage ? `<div class="mt-4"><img src="${work.timelineImage}" alt="Cronograma da Obra" style="max-width: 100%; max-height: 200mm; object-fit: contain; margin: 0 auto; display: block;" /></div>` : `<div class="mt-4 p-4 border-2 border-dashed border-slate-300 rounded-none text-slate-500 text-xs text-center">Inserir cronologia da obra aqui.</div>`}
         `;
-        contentHtml += `</td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table>`;
+        contentHtml += `</td></tr></tbody>`;
 
-        // Atividades (A TABELA QUE VAI CRESCER INFINITAMENTE, Quebra a página antes)
-        contentHtml += `<div class="page-break"></div><table class="main-print-table"><thead><tr><td></td></tr></thead><tbody><tr><td>`;
+        // Atividades de Fiscalização (NOVO FORMATO DE TABELA QUEBRÁVEL)
+        contentHtml += `<tbody style="page-break-before: always; break-before: page;"><tr><td>`;
         contentHtml += `
           <div style="background-color: #f97316; border: 0.3mm solid black; padding: 6px 10px; text-align: center; margin-bottom: 8px;"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">ATIVIDADES DE FISCALIZAÇÃO — ${work.name}</h2></div>
-          <table class="black-grid-table">
+          
+          <table class="black-grid-table" style="border-bottom: none; margin-bottom: 0;">
             <tbody>
               <tr><td style="font-weight: bold; width: 42%;">% Físico executado:</td><td style="font-weight: bold;">${log.newProgress}%</td></tr>
               <tr><td style="font-weight: bold;">Situação do Aditivo:</td><td>${parsed.sitacaoAditivo || "N/A"}</td></tr>
@@ -610,31 +605,39 @@ export default function App() {
               <tr><td style="font-weight: bold;">Atividades de Infraestrutura de Dados:</td><td>${parsed.infraDados || "N/A"}</td></tr>
               <tr><td style="font-weight: bold;">Status aumento de carga (Enel):</td><td>${parsed.enelStatus || "N/A"}</td></tr>
               <tr><td style="font-weight: bold;">Status da Subestação Elétrica:</td><td>${parsed.substationStatus || "N/A"}</td></tr>
-              <tr>
-                <td style="font-weight: bold; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
-                <td style="vertical-align: top; padding: 4px 8px;">
-                  <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.weeklyActivities.map(act => `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${act}</li>`).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade descrita.</li>`}</ul>
-                </td>
+            </tbody>
+          </table>
+          
+          <table class="black-grid-table" style="border-top: none; margin-top: 0;">
+            <tbody>
+              <tr style="background-color: #f3f4f6;">
+                <td style="font-weight: bold; padding: 6px 8px;">Atividades da semana: <span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
               </tr>
-              <tr>
-                <td style="font-weight: bold; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
-                <td style="vertical-align: top; padding: 4px 8px;">
-                  <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.nextWeekActivities.map(act => `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${act}</li>`).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade programada.</li>`}</ul>
-                </td>
+              ${parsed.weeklyActivities.map(act => `<tr><td style="padding: 4px 12px; position: relative;"><span style="position: absolute; left: 6px; top: 4px;">•</span><span style="display: block; padding-left: 10px;">${act}</span></td></tr>`).join("") || `<tr><td style="padding: 4px 12px; font-style: italic; color: #777;">Nenhuma atividade descrita.</td></tr>`}
+              
+              <tr style="background-color: #f3f4f6;">
+                <td style="font-weight: bold; padding: 6px 8px;">Atividades da próxima semana: <span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
               </tr>
-              <tr>
-                <td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td>
-                <td style="vertical-align: top; padding: 4px 8px;">
-                  <ul style="list-style-type: none; margin: 0; padding: 0;">${parsed.observations.map(obs => { const cleaned = obs.trim(); if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); return `<li style="margin-top: 4px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt;"><strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>${content}</li>`; } return `<li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;"><span style="position: absolute; left: 0; top: 0;">•</span>${cleaned}</li>`; }).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhum apontamento crítico.</li>`}</ul>
-                </td>
+              ${parsed.nextWeekActivities.map(act => `<tr><td style="padding: 4px 12px; position: relative;"><span style="position: absolute; left: 6px; top: 4px;">•</span><span style="display: block; padding-left: 10px;">${act}</span></td></tr>`).join("") || `<tr><td style="padding: 4px 12px; font-style: italic; color: #777;">Nenhuma atividade programada.</td></tr>`}
+              
+              <tr style="background-color: #f3f4f6;">
+                <td style="font-weight: bold; padding: 6px 8px;">Observações e apontamentos importantes:</td>
               </tr>
+              ${parsed.observations.map(obs => { 
+                  const cleaned = obs.trim(); 
+                  if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { 
+                      const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); 
+                      return `<tr><td style="padding: 6px 12px;"><strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>${content}</td></tr>`; 
+                  } 
+                  return `<tr><td style="padding: 4px 12px; position: relative;"><span style="position: absolute; left: 6px; top: 4px;">•</span><span style="display: block; padding-left: 10px;">${cleaned}</span></td></tr>`; 
+              }).join("") || `<tr><td style="padding: 4px 12px; font-style: italic; color: #777;">Nenhum apontamento crítico.</td></tr>`}
             </tbody>
           </table>
         `;
-        contentHtml += `</td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table>`;
+        contentHtml += `</td></tr></tbody>`;
 
-        // Fotos da Semana (Força uma folha nova antes)
-        contentHtml += `<div class="page-break"></div><table class="main-print-table"><thead><tr><td></td></tr></thead><tbody><tr><td>`;
+        // Fotos da Semana 
+        contentHtml += `<tbody style="page-break-before: always; break-before: page;"><tr><td>`;
         contentHtml += `
           <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">FOTOS DA SEMANA — ${work.name}:</div>
           <div style="border: 0.3mm solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
@@ -644,15 +647,15 @@ export default function App() {
             <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">${log.progressImages && log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Foto 4" />` : `<div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;"><div>📷</div><div>F-04 (Vazio)</div></div>`}</div>
           </div>
         `;
-        contentHtml += `</td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table>`;
+        contentHtml += `</td></tr></tbody>`;
 
       } else {
-        contentHtml += `<div class="page-break"></div><table class="main-print-table"><thead><tr><td></td></tr></thead><tbody><tr><td>`;
+        contentHtml += `<tbody style="page-break-before: always; break-before: page;"><tr><td>`;
         contentHtml += `
           <div style="background-color: #e2e8f0; border: 0.3mm solid black; border-radius: 0px; padding: 6px 10px; text-align: center; margin-bottom: 20px;"><h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">OBRA: ${work.name}</h2></div>
           <div style="border: 1px dashed #cbd5e1; padding: 40px; text-align: center; border-radius: 8px; margin-top: 40px; font-family: Calibri, sans-serif; color: #64748b;"><div style="font-size: 24pt; margin-bottom: 12px;">📋</div><div style="font-size: 11pt; font-weight: bold; color: #334155; margin-bottom: 8px;">Sem lançamentos registrados para esta obra na semana</div><div style="font-size: 9.5pt;">Esta obra encontra-se ativa no contrato de gerenciamento, mas não recebeu boletins de fiscalização de atividades ou de progresso na semana selecionada (${periodFormatted}).</div></div>
         `;
-        contentHtml += `</td></tr></tbody><tfoot><tr><td></td></tr></tfoot></table>`;
+        contentHtml += `</td></tr></tbody>`;
       }
     });
 
@@ -665,97 +668,50 @@ export default function App() {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-      @page {
-        size: A4;
-        margin: 0 0 15mm 0;
-        @bottom-left {
-          content: "Página " counter(page);
-          font-family: 'JetBrains Mono', monospace;
-          font-size: 9px;
-          color: #94a3b8;
-          font-weight: bold;
-          padding-left: 15mm;
-          padding-bottom: 10mm;
-        }
-      }
-      @page :first {
-        margin: 0;
-        @bottom-left {
-          content: "";
-        }
-      }
-      body { margin: 0; padding: 20mm 0; background-color: #e2e8f0; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; display: flex; flex-direction: column; align-items: center; gap: 15mm; }
+      @page { size: A4; margin: 0; }
+      body { margin: 0; padding: 0; background-color: #cbd5e1; font-family: 'Inter', sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; display: flex; flex-direction: column; align-items: center; }
       
       .cover-page {
-        width: 210mm; height: 297mm; position: relative; background-color: white; page-break-after: always; break-after: page; z-index: 10; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); border: 1px solid #cbd5e1;
+        width: 210mm; height: 297mm; position: relative; background-color: white; page-break-after: always; break-after: page; z-index: 10; margin: 0 auto; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
       }
 
-      .main-print-table {
-        width: 210mm;
-        border-collapse: collapse;
-        border: 1px solid #cbd5e1;
-        margin: 0 auto;
-        background-color: white;
-        background-image: url('/timbrado.jpg');
-        background-size: 100% 100%;
-        background-repeat: no-repeat;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
-        min-height: 296.8mm;
-        box-sizing: border-box;
+      .watermark-bg {
+        position: fixed; top: 0; left: 0; width: 210mm; height: 297mm;
+        background-image: url('/timbrado.jpg'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; z-index: -1;
       }
+
+      .main-print-table { width: 210mm; border-collapse: collapse; border: none; margin: 0 auto; background-color: transparent; }
       .main-print-table thead tr td { height: 15mm; border: none; padding: 0; } 
       .main-print-table tfoot tr td { height: 35mm; border: none; padding: 0; } 
       .main-print-table tbody tr td { padding: 0 15mm; border: none; vertical-align: top; }
-
-      .page-break { page-break-before: always; break-before: page; }
       
-      .black-grid-table { 
-          border-collapse: collapse !important; 
-          width: 100% !important; 
-          border: 1.5px solid #000000 !important; 
-          font-family: 'Calibri', 'Arial', sans-serif; 
-          font-size: 8.5pt; 
-          line-height: 1.25; 
-          background-color: white; 
+      .black-grid-table { border-collapse: collapse; width: 100%; border: 1.5px solid #000000; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; line-height: 1.4; background-color: white; }
+      .black-grid-table th { border: 1px solid #000000; padding: 4px 8px; color: #000000;}
+      
+      /* A MÁGICA DA QUEBRA DE LINHAS: */
+      .black-grid-table td, .black-grid-table tr { 
+          border: 1px solid #000000; 
+          color: #000000;
           page-break-inside: auto !important; 
           break-inside: auto !important; 
       }
-      .black-grid-table th { 
-          border: 1.5px solid #000000 !important; 
-          padding: 4px 8px !important; 
-          color: #000000 !important;
-      }
-      
-      .black-grid-table tr {
-          page-break-inside: auto !important;
-          break-inside: auto !important;
-      }
-      .black-grid-table td { 
-          border: 1.5px solid #000000 !important; 
-          padding: 4px 8px !important; 
-          color: #000000 !important;
-      }
 
       @media print { 
-        body { display: block !important; background-color: transparent !important; margin: 0 !important; padding: 0 !important; gap: 0 !important; }
-        html { background-color: transparent !important; }
-        .cover-page { box-shadow: none !important; border: none !important; margin: 0 !important; }
-        .main-print-table {
-          background-color: white !important;
-          box-shadow: none !important;
-          border: none !important;
-          margin: 0 auto !important;
-          min-height: 296.8mm !important;
-          page-break-after: auto;
-          break-after: auto;
-        }
+        body { background-color: white; } 
+        .cover-page { box-shadow: none; }
       }
     </style>
 </head>
 <body>
   ${coverPageHtml}
   
-  ${contentHtml}
+  <div class="watermark-bg"></div>
+  
+  <table class="main-print-table">
+    <thead><tr><td></td></tr></thead>
+    ${contentHtml}
+    <tfoot><tr><td></td></tr></tfoot>
+  </table>
 
   <script>
     window.addEventListener('DOMContentLoaded', () => { setTimeout(() => { window.print(); }, 500); });
