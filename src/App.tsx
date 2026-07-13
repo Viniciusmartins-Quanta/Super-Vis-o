@@ -553,7 +553,7 @@ export default function App() {
         // Ficha Técnica da Obra
         contentHtml += `
           <div class="titulo-secao">${work.name}</div>
-          <div style="border: 1px solid black; height: 45mm; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;">
+          <div style="border: 1px solid black; height: 80mm; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;">
             ${log.coverImage ? `<img src="${log.coverImage}" style="width: 100%; height: 100%; object-fit: contain;" />` : `<div style="text-align: center; color: #64748b; font-family: monospace;">📷<br/>SEM FOTO DE CAPA</div>`}
           </div>
           <table class="tabela-dados">
@@ -623,10 +623,10 @@ export default function App() {
         contentHtml += `
           <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">FOTOS DA SEMANA — ${work.name}:</div>
           <div style="border: 1px solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
-            <div style="border: 1px solid #000; height: 70mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[0] ? `<img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-01 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 70mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[1] ? `<img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-02 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 70mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[2] ? `<img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-03 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 70mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-04 (Vazio)</span>`}</div>
+            <div style="border: 1px solid #000; height: 50mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[0] ? `<img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-01 (Vazio)</span>`}</div>
+            <div style="border: 1px solid #000; height: 50mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[1] ? `<img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-02 (Vazio)</span>`}</div>
+            <div style="border: 1px solid #000; height: 50mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[2] ? `<img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-03 (Vazio)</span>`}</div>
+            <div style="border: 1px solid #000; height: 50mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-04 (Vazio)</span>`}</div>
           </div>
         `;
 
@@ -669,8 +669,8 @@ export default function App() {
       .master-tbody td { padding: 0 15mm; border: none; vertical-align: top; }
       
       /* Tabelas de Dados e Quebras */
-      .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.5pt; }
-      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 6px 8px; page-break-inside: auto; }
+      .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.0pt; }
+      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 4px 6px; page-break-inside: auto; }
       .tabela-dados tr { page-break-inside: avoid; page-break-after: auto; }
       
       .quebra-pagina { page-break-before: always; }
