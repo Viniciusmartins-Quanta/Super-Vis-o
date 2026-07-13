@@ -553,7 +553,7 @@ export default function App() {
         // Ficha Técnica da Obra
         contentHtml += `
           <div class="titulo-secao">${work.name}</div>
-          <div style="border: 1px solid black; height: 80mm; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;">
+          <div style="border: 1px solid black; height: 70mm; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;">
             ${log.coverImage ? `<img src="${log.coverImage}" style="width: 100%; height: 100%; object-fit: contain;" />` : `<div style="text-align: center; color: #64748b; font-family: monospace;">📷<br/>SEM FOTO DE CAPA</div>`}
           </div>
           <table class="tabela-dados">
@@ -600,19 +600,19 @@ export default function App() {
           <table class="tabela-dados" style="margin-top: 0; border-top: none;">
             <tbody>
               <tr style="background-color: #f3f4f6;"><td style="font-weight: bold;">Atividades da semana: <span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td></tr>
-              ${parsed.weeklyActivities.map(act => `<tr><td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act}</td></tr>`).join("") || `<tr><td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade descrita.</td></tr>`}
+              ${parsed.weeklyActivities.map(act => `<tr><td style="padding-left: 15px; padding-top: 3px; padding-bottom: 3px;">• ${act}</td></tr>`).join("") || `<tr><td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade descrita.</td></tr>`}
               
               <tr style="background-color: #f3f4f6;"><td style="font-weight: bold;">Atividades da próxima semana: <span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td></tr>
-              ${parsed.nextWeekActivities.map(act => `<tr><td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act}</td></tr>`).join("") || `<tr><td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade programada.</td></tr>`}
+              ${parsed.nextWeekActivities.map(act => `<tr><td style="padding-left: 15px; padding-top: 3px; padding-bottom: 3px;">• ${act}</td></tr>`).join("") || `<tr><td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade programada.</td></tr>`}
               
               <tr style="background-color: #f3f4f6;"><td style="font-weight: bold;">Observações e apontamentos importantes:</td></tr>
               ${parsed.observations.map(obs => { 
                   const cleaned = obs.trim(); 
                   if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { 
                       const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); 
-                      return `<tr><td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;"><strong style="color: #000;">Não conformidade:</strong><br/>${content}</td></tr>`; 
+                      return `<tr><td style="padding-left: 15px; padding-top: 3px; padding-bottom: 3px;"><strong style="color: #000;">Não conformidade:</strong><br/>${content}</td></tr>`; 
                   } 
-                  return `<tr><td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${cleaned}</td></tr>`; 
+                  return `<tr><td style="padding-left: 15px; padding-top: 3px; padding-bottom: 3px;">• ${cleaned}</td></tr>`; 
               }).join("") || `<tr><td style="padding-left: 15px; font-style: italic; color: #777;">Nenhum apontamento crítico.</td></tr>`}
             </tbody>
           </table>
@@ -670,7 +670,7 @@ export default function App() {
       
       /* Tabelas de Dados e Quebras */
       .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.0pt; }
-      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 4px 6px; page-break-inside: auto; }
+      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 3px 8px; page-break-inside: auto; }
       .tabela-dados tr { page-break-inside: avoid; page-break-after: auto; }
       
       .quebra-pagina { page-break-before: always; }
