@@ -497,7 +497,7 @@ export default function App() {
             <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.contractValue)}</td></tr>
           </tbody>
         </table>
-        <div style="font-family: Arial, sans-serif; font-size: 10pt; font-weight: bold; color: black; margin-bottom: 8px; text-transform: uppercase; border-left: 3px solid #f97316; padding-left: 8px;">RESUMO DAS OBRAS ATIVAS NA SEMANA</div>
+        <div style="font-family: Arial, sans-serif; font-size: 10pt; font-weight: bold; color: black; margin-bottom: 6px; text-transform: uppercase; border-left: 3px solid #f97316; padding-left: 8px;">RESUMO DAS OBRAS ATIVAS NA SEMANA</div>
         <table class="tabela-dados">
           <thead><tr style="background-color: #f3f4f6;"><th style="font-weight: bold; text-align: left; width: 35%;">Obra</th><th style="font-weight: bold; text-align: left; width: 25%;">Construtora</th><th style="font-weight: bold; text-align: center; width: 15%;">Progresso</th><th style="font-weight: bold; text-align: center; width: 25%;">Boletim da Semana</th></tr></thead>
           <tbody>
@@ -535,7 +535,7 @@ export default function App() {
         additivesTableRows = work.additives.map((add:any, idx:number) => {
           const orderWord = `${idx + 1}º ADITIVO`; const publishJomDate = add.description ? (add.description.match(/JOM de (\d{2}\/\d{2}\/\d{4})/i)?.[1] || formatDate(add.signatureDate)) : formatDate(add.signatureDate);
           const lines = [`Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`, `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`];
-          if (add.days) lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} dias</span>`); else if (add.type === "prazo" || add.type === "misto") lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
+          if (add.days) lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} ${add.days == 1 ? 'mês' : 'meses'}</span>`); else if (add.type === "prazo" || add.type === "misto") lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
           if (add.value !== undefined && add.value !== null) { lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(add.value)}</span>`); if (add.type === "financeiro" || add.type === "misto") lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(work.biddedValue + add.value)}</span>`); }
           if (add.newVigenciaDate) lines.push(`Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
           if (add.newExecucaoDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newExecucaoDate)}</span>`); else if (add.newVigenciaDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
@@ -599,21 +599,37 @@ export default function App() {
           
           <table class="tabela-dados" style="margin-top: 0; border-top: none;">
             <tbody>
-              <tr style="background-color: #f3f4f6;"><td style="font-weight: bold;">Atividades da semana: <span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td></tr>
-              ${parsed.weeklyActivities.map(act => `<tr><td style="padding-left: 15px; padding-top: 3px; padding-bottom: 3px;">• ${act}</td></tr>`).join("") || `<tr><td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade descrita.</td></tr>`}
+              ${(() => {
+                const rowspan = Math.max(1, parsed.weeklyActivities.length);
+                const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da semana:<br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>`;
+                return parsed.weeklyActivities.length > 0 
+                  ? parsed.weeklyActivities.map((act, i) => `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act}</td></tr>`).join("")
+                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade descrita.</td></tr>`;
+              })()}
               
-              <tr style="background-color: #f3f4f6;"><td style="font-weight: bold;">Atividades da próxima semana: <span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td></tr>
-              ${parsed.nextWeekActivities.map(act => `<tr><td style="padding-left: 15px; padding-top: 3px; padding-bottom: 3px;">• ${act}</td></tr>`).join("") || `<tr><td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade programada.</td></tr>`}
+              ${(() => {
+                const rowspan = Math.max(1, parsed.nextWeekActivities.length);
+                const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da próxima semana:<br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>`;
+                return parsed.nextWeekActivities.length > 0 
+                  ? parsed.nextWeekActivities.map((act, i) => `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act}</td></tr>`).join("")
+                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade programada.</td></tr>`;
+              })()}
               
-              <tr style="background-color: #f3f4f6;"><td style="font-weight: bold;">Observações e apontamentos importantes:</td></tr>
-              ${parsed.observations.map(obs => { 
-                  const cleaned = obs.trim(); 
-                  if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { 
-                      const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); 
-                      return `<tr><td style="padding-left: 15px; padding-top: 3px; padding-bottom: 3px;"><strong style="color: #000;">Não conformidade:</strong><br/>${content}</td></tr>`; 
-                  } 
-                  return `<tr><td style="padding-left: 15px; padding-top: 3px; padding-bottom: 3px;">• ${cleaned}</td></tr>`; 
-              }).join("") || `<tr><td style="padding-left: 15px; font-style: italic; color: #777;">Nenhum apontamento crítico.</td></tr>`}
+              ${(() => {
+                const rowspan = Math.max(1, parsed.observations.length);
+                const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Observações e apontamentos importantes:</td>`;
+                return parsed.observations.length > 0 
+                  ? parsed.observations.map((obs, i) => {
+                      const cleaned = obs.trim();
+                      let content = `• ${cleaned}`;
+                      if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { 
+                          const text = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); 
+                          content = `<strong style="color: #000;">Não conformidade:</strong><br/>${text}`; 
+                      }
+                      return `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">${content}</td></tr>`;
+                  }).join("")
+                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">Nenhum apontamento crítico.</td></tr>`;
+              })()}
             </tbody>
           </table>
         `;
@@ -623,10 +639,10 @@ export default function App() {
         contentHtml += `
           <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">FOTOS DA SEMANA — ${work.name}:</div>
           <div style="border: 1px solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
-            <div style="border: 1px solid #000; height: 50mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[0] ? `<img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-01 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 50mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[1] ? `<img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-02 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 50mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[2] ? `<img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-03 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 50mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-04 (Vazio)</span>`}</div>
+            <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[0] ? `<img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-01 (Vazio)</span>`}</div>
+            <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[1] ? `<img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-02 (Vazio)</span>`}</div>
+            <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[2] ? `<img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-03 (Vazio)</span>`}</div>
+            <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-04 (Vazio)</span>`}</div>
           </div>
         `;
 
@@ -669,8 +685,8 @@ export default function App() {
       .master-tbody td { padding: 0 15mm; border: none; vertical-align: top; }
       
       /* Tabelas de Dados e Quebras */
-      .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.0pt; }
-      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 3px 8px; page-break-inside: auto; }
+      .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 8.8pt; }
+      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 2px 8px; page-break-inside: auto; }
       .tabela-dados tr { page-break-inside: avoid; page-break-after: auto; }
       
       .quebra-pagina { page-break-before: always; }
