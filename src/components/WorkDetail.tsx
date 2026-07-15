@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Obra, UpdateLog, ContractAdditive, UserProfile } from "../types";
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from "../utils";
-import { uploadFotoParaStorage } from "../src/uploadService";
+import { uploadFotoParaStorage } from "../uploadService";
 import {
   ArrowLeft,
   Calendar,
