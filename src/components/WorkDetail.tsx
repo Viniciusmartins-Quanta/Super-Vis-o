@@ -686,18 +686,19 @@ export default function WorkDetail({
         font-family: 'Calibri', 'Arial', sans-serif;
         font-size: 8.5pt;
         color: #000000;
-        line-height: 1.25;
-        page-break-inside: auto !important;
-        break-inside: auto !important;
+        line-height: 1.25 !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .black-grid-table tr {
-        page-break-inside: auto !important;
-        break-inside: auto !important;
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
       }
       .black-grid-table td, .black-grid-table th {
         border: 1.5px solid #000000 !important;
-        padding: 4px 8px !important;
+        padding: 6px 8px !important;
         color: #000000 !important;
+        line-height: 1.25 !important;
       }
     </style>
 </head>
