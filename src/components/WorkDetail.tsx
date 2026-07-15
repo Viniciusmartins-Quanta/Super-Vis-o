@@ -686,7 +686,7 @@ export default function WorkDetail({
         font-family: 'Calibri', 'Arial', sans-serif;
         font-size: 8.5pt;
         color: #000000;
-        line-height: 1.25 !important;
+        line-height: 0.9 !important;
         page-break-inside: avoid !important;
         break-inside: avoid !important;
       }
@@ -696,9 +696,9 @@ export default function WorkDetail({
       }
       .black-grid-table td, .black-grid-table th {
         border: 1.5px solid #000000 !important;
-        padding: 6px 8px !important;
+        padding: 4px 8px !important;
         color: #000000 !important;
-        line-height: 1.25 !important;
+        line-height: 0.9 !important;
       }
     </style>
 </head>

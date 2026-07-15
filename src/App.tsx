@@ -725,8 +725,8 @@ export default function App() {
       .master-tbody td { padding: 0 15mm; border: none; vertical-align: top; }
       
       /* Tabelas de Dados e Quebras */
-      .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.5pt; line-height: 1.25 !important; }
-      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 6px 8px; page-break-inside: avoid; break-inside: avoid; line-height: 1.25 !important; }
+      .tabela-dados { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.5pt; line-height: 0.9 !important; }
+      .tabela-dados th, .tabela-dados td { border: 1px solid #000; padding: 4px 8px; page-break-inside: avoid; break-inside: avoid; line-height: 0.9 !important; }
       .tabela-dados tr { page-break-inside: avoid; break-inside: avoid; page-break-after: auto; }
       
       .quebra-pagina { page-break-before: always; }
