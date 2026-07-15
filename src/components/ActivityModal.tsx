@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Obra, UserProfile, UpdateLog } from "../types";
 import { X, Plus, Trash2, Save, HelpCircle, Calendar, Sparkles, Upload, Image as ImageIcon, Camera } from "lucide-react";
-import { uploadFotoParaStorage } from "../services/uploadService";
+import { uploadFotoParaStorage } from "../uploadService";
 
 interface ActivityModalProps {
   isOpen: boolean;

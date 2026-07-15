@@ -36,3 +36,4 @@ export async function uploadFotoParaStorage(file: File, pasta: string = 'geral')
     return null;
   }
 }
+// forçando o salvamento
