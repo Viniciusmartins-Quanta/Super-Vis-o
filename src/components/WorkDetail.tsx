@@ -105,16 +105,14 @@ export default function WorkDetail({
   const [isEditingReport, setIsEditingReport] = useState(false);
   const [editNotesText, setEditNotesText] = useState("");
 
-  const handleTimelineImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTimelineImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Opcional: Feedback visual ou loading aqui se desejar
-    const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/timeline`);
-    
-    if (urlPublica) {
-      // Agora salvamos APENAS um link de 60 letras na tabela do banco, ex: https://xyz.../timeline/172106.jpg
-      onUpdateWork({ ...work, timelineImage: urlPublica });
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        onUpdateWork({ ...work, timelineImage: reader.result as string });
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -1138,27 +1136,19 @@ export default function WorkDetail({
     return baseDate.toISOString().split("T")[0];
   };
 
-  // Busca o último aditivo cadastrado que tenha datas preenchidas para ser a referência suprema
-  const lastVigenciaAdditive = [...currentAdditives].reverse().find(a => a.newVigenciaDate);
-  const lastExecucaoAdditive = [...currentAdditives].reverse().find(a => a.newExecucaoDate || a.newVigenciaDate);
-
-  // Soma da vigência original com a data da ordem de início de obras (usado apenas se não houver aditivo)
+  // Soma da vigência original com a data da ordem de início de obras, mais os meses aditivados
   const startVigenciaBaseDate = work.startOrderDate || work.signingDate || work.startDate || "";
   const baseVigenciaDateCalculated = addMonths(startVigenciaBaseDate, work.termDaysVigencia || "12 meses");
-  
-  // A data total será a do ÚLTIMO aditivo. Se não tiver aditivo, usa a data do contrato (ou a calculada)
-  const totalCalculatedVigencia = lastVigenciaAdditive?.newVigenciaDate 
-    ? lastVigenciaAdditive.newVigenciaDate 
+  const totalCalculatedVigencia = totalVigenciaDaysExtended > 0
+    ? addMonths(baseVigenciaDateCalculated, totalVigenciaDaysExtended.toString())
     : (work.activeContractDate || baseVigenciaDateCalculated);
 
-  // Soma da execução original com a data da ordem de início de obras (usado apenas se não houver aditivo)
+  // Soma da execução original com a data da ordem de início de obras, mais os meses aditivados de execução
   const startExecucaoBaseDate = work.startOrderDate || work.startDate || "";
   const baseExecucaoDateCalculated = addMonths(startExecucaoBaseDate, work.termDaysExecucao || "12 meses");
-  
-  // A data total será a do ÚLTIMO aditivo. Se não tiver aditivo, usa a data do contrato (ou a calculada)
-  const totalCalculatedExecucao = lastExecucaoAdditive?.newExecucaoDate 
-    ? lastExecucaoAdditive.newExecucaoDate 
-    : (lastExecucaoAdditive?.newVigenciaDate || work.deadlineDate || baseExecucaoDateCalculated);
+  const totalCalculatedExecucao = totalDaysExtended > 0
+    ? addMonths(baseExecucaoDateCalculated, totalDaysExtended.toString())
+    : (work.deadlineDate || baseExecucaoDateCalculated);
 
   // Find baseline dates excluding the editing additive (for accurate incremental calculation)
   const getBaselineDates = () => {
@@ -2113,7 +2103,7 @@ export default function WorkDetail({
                           <div className="flex flex-col">
                             <span className="text-slate-450 font-bold uppercase">Data de Execução</span>
                             <span className="text-slate-700 font-mono font-bold">
-                              {add.newExecucaoDate ? formatDate(add.newExecucaoDate) : (add.newVigenciaDate ? formatDate(add.newVigenciaDate) : "N/A")}
+                              {add.signatureDate ? formatDate(add.signatureDate) : "N/A"}
                             </span>
                           </div>
                           <div className="flex flex-col">

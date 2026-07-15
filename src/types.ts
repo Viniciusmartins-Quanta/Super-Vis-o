@@ -1,24 +1,16 @@
-export interface ContractAdditive {
-  id: string;
-  number: string;
-  type: "financeiro" | "prazo" | "misto";
-  value?: number;
-  days?: number;
-  description: string;
-  signatureDate: string;
-}
-
 export interface Obra {
   id: string;
   name: string;
   contractNumber: string;
-  startDate: string;
-  deadlineDate: string;
-  activeContractDate: string;
+  startDate: string; // Keep as required, can match physicalStartDate or fallback
+  deadlineDate: string; // Keep as required, can match execution deadline or fallback
+  activeContractDate: string; // Keep as required, can match activeContractDate or fallback
   progress: number;
   contractorName: string;
   biddedValue: number;
   status: "planejamento" | "em_andamento" | "paralisada" | "concluida";
+  
+  // New specific fields requested in form example
   biddingNumber?: string;
   adminProcess?: string;
   termDaysVigencia?: string;
@@ -28,7 +20,7 @@ export interface Obra {
   physicalStartDate?: string;
   startOrderDate?: string;
   additives?: ContractAdditive[];
-  timelineImage?: string;
+  timelineImage?: string; // Image for construction chronology
   order?: number;
 }
 
@@ -42,16 +34,26 @@ export interface UpdateLog {
   oldProgress: number;
   newProgress: number;
   notes: string;
-  coverImage?: string;
-  progressImages?: string[];
+  coverImage?: string; // Image for page 2 cover of the week
+  progressImages?: string[]; // Array of 4 images for page 5 weekly photos
 }
 
-export interface UserProfile {
-  name: string;
-  role: string;
+export interface ContractAdditive {
+  id: string;
+  number: string;
+  type: "financeiro" | "prazo" | "misto";
+  value?: number;
+  days?: number;
+  description: string;
+  signatureDate: string;
+  newVigenciaDate?: string;
+  newExecucaoDate?: string;
+  daysVigencia?: number;
+  daysExecucao?: number;
+  publicationDateJom?: string;
 }
 
-export interface Database {
+export interface DatabaseState {
   contractName: string;
   supervisorCompany: string;
   contractValue?: number;
@@ -60,4 +62,20 @@ export interface Database {
   contractAdditives?: ContractAdditive[];
   works: Obra[];
   logs: UpdateLog[];
+  authorizedUsers: string[];
+  supabaseStatus?: {
+    connected: boolean;
+    tableExists: boolean;
+    rlsEnabled?: boolean;
+    error: string;
+  };
 }
+
+export interface UserProfile {
+  name: string;
+  role: string;
+}
+
+export const USER_PROFILES: UserProfile[] = [
+  { name: "Supervisão", role: "Supervisor" }
+];
