@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Obra, UserProfile, UpdateLog } from "../types";
 import { X, Plus, Trash2, Save, HelpCircle, Calendar, Sparkles, Upload, Image as ImageIcon, Camera } from "lucide-react";
+import { uploadFotoParaStorage } from "../services/uploadService";
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -43,7 +44,7 @@ export default function ActivityModal({
   const [physicalProgress, setPhysicalProgress] = useState<number>(work.progress);
   
   // 4. SITUAÇÃO DO ADITIVO
-  const [aditivoStatus, setAditivoStatus] = useState("Formalizado");
+  const [aditivoStatus, setAditivoStatus] = useState("N/A");
   // 5. ATIVIDADES DA INFRAESTRUTURA DE DADOS
   const [dataInfrastructure, setDataInfrastructure] = useState("N/A");
   // 6. STATUS DO AUMENTO DE CARGA (ENEL)
@@ -179,7 +180,7 @@ export default function ActivityModal({
       setStartDate("");
       setEndDate("");
       setPhysicalProgress(work.progress);
-      setAditivoStatus("Formalizado");
+      setAditivoStatus("N/A");
       setDataInfrastructure("N/A");
       setEnelStatus("N/A");
       setSubstationStatus("N/A");
@@ -196,29 +197,29 @@ export default function ActivityModal({
 
 
 
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      // Faz o upload direto para o Supabase Storage
+      const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/capas`);
+      if (urlPublica) {
+        setCoverImage(urlPublica); // Salva apenas o link gerado!
+      }
     }
   };
 
-  const handleProgressSlotChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProgressSlotChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      // Faz o upload direto para o Supabase Storage
+      const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/progresso`);
+      if (urlPublica) {
         setProgressImages((prev) => {
           const copy = [...prev];
-          copy[index] = reader.result as string;
+          copy[index] = urlPublica; // Salva apenas o link gerado no respectivo slot (1 a 4)!
           return copy;
         });
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
