@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Obra, UpdateLog, ContractAdditive, UserProfile } from "../types";
 import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from "../utils";
+import { uploadFotoParaStorage } from "../src/uploadService";
 import {
   ArrowLeft,
   Calendar,
@@ -105,14 +106,13 @@ export default function WorkDetail({
   const [isEditingReport, setIsEditingReport] = useState(false);
   const [editNotesText, setEditNotesText] = useState("");
 
-  const handleTimelineImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleTimelineImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        onUpdateWork({ ...work, timelineImage: reader.result as string });
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/timeline`);
+    if (urlPublica) {
+      onUpdateWork({ ...work, timelineImage: urlPublica });
     }
   };
 

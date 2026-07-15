@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Obra, UserProfile, UpdateLog } from "../types";
 import { X, Plus, Trash2, Save, HelpCircle, Calendar, Sparkles, Upload, Image as ImageIcon, Camera } from "lucide-react";
+import { uploadFotoParaStorage } from "../src/uploadService";
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -196,29 +197,27 @@ export default function ActivityModal({
 
 
 
-  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCoverImage(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/capas`);
+      if (urlPublica) {
+        setCoverImage(urlPublica);
+      }
     }
   };
 
-  const handleProgressSlotChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProgressSlotChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
+      const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/progresso`);
+      if (urlPublica) {
         setProgressImages((prev) => {
           const copy = [...prev];
-          copy[index] = reader.result as string;
+          copy[index] = urlPublica;
           return copy;
         });
-      };
-      reader.readAsDataURL(file);
+      }
     }
   };
 
