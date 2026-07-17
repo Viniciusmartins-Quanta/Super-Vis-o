@@ -2104,7 +2104,9 @@ export default function WorkDetail({
                           <div className="flex flex-col">
                             <span className="text-slate-450 font-bold uppercase">Data de Execução</span>
                             <span className="text-slate-700 font-mono font-bold">
-                              {add.signatureDate ? formatDate(add.signatureDate) : "N/A"}
+                              {add.newExecucaoDate
+                                ? formatDate(add.newExecucaoDate)
+                                : (add.newVigenciaDate ? formatDate(add.newVigenciaDate) : "N/A")}
                             </span>
                           </div>
                           <div className="flex flex-col">
@@ -2113,6 +2115,11 @@ export default function WorkDetail({
                               {add.newVigenciaDate ? formatDate(add.newVigenciaDate) : "N/A"}
                             </span>
                           </div>
+                          <div className="space-y-1">
+                            <span className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider">Data de Publicação</span>
+                            <span className="block text-xs font-mono font-bold text-slate-700">
+                             {add.publicationDate ? formatDate(add.publicationDate) : "N/A"}
+                            </span>
                         </div>
                       </div>
 
