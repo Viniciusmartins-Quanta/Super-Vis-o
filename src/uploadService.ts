@@ -16,8 +16,14 @@ export async function uploadFotoParaStorage(file: File, pasta: string = 'geral')
     const arquivoComprimido = await imageCompression(file, opcoesCompressao);
     
     // Gera um nome único e seguro para o arquivo
+    const pastaSegura = pasta
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+      .replace(/[^a-zA-Z0-9-_]/g, '-') // Troca espaços e símbolos por traço
+      .toLowerCase();
+
     const fileExt = arquivoComprimido.name.split('.').pop() || 'jpg';
-    const fileName = `${pasta}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    const fileName = `${pastaSegura}/${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
 
     // Envia o arquivo leve para o bucket 'fotos-obras' no Supabase
     const { error: uploadError } = await supabase.storage

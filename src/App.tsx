@@ -621,11 +621,11 @@ export default function App() {
         
         // Ficha Técnica da Obra
         contentHtml += `
-          <div class="titulo-secao">${work.name}</div>
-          <div style="border: 1px solid black; height: 70mm; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;">
+          <div class="titulo-secao" style="margin-bottom: 4px;">${work.name}</div>
+          <div class="my-1 py-0.5" style="border: 1px solid black; height: 70mm; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;">
             ${log.coverImage ? `<img src="${log.coverImage}" style="width: 100%; height: 100%; object-fit: contain;" />` : `<div style="text-align: center; color: #64748b; font-family: monospace;">📷<br/>SEM FOTO DE CAPA</div>`}
           </div>
-          <table class="tabela-dados">
+          <table class="tabela-dados" style="margin-top: 0px;">
             <tbody>
               <tr><td style="font-weight: bold; width: 45%;">Contrato N°:</td><td style="font-weight: bold;">${work.contractNumber}</td></tr>
               <tr><td style="font-weight: bold;">Concorrência Pública:</td><td>${biddingNumber}</td></tr>

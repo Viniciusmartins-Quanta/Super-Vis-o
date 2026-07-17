@@ -745,16 +745,16 @@ export default function WorkDetail({
     <thead><tr><td></td></tr></thead>
     <tbody>
       <tr><td>
-        <div class="flex-grow my-4 flex flex-col justify-start">
+        <div class="flex-grow my-1 flex flex-col justify-start">
           <!-- Contract Title banner with background orange, black Arial 11pt bold text -->
-          <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+          <div style="background-color: #f97316; border: 0.3mm solid black; border-radius: 0px; padding: 7px 12px; text-align: center; margin-bottom: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
             <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase; letter-spacing: 0.1px;">
               ${work.name}
             </h2>
           </div>
           
           <!-- Space for the cover photo of the week (using log.coverImage if loaded, else fallback blueprint design) -->
-          <div class="border border-black flex items-center justify-center relative overflow-hidden mb-3 bg-slate-50 shadow-2xs" style="border-width: 0.3mm; height: ${coverHeight};">
+          <div class="border border-black flex items-center justify-center relative overflow-hidden bg-slate-50 shadow-2xs my-1 py-0.5" style="border-width: 0.3mm; height: ${coverHeight}; margin-bottom: 4px;">
             ${log.coverImage ? `
               <img src="${log.coverImage}" class="w-full h-full object-contain" alt="Foto da Capa da Semana" />
             ` : `
@@ -770,7 +770,7 @@ export default function WorkDetail({
           </div>
 
           <!-- Contract Parameter Table perfectly resembling example -->
-          <table class="black-grid-table" style="margin-top: 5px;">
+          <table class="black-grid-table" style="margin-top: 0px;">
             <tbody>
               <tr>
                 <td style="font-weight: bold; width: 45%;">Contrato N°:</td>
