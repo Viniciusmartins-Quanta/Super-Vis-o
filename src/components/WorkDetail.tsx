@@ -500,9 +500,9 @@ export default function WorkDetail({
         }
         
         if (add.newExecucaoDate) {
-          lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newExecucaoDate)}</span>`);
+          lines.push(`Novo Prazo de Execução: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newExecucaoDate)}</span>`);
         } else if (add.newVigenciaDate) {
-          lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
+          lines.push(`Novo Prazo de Execução: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
         }
 
         return `
