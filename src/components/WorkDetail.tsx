@@ -475,7 +475,7 @@ export default function WorkDetail({
     if (work.additives && work.additives.length > 0) {
       additivesTableRows = work.additives.map((add, idx) => {
         const orderWord = `${idx + 1}º ADITIVO`;
-        const publishJomDate = add.description ? (add.description.match(/JOM de (\d{2}\/\d{2}\/\d{4})/i)?.[1] || formatDate(add.signatureDate)) : formatDate(add.signatureDate);
+        const publishJomDate = add.publicationDateJom ? formatDate(add.publicationDateJom) : "N/A";
         
         const lines = [
           `Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`,
@@ -507,10 +507,10 @@ export default function WorkDetail({
 
         return `
           <tr>
-            <td style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif;">
+            <td class="text-[10px] leading-tight" style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-family: Arial, sans-serif; font-size: 8pt; line-height: 1.1; padding: 3px 6px;">
               ${orderWord}
             </td>
-            <td style="font-family: Calibri, sans-serif; font-size: 9.2pt; line-height: 1.35; padding: 4px 8px;">${lines.join("<br/>")}</td>
+            <td class="text-[10px] leading-tight" style="font-family: Calibri, sans-serif; font-size: 8pt; line-height: 1.1; padding: 3px 6px;">${lines.join("<br/>")}</td>
           </tr>
         `;
       }).join("");
@@ -2115,7 +2115,7 @@ export default function WorkDetail({
                           {cleanedDescription}
                         </p>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-[11px] bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-[10px] leading-tight bg-slate-50 p-3 rounded-lg border border-slate-100">
                           <div className="flex flex-col">
                             <span className="text-slate-450 font-bold uppercase">Valor Aditivado</span>
                             <span className="text-emerald-700 font-extrabold">
