@@ -2088,7 +2088,7 @@ export default function WorkDetail({
                           {cleanedDescription}
                         </p>
                         
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-[11px] bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-[11px] bg-slate-50 p-3 rounded-lg border border-slate-100">
                           <div className="flex flex-col">
                             <span className="text-slate-450 font-bold uppercase">Valor Aditivado</span>
                             <span className="text-emerald-700 font-extrabold">
@@ -2104,9 +2104,7 @@ export default function WorkDetail({
                           <div className="flex flex-col">
                             <span className="text-slate-450 font-bold uppercase">Data de Execução</span>
                             <span className="text-slate-700 font-mono font-bold">
-                              {add.newExecucaoDate
-                                ? formatDate(add.newExecucaoDate)
-                                : (add.newVigenciaDate ? formatDate(add.newVigenciaDate) : "N/A")}
+                              {add.newExecucaoDate ? formatDate(add.newExecucaoDate) : "N/A"}
                             </span>
                           </div>
                           <div className="flex flex-col">
@@ -2115,11 +2113,12 @@ export default function WorkDetail({
                               {add.newVigenciaDate ? formatDate(add.newVigenciaDate) : "N/A"}
                             </span>
                           </div>
-                          <div className="space-y-1">
-                            <span className="block text-[10px] text-slate-450 font-bold uppercase tracking-wider">Data de Publicação</span>
-                            <span className="block text-xs font-mono font-bold text-slate-700">
-                             {add.publicationDate ? formatDate(add.publicationDate) : "N/A"}
+                          <div className="flex flex-col">
+                            <span className="text-slate-450 font-bold uppercase">Data de Publicação</span>
+                            <span className="text-slate-700 font-mono font-bold">
+                              {add.publicationDateJom ? formatDate(add.publicationDateJom) : "N/A"}
                             </span>
+                          </div>
                         </div>
                       </div>
 
