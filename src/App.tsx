@@ -354,6 +354,20 @@ export default function App() {
     
     if (!reportWeek) return alert("Por favor, selecione uma semana para gerar o relatório.");
 
+    const addMonths = (dateStr: string, monthsStr: string, defaultMonths = 12): string => {
+      const baseDate = dateStr ? new Date(dateStr + "T12:00:00") : new Date();
+      if (isNaN(baseDate.getTime())) return new Date().toISOString().split("T")[0];
+      const match = (monthsStr || "").match(/\d+/);
+      const parsedMonths = match ? parseInt(match[0], 10) : defaultMonths;
+      baseDate.setMonth(baseDate.getMonth() + parsedMonths);
+      return baseDate.toISOString().split("T")[0];
+    };
+
+    const formatTimeExtension = (originalTerm: string, addedMonths: number) => {
+      if (!addedMonths) return originalTerm || "12 meses";
+      return `${originalTerm || "12 meses"} (+${addedMonths} meses)`;
+    };
+
     function valorParaExtenso(valor: number): string {
       if (valor === 0) return "Zero reais";
       const unidades = ["", "Um", "Dois", "Três", "Quatro", "Cinco", "Seis", "Sete", "Oito", "Nove"];
@@ -530,6 +544,60 @@ export default function App() {
       
       const biddingNumber = work.biddingNumber || "39/2022"; const adminProcess = work.adminProcess || "4200/2022"; const signingDate = work.signingDate ? formatDate(work.signingDate) : formatDate(work.startDate); const publicationDateJom = work.publicationDateJom ? formatDate(work.publicationDateJom) : formatDate(work.startDate); const startOrderDate = work.startOrderDate ? formatDate(work.startOrderDate) : formatDate(work.startDate); const termDaysVigencia = work.termDaysVigencia || "8 meses"; const termDaysExecucao = work.termDaysExecucao || "8 meses"; const parsedValueExtenso = valorParaExtenso(work.biddedValue);
       
+      const currentAdditives = work.additives || [];
+      const totalDaysExtended = currentAdditives.reduce((acc: number, curr: any) => {
+        if (curr.type === "prazo" || curr.type === "misto") {
+          return acc + (curr.daysExecucao ?? curr.days ?? 0);
+        }
+        return acc;
+      }, 0);
+
+      const totalVigenciaDaysExtended = currentAdditives.reduce((acc: number, curr: any) => {
+        if (curr.type === "prazo" || curr.type === "misto") {
+          return acc + (curr.daysVigencia ?? curr.days ?? 0);
+        }
+        return acc;
+      }, 0);
+
+      const startVigenciaBaseDate = work.startOrderDate || work.signingDate || work.startDate || "";
+      const baseVigenciaDateCalculated = addMonths(startVigenciaBaseDate, work.termDaysVigencia || "12 meses");
+      
+      const startExecucaoBaseDate = work.startOrderDate || work.startDate || "";
+      const baseExecucaoDateCalculated = addMonths(startExecucaoBaseDate, work.termDaysExecucao || "12 meses");
+
+      const lastAdditive = currentAdditives.length > 0 ? currentAdditives[currentAdditives.length - 1] : null;
+
+      let totalCalculatedVigencia = "";
+      if (lastAdditive && lastAdditive.newVigenciaDate) {
+        totalCalculatedVigencia = lastAdditive.newVigenciaDate;
+      } else {
+        const lastWithVigencia = [...currentAdditives].reverse().find((a: any) => a.newVigenciaDate);
+        if (lastWithVigencia && lastWithVigencia.newVigenciaDate) {
+          totalCalculatedVigencia = lastWithVigencia.newVigenciaDate;
+        } else {
+          totalCalculatedVigencia = totalVigenciaDaysExtended > 0
+            ? addMonths(baseVigenciaDateCalculated, totalVigenciaDaysExtended.toString())
+            : (work.activeContractDate || baseVigenciaDateCalculated);
+        }
+      }
+
+      let totalCalculatedExecucao = "";
+      if (lastAdditive && lastAdditive.newExecucaoDate) {
+        totalCalculatedExecucao = lastAdditive.newExecucaoDate;
+      } else {
+        const lastWithExecucao = [...currentAdditives].reverse().find((a: any) => a.newExecucaoDate);
+        if (lastWithExecucao && lastWithExecucao.newExecucaoDate) {
+          totalCalculatedExecucao = lastWithExecucao.newExecucaoDate;
+        } else {
+          totalCalculatedExecucao = totalDaysExtended > 0
+            ? addMonths(baseExecucaoDateCalculated, totalDaysExtended.toString())
+            : (work.deadlineDate || baseExecucaoDateCalculated);
+        }
+      }
+
+      const totalVigenciaText = `${formatTimeExtension(work.termDaysVigencia || "12 meses", totalVigenciaDaysExtended)} (${formatDate(totalCalculatedVigencia)})`;
+      const totalExecucaoText = `${formatTimeExtension(work.termDaysExecucao || "12 meses", totalDaysExtended)} (${formatDate(totalCalculatedExecucao)})`;
+      
       let additivesTableRows = "";
       if (work.additives && work.additives.length > 0) {
         additivesTableRows = work.additives.map((add:any, idx:number) => {
@@ -565,8 +633,8 @@ export default function App() {
               <tr><td style="font-weight: bold;">Publicação no JOM:</td><td>${publicationDateJom}</td></tr>
               <tr><td style="font-weight: bold;">Ordem de Início:</td><td>${startOrderDate}</td></tr>
               <tr><td style="font-weight: bold;">Empresa Vencedora:</td><td style="text-transform: uppercase;">${work.contractorName}</td></tr>
-              <tr><td style="font-weight: bold;">Prazo Vigência:</td><td>${termDaysVigencia}</td></tr>
-              <tr><td style="font-weight: bold;">Prazo Execução:</td><td>${termDaysExecucao}</td></tr>
+              <tr><td style="font-weight: bold;">Prazo de Vigência:</td><td>${totalVigenciaText}</td></tr>
+              <tr><td style="font-weight: bold;">Prazo de Execução Atualizado:</td><td>${totalExecucaoText}</td></tr>
               <tr><td style="font-weight: bold;">Início de Atividades:</td><td>${formatDate(work.startDate)}</td></tr>
               <tr><td style="font-weight: bold;">Valor Total Inicial:</td><td style="font-weight: bold;">${formatCurrency(work.biddedValue)} <span style="font-size: 8pt; font-weight: normal; font-style: italic;">(${parsedValueExtenso})</span></td></tr>
               ${additivesTableRows}

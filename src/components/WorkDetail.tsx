@@ -350,6 +350,9 @@ export default function WorkDetail({
     const termDaysExecucao = work.termDaysExecucao || "8 meses";
     const parsedValueExtenso = valorParaExtenso(work.biddedValue);
     
+    const totalVigenciaText = `${formatTimeExtension(work.termDaysVigencia || "12 meses", totalVigenciaDaysExtended)} (${formatDate(totalCalculatedVigencia)})`;
+    const totalExecucaoText = `${formatTimeExtension(work.termDaysExecucao || "12 meses", totalDaysExtended)} (${formatDate(totalCalculatedExecucao)})`;
+    
     // Build Chronological Timeline Milestones Array dynamically matching timeline cards from PDF page 3
     interface TimelineMilestone {
       title: string;
@@ -798,12 +801,12 @@ export default function WorkDetail({
                 <td style="text-transform: uppercase;">${work.contractorName}</td>
               </tr>
               <tr>
-                <td style="font-weight: bold;">Prazo Vigência:</td>
-                <td>${termDaysVigencia}</td>
+                <td style="font-weight: bold;">Prazo de Vigência:</td>
+                <td>${totalVigenciaText}</td>
               </tr>
               <tr>
-                <td style="font-weight: bold;">Prazo Execução:</td>
-                <td>${termDaysExecucao}</td>
+                <td style="font-weight: bold;">Prazo de Execução Atualizado:</td>
+                <td>${totalExecucaoText}</td>
               </tr>
               <tr>
                 <td style="font-weight: bold;">Início de Atividades:</td>
@@ -1140,16 +1143,40 @@ export default function WorkDetail({
   // Soma da vigência original com a data da ordem de início de obras, mais os meses aditivados
   const startVigenciaBaseDate = work.startOrderDate || work.signingDate || work.startDate || "";
   const baseVigenciaDateCalculated = addMonths(startVigenciaBaseDate, work.termDaysVigencia || "12 meses");
-  const totalCalculatedVigencia = totalVigenciaDaysExtended > 0
-    ? addMonths(baseVigenciaDateCalculated, totalVigenciaDaysExtended.toString())
-    : (work.activeContractDate || baseVigenciaDateCalculated);
-
+  
   // Soma da execução original com a data da ordem de início de obras, mais os meses aditivados de execução
   const startExecucaoBaseDate = work.startOrderDate || work.startDate || "";
   const baseExecucaoDateCalculated = addMonths(startExecucaoBaseDate, work.termDaysExecucao || "12 meses");
-  const totalCalculatedExecucao = totalDaysExtended > 0
-    ? addMonths(baseExecucaoDateCalculated, totalDaysExtended.toString())
-    : (work.deadlineDate || baseExecucaoDateCalculated);
+
+  const lastAdditive = currentAdditives.length > 0 ? currentAdditives[currentAdditives.length - 1] : null;
+
+  let totalCalculatedVigencia = "";
+  if (lastAdditive && lastAdditive.newVigenciaDate) {
+    totalCalculatedVigencia = lastAdditive.newVigenciaDate;
+  } else {
+    const lastWithVigencia = [...currentAdditives].reverse().find(a => a.newVigenciaDate);
+    if (lastWithVigencia && lastWithVigencia.newVigenciaDate) {
+      totalCalculatedVigencia = lastWithVigencia.newVigenciaDate;
+    } else {
+      totalCalculatedVigencia = totalVigenciaDaysExtended > 0
+        ? addMonths(baseVigenciaDateCalculated, totalVigenciaDaysExtended.toString())
+        : (work.activeContractDate || baseVigenciaDateCalculated);
+    }
+  }
+
+  let totalCalculatedExecucao = "";
+  if (lastAdditive && lastAdditive.newExecucaoDate) {
+    totalCalculatedExecucao = lastAdditive.newExecucaoDate;
+  } else {
+    const lastWithExecucao = [...currentAdditives].reverse().find(a => a.newExecucaoDate);
+    if (lastWithExecucao && lastWithExecucao.newExecucaoDate) {
+      totalCalculatedExecucao = lastWithExecucao.newExecucaoDate;
+    } else {
+      totalCalculatedExecucao = totalDaysExtended > 0
+        ? addMonths(baseExecucaoDateCalculated, totalDaysExtended.toString())
+        : (work.deadlineDate || baseExecucaoDateCalculated);
+    }
+  }
 
   // Find baseline dates excluding the editing additive (for accurate incremental calculation)
   const getBaselineDates = () => {
