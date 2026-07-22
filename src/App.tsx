@@ -31,6 +31,7 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [errorHeader, setErrorHeader] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   const [activeUser, setActiveUser] = useState<UserProfile>(USER_PROFILES[0]);
@@ -79,8 +80,6 @@ export default function App() {
       const { data: configData, error: configError } = await supabase.from("contrato_config").select("*").eq("id", "config-atual").maybeSingle();
       let errors: string[] = [];
       if (configError) errors.push("configuração");
-      
-      const configSegura = configData || { contract_name: "Contrato de Supervisão (Novo)", supervisor_company: "Empresa Supervisora", contract_value: 0, contract_start_date: "", contract_end_date: "" };
 
       const { data: obrasData, error: obrasError } = await supabase.from("obras").select("*").order("order_index", { ascending: true });
       if (obrasError) errors.push("obras");
@@ -91,46 +90,87 @@ export default function App() {
       const { data: aditivosData, error: aditivosError } = await supabase.from("aditivos").select("*");
       if (aditivosError) errors.push("aditivos");
 
-      setErrorHeader(errors.length > 0 ? `Erro ao carregar: ${errors.join(", ")}` : "");
+      if (errors.length > 0) {
+        setErrorHeader(`Aviso: Falha temporária ao sincronizar dados (${errors.join(", ")}). Exibindo dados anteriores.`);
+      } else {
+        setErrorHeader("");
+      }
 
-      const obrasFormatadas = (obrasData || []).map((o: any) => {
-        const workLogs = (logsData || []).filter((l: any) => l.work_id === o.id);
-        let progressVal = o.progress || 0;
-        if (workLogs.length > 0) {
-          const sorted = [...workLogs].sort((a, b) => {
-            const aTime = getLogStartDate(a.notes || "", a.timestamp || "");
-            const bTime = getLogStartDate(b.notes || "", b.timestamp || "");
-            if (aTime !== bTime) return bTime - aTime;
-            return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
+      setState((prevState: any) => {
+        // Fallback to previous values on error
+        const configSegura = (!configError && configData) ? configData : {
+          contract_name: prevState?.contractName || "Contrato de Supervisão (Novo)",
+          supervisor_company: prevState?.supervisorCompany || "Empresa Supervisora",
+          contract_value: prevState?.contractValue || 0,
+          contract_start_date: prevState?.contractStartDate || "",
+          contract_end_date: prevState?.contractEndDate || "",
+          authorized_emails: prevState?.authorizedUsers || [],
+          readonly_emails: prevState?.readonlyUsers || []
+        };
+
+        const finalObrasData = obrasError ? null : obrasData;
+        const finalLogsData = logsError ? null : logsData;
+        const finalAditivosData = aditivosError ? null : aditivosData;
+
+        let aditivosFormatados = prevState?.contractAdditives || [];
+        if (finalAditivosData !== null) {
+          aditivosFormatados = finalAditivosData.map((a: any) => ({
+            id: a.id, number: a.number || "00", type: a.type || "", value: a.value || 0, days: a.days || 0, description: a.description || "", signatureDate: a.signature_date || "2024-01-01"
+          }));
+        }
+
+        let obrasFormatadas = prevState?.works || [];
+        if (finalObrasData !== null) {
+          const activeLogs = finalLogsData !== null ? finalLogsData : (prevState?.logs || []);
+          obrasFormatadas = finalObrasData.map((o: any) => {
+            const workLogs = activeLogs.filter((l: any) => (l.work_id || l.workId) === o.id);
+            let progressVal = o.progress || 0;
+            if (workLogs.length > 0) {
+              const sorted = [...workLogs].sort((a: any, b: any) => {
+                const aNotes = a.notes || "";
+                const bNotes = b.notes || "";
+                const aTime = getLogStartDate(aNotes, a.timestamp || "");
+                const bTime = getLogStartDate(bNotes, b.timestamp || "");
+                if (aTime !== bTime) return bTime - aTime;
+                return new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime();
+              });
+              progressVal = sorted[0].new_progress ?? sorted[0].newProgress ?? o.progress ?? 0;
+            }
+
+            return {
+              id: o.id, name: o.name, contractNumber: o.contract_number || "S/N", contractorName: o.contractor_name || "Construtora não informada", progress: progressVal, status: o.status || "em_andamento", deadlineDate: o.deadline_date || "2025-01-01", activeContractDate: o.active_contract_date || "2025-01-01", biddedValue: o.bidded_value || 0, order: o.order_index || 0, biddingNumber: o.bidding_number || "", adminProcess: o.admin_process || "", termDaysVigencia: o.term_days_vigencia || "", termDaysExecucao: o.term_days_execucao || "", signingDate: o.signing_date || "", publicationDateJom: o.publication_date_jom || "", startOrderDate: o.start_order_date || "", startDate: o.start_date || "", physicalStartDate: o.start_date || "", additives: o.additives || [], timelineImage: o.timeline_image || ""
+            };
           });
-          progressVal = sorted[0].new_progress ?? o.progress ?? 0;
+        }
+
+        let logsFormatados = prevState?.logs || [];
+        if (finalLogsData !== null) {
+          logsFormatados = finalLogsData.map((l: any) => {
+            const obraRelacionada = obrasFormatadas.find((w: any) => w.id === l.work_id);
+            return {
+              id: l.id, workId: l.work_id, workName: obraRelacionada ? obraRelacionada.name : "Obra Desconhecida", userName: l.user_name || "Usuário", userRole: l.user_role || "", oldProgress: l.old_progress || 0, newProgress: l.new_progress || 0, notes: l.notes || "", coverImage: l.cover_image, progressImages: l.progress_images || [], timestamp: l.timestamp || new Date().toISOString()
+            };
+          });
         }
 
         return {
-          id: o.id, name: o.name, contractNumber: o.contract_number || "S/N", contractorName: o.contractor_name || "Construtora não informada", progress: progressVal, status: o.status || "em_andamento", deadlineDate: o.deadline_date || "2025-01-01", activeContractDate: o.active_contract_date || "2025-01-01", biddedValue: o.bidded_value || 0, order: o.order_index || 0, biddingNumber: o.bidding_number || "", adminProcess: o.admin_process || "", termDaysVigencia: o.term_days_vigencia || "", termDaysExecucao: o.term_days_execucao || "", signingDate: o.signing_date || "", publicationDateJom: o.publication_date_jom || "", startOrderDate: o.start_order_date || "", startDate: o.start_date || "", physicalStartDate: o.start_date || "", additives: o.additives || [], timelineImage: o.timeline_image || ""
+          contractName: configSegura.contract_name, 
+          supervisorCompany: configSegura.supervisor_company, 
+          contractValue: configSegura.contract_value, 
+          contractStartDate: configSegura.contract_start_date || "", 
+          contractEndDate: configSegura.contract_end_date || "", 
+          contractAdditives: aditivosFormatados, 
+          works: obrasFormatadas, 
+          logs: logsFormatados, 
+          authorizedUsers: configSegura.authorized_emails || [], 
+          readonlyUsers: configSegura.readonly_emails || [], 
+          supabaseStatus: { connected: errors.length === 0, tableExists: true, rlsEnabled: false, error: errors.join(", ") }
         };
-      });
-
-      const logsFormatados = (logsData || []).map((l: any) => {
-        const obraRelacionada = obrasFormatadas.find((w: any) => w.id === l.work_id);
-        return {
-          id: l.id, workId: l.work_id, workName: obraRelacionada ? obraRelacionada.name : "Obra Desconhecida", userName: l.user_name || "Usuário", userRole: l.user_role || "", oldProgress: l.old_progress || 0, newProgress: l.new_progress || 0, notes: l.notes || "", coverImage: l.cover_image, progressImages: l.progress_images || [], timestamp: l.timestamp || new Date().toISOString()
-        };
-      });
-
-      const aditivosFormatados = (aditivosData || []).map((a: any) => ({
-        id: a.id, number: a.number || "00", type: a.type || "", value: a.value || 0, days: a.days || 0, description: a.description || "", signatureDate: a.signature_date || "2024-01-01"
-      }));
-
-      setState({
-        contractName: configSegura.contract_name, supervisorCompany: configSegura.supervisor_company, contractValue: configSegura.contract_value, contractStartDate: configSegura.contract_start_date || "", contractEndDate: configSegura.contract_end_date || "", contractAdditives: aditivosFormatados, works: obrasFormatadas, logs: logsFormatados, 
-        authorizedUsers: configSegura.authorized_emails || [], 
-        readonlyUsers: configSegura.readonly_emails || [], 
-        supabaseStatus: { connected: true, tableExists: true, rlsEnabled: false, error: "" }
       });
 
     } catch (err: any) {
-      setErrorHeader("Erro ao conectar com o banco de dados.");
+      console.error(err);
+      setErrorHeader("Erro ao carregar dados. Verifique sua conexão.");
     } finally {
       setLoading(false);
       setIsSyncing(false);
@@ -204,6 +244,64 @@ export default function App() {
       active = false;
       supabase.removeChannel(canalTempoReal);
       subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    let offlineTimeout: any = null;
+
+    const handleOffline = () => {
+      if (offlineTimeout) clearTimeout(offlineTimeout);
+      
+      // DEBOUNCE NO OFFLINE: Aguarda 3 segundos antes de ativar o banner de Offline
+      offlineTimeout = setTimeout(async () => {
+        let actualOffline = true;
+        try {
+          // Ping silencioso para a nossa própria rota (muito leve, sem CORS)
+          const response = await fetch("/", { method: "HEAD", cache: "no-store" });
+          if (response.ok || response.status < 500) {
+            actualOffline = false;
+          }
+        } catch (e) {
+          actualOffline = true;
+        }
+
+        if (actualOffline && !navigator.onLine) {
+          setIsOffline(true);
+          setErrorHeader("Sem conexão com a internet. Verifique sua rede.");
+        }
+      }, 3000);
+    };
+
+    const handleOnline = async () => {
+      if (offlineTimeout) {
+        clearTimeout(offlineTimeout);
+        offlineTimeout = null;
+      }
+      setIsOffline(false);
+      setErrorHeader("");
+      console.log("Conexão restabelecida. Sincronizando dados silenciosamente...");
+      // AUTO-RECOVERY: re-execute a busca silenciosamente para restaurar a sincronização
+      await loadState(false);
+    };
+
+    const handleFocus = async () => {
+      if (navigator.onLine) {
+        setIsOffline(false);
+        setErrorHeader("");
+        await loadState(false);
+      }
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      if (offlineTimeout) clearTimeout(offlineTimeout);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
