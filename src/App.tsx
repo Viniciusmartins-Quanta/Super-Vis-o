@@ -26,6 +26,7 @@ export default function App() {
   const [session, setSession] = useState<any>(null); 
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
+  const [isInitializing, setIsInitializing] = useState(true);
   const [isAuthLoading, setIsAuthLoading] = useState(true); 
   const [authError, setAuthError] = useState("");
   const [errorHeader, setErrorHeader] = useState("");
@@ -151,15 +152,59 @@ export default function App() {
   };
 
   useEffect(() => {
-    loadDirectSupabaseState();
-    const canalTempoReal = supabase.channel('escuta-banco-inteiro').on('postgres_changes', { event: '*', schema: 'public' }, () => loadDirectSupabaseState()).subscribe();
-    return () => { supabase.removeChannel(canalTempoReal); };
-  }, []);
+    let active = true;
 
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => { setSession(session); setIsAuthLoading(false); });
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => { setSession(session); setIsAuthLoading(false); });
-    return () => subscription.unsubscribe();
+    const initialize = async () => {
+      try {
+        setIsInitializing(true);
+        // 1. Obter a sessão inicial do Supabase
+        const { data: { session: initialSession } } = await supabase.auth.getSession();
+        if (active) {
+          setSession(initialSession);
+        }
+        // 2. Carregar as configurações de acesso e dados do banco
+        await loadDirectSupabaseState();
+      } catch (err) {
+        console.error("Erro durante a inicialização do app:", err);
+      } finally {
+        if (active) {
+          setIsInitializing(false);
+          setIsAuthLoading(false);
+        }
+      }
+    };
+
+    initialize();
+
+    // Configurar escuta em tempo real do banco de dados
+    const canalTempoReal = supabase.channel('escuta-banco-inteiro')
+      .on('postgres_changes', { event: '*', schema: 'public' }, () => {
+        loadDirectSupabaseState();
+      })
+      .subscribe();
+
+    // Escutar mudanças no estado de autenticação
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+      if (active) {
+        setSession(currentSession);
+        
+        // Se houver uma sessão, manter/definir isAuthLoading como true para evitar flash ou race condition
+        // enquanto consulta as permissões no banco, mudando para false apenas após a conclusão
+        if (currentSession) {
+          setIsAuthLoading(true);
+          await loadDirectSupabaseState();
+          setIsAuthLoading(false);
+        } else {
+          setIsAuthLoading(false);
+        }
+      }
+    });
+
+    return () => {
+      active = false;
+      supabase.removeChannel(canalTempoReal);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const handleSignUp = async (e: React.FormEvent) => {
@@ -606,8 +651,8 @@ export default function App() {
           const lines = [`Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`, `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`];
           if (add.days) lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} ${add.days == 1 ? 'mês' : 'meses'}</span>`); else if (add.type === "prazo" || add.type === "misto") lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
           if (add.value !== undefined && add.value !== null) { lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(add.value)}</span>`); if (add.type === "financeiro" || add.type === "misto") lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(work.biddedValue + add.value)}</span>`); }
-          if (add.newVigenciaDate) lines.push(`Novo Prazo Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
-          if (add.newExecucaoDate) lines.push(`Novo Prazo de Execução: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newExecucaoDate)}</span>`); else if (add.newVigenciaDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: #ea580c;">${formatDate(add.newVigenciaDate)}</span>`);
+          if (add.newVigenciaDate) lines.push(`Novo Prazo Contratual: <span style="font-weight: bold; color: black;">${formatDate(add.newVigenciaDate)}</span>`);
+          if (add.newExecucaoDate) lines.push(`Novo Prazo de Execução: <span style="font-weight: bold; color: black;">${formatDate(add.newExecucaoDate)}</span>`); else if (add.newVigenciaDate) lines.push(`Novo Prazo de Execução Contratual: <span style="font-weight: bold; color: black;">${formatDate(add.newVigenciaDate)}</span>`);
           const rowspan = lines.length;
           return lines.map((line, lineIdx) => {
             if (lineIdx === 0) return `<tr><td rowspan="${rowspan}" class="text-[10px] leading-tight" style="text-align: center; vertical-align: middle; font-weight: bold; text-transform: uppercase; width: 25%; font-size: 8pt; padding: 3px 6px; line-height: 1.1 !important;">${orderWord}</td><td class="text-[10px] leading-tight" style="font-size: 8pt; padding: 3px 6px; line-height: 1.1 !important;">${line}</td></tr>`;
@@ -857,6 +902,15 @@ export default function App() {
   };
   
   // =========================================================================
+
+  if (isInitializing) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300">
+        <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mb-3" />
+        <span className="text-sm font-semibold">Carregando permissões e dados...</span>
+      </div>
+    );
+  }
 
   if (isAuthLoading) {
     return (
