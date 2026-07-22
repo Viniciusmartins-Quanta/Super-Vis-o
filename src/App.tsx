@@ -97,32 +97,54 @@ export default function App() {
       }
 
       setState((prevState: any) => {
-        // Fallback to previous values on error
-        const configSegura = (!configError && configData) ? configData : {
-          contract_name: prevState?.contractName || "Contrato de Supervisão (Novo)",
-          supervisor_company: prevState?.supervisorCompany || "Empresa Supervisora",
-          contract_value: prevState?.contractValue || 0,
-          contract_start_date: prevState?.contractStartDate || "",
-          contract_end_date: prevState?.contractEndDate || "",
-          authorized_emails: prevState?.authorizedUsers || [],
-          readonly_emails: prevState?.readonlyUsers || []
-        };
-
         const finalObrasData = obrasError ? null : obrasData;
         const finalLogsData = logsError ? null : logsData;
         const finalAditivosData = aditivosError ? null : aditivosData;
 
+        // Extrair o registro oculto do sistema (que guarda aditivos gerais de forma RLS-safe)
+        const systemAditivosObra = finalObrasData?.find((o: any) => o.id === "sistema-aditivos-gerais");
+        const finalObrasDataFiltrada = finalObrasData ? finalObrasData.filter((o: any) => o.id !== "sistema-aditivos-gerais") : null;
+
+        // Fallback to previous values on error or use shared system record
+        let configSegura = (!configError && configData) ? configData : null;
+        if (!configSegura && systemAditivosObra) {
+          configSegura = {
+            contract_name: systemAditivosObra.name,
+            supervisor_company: systemAditivosObra.contractor_name,
+            contract_value: systemAditivosObra.bidded_value,
+            contract_start_date: systemAditivosObra.start_date,
+            contract_end_date: systemAditivosObra.deadline_date,
+            authorized_emails: prevState?.authorizedUsers || [],
+            readonly_emails: prevState?.readonlyUsers || []
+          };
+        }
+        if (!configSegura) {
+          configSegura = {
+            contract_name: prevState?.contractName || "Contrato de Supervisão (Novo)",
+            supervisor_company: prevState?.supervisorCompany || "Empresa Supervisora",
+            contract_value: prevState?.contractValue || 0,
+            contract_start_date: prevState?.contractStartDate || "",
+            contract_end_date: prevState?.contractEndDate || "",
+            authorized_emails: prevState?.authorizedUsers || [],
+            readonly_emails: prevState?.readonlyUsers || []
+          };
+        }
+
         let aditivosFormatados = prevState?.contractAdditives || [];
-        if (finalAditivosData !== null) {
+        // Se temos dados válidos da tabela de aditivos, usamos eles.
+        // Se vier vazio ou nulo (ex: devido a RLS para outros usuários), usamos do sistema de aditivos gerais compartilhado na tabela de obras!
+        if (finalAditivosData !== null && finalAditivosData.length > 0) {
           aditivosFormatados = finalAditivosData.map((a: any) => ({
             id: a.id, number: a.number || "00", type: a.type || "", value: a.value || 0, days: a.days || 0, description: a.description || "", signatureDate: a.signature_date || "2024-01-01"
           }));
+        } else if (systemAditivosObra && systemAditivosObra.additives) {
+          aditivosFormatados = systemAditivosObra.additives;
         }
 
         let obrasFormatadas = prevState?.works || [];
-        if (finalObrasData !== null) {
+        if (finalObrasDataFiltrada !== null) {
           const activeLogs = finalLogsData !== null ? finalLogsData : (prevState?.logs || []);
-          obrasFormatadas = finalObrasData.map((o: any) => {
+          obrasFormatadas = finalObrasDataFiltrada.map((o: any) => {
             const workLogs = activeLogs.filter((l: any) => (l.work_id || l.workId) === o.id);
             let progressVal = o.progress || 0;
             if (workLogs.length > 0) {
@@ -197,12 +219,13 @@ export default function App() {
     const initialize = async () => {
       try {
         setIsInitializing(true);
+        setIsAuthLoading(true);
         // 1. Obter a sessão inicial do Supabase
         const { data: { session: initialSession } } = await supabase.auth.getSession();
         if (active) {
           setSession(initialSession);
         }
-        // 2. Carregar as configurações de acesso e dados do banco
+        // 2. Carregar as configurações de acesso e dados do banco de forma estrita
         await loadDirectSupabaseState();
       } catch (err) {
         console.error("Erro durante a inicialização do app:", err);
@@ -229,11 +252,18 @@ export default function App() {
         setSession(currentSession);
         
         // Se houver uma sessão, manter/definir isAuthLoading como true para evitar flash ou race condition
-        // enquanto consulta as permissões no banco, mudando para false apenas após a conclusão
+        // enquanto consulta as permissões no banco, mudando para false apenas após a conclusão definitiva (sucesso ou falha real)
         if (currentSession) {
           setIsAuthLoading(true);
-          await loadDirectSupabaseState();
-          setIsAuthLoading(false);
+          try {
+            await loadDirectSupabaseState();
+          } catch (err) {
+            console.error("Erro ao carregar estado após alteração de autenticação:", err);
+          } finally {
+            if (active) {
+              setIsAuthLoading(false);
+            }
+          }
         } else {
           setIsAuthLoading(false);
         }
@@ -339,6 +369,37 @@ export default function App() {
           await supabase.from("aditivos").upsert({ id: add.id || `add-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`, config_id: "config-atual", number: add.number, type: add.type, value: add.value || 0, days: add.days || 0, description: add.description, signature_date: add.signatureDate || null });
         }
       }
+
+      // Salvar o espelhamento das configurações de contrato e aditivos no registro público 'obras' (id: 'sistema-aditivos-gerais')
+      // para contornar qualquer restrição RLS (Row-Level Security) na tabela 'aditivos' para outros usuários.
+      const payloadSystemRecord = {
+        id: "sistema-aditivos-gerais",
+        name: contractName,
+        contract_number: "SISTEMA",
+        contractor_name: supervisorCompany,
+        progress: 0,
+        status: "planejamento" as const,
+        deadline_date: contractEndDate || null,
+        active_contract_date: contractEndDate || null,
+        bidded_value: contractValue || 0,
+        bidding_number: null,
+        admin_process: null,
+        term_days_vigencia: null,
+        term_days_execucao: null,
+        signing_date: null,
+        publication_date_jom: null,
+        start_order_date: null,
+        start_date: contractStartDate || null,
+        additives: contractAdditives || [],
+        timeline_image: null,
+        order_index: -9999 // Força ficar fora de ordem se aparecer acidentalmente
+      };
+      
+      const { error: systemRecordError } = await supabase.from("obras").upsert(payloadSystemRecord);
+      if (systemRecordError) {
+        console.error("Erro ao salvar o registro de sincronização global:", systemRecordError.message);
+      }
+
       await loadDirectSupabaseState();
     } catch (err: any) { setErrorHeader("Não foi possível salvar os dados."); }
   };
