@@ -185,9 +185,9 @@ export default function ActivityModal({
       setEnelStatus("N/A");
       setSubstationStatus("N/A");
       setRelevantInfo("N/A");
-      setWeeklyActivities("Alocação de forma e armadura nos trechos...");
-      setNextWeekActivities("Concretagem integral dos blocos da viga de coroamento...");
-      setImportantNotes("Identificadas trincas superficiais na passarela...");
+      setWeeklyActivities("");
+      setNextWeekActivities("");
+      setImportantNotes("");
       setCoverImage("");
       setProgressImages(["", "", "", ""]);
     }
@@ -478,7 +478,7 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
               <textarea
                 value={weeklyActivities}
                 onChange={(e) => setWeeklyActivities(e.target.value)}
-                placeholder="Insira as atividades realizadas na semana, uma por linha..."
+                placeholder="Alocação de forma e armadura nos trechos..."
                 rows={5}
                 className="w-full bg-slate-50 border border-slate-300 focus:border-indigo-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />
@@ -492,7 +492,7 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
               <textarea
                 value={nextWeekActivities}
                 onChange={(e) => setNextWeekActivities(e.target.value)}
-                placeholder="Insira as atividades planejadas para a próxima semana, uma por linha..."
+                placeholder="Concretagem integral dos blocos da viga de coroamento..."
                 rows={5}
                 className="w-full bg-slate-50 border border-slate-300 focus:border-emerald-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />
@@ -506,7 +506,7 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
               <textarea
                 value={importantNotes}
                 onChange={(e) => setImportantNotes(e.target.value)}
-                placeholder="Insira as observações e apontamentos importantes, um por linha..."
+                placeholder="Identificadas trincas superficiais na passarela..."
                 rows={5}
                 className="w-full bg-slate-50 border border-slate-300 focus:border-rose-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />

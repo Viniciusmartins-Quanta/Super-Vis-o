@@ -891,16 +891,16 @@ export default function App() {
                 const rowspan = Math.max(1, parsed.weeklyActivities.length);
                 const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da semana:<br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>`;
                 return parsed.weeklyActivities.length > 0 
-                  ? parsed.weeklyActivities.map((act, i) => `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act}</td></tr>`).join("")
-                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade descrita.</td></tr>`;
+                  ? parsed.weeklyActivities.map((act, i) => `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act || "N/A"}</td></tr>`).join("")
+                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">N/A</td></tr>`;
               })()}
               
               ${(() => {
                 const rowspan = Math.max(1, parsed.nextWeekActivities.length);
                 const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da próxima semana:<br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>`;
                 return parsed.nextWeekActivities.length > 0 
-                  ? parsed.nextWeekActivities.map((act, i) => `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act}</td></tr>`).join("")
-                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">Nenhuma atividade programada.</td></tr>`;
+                  ? parsed.nextWeekActivities.map((act, i) => `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act || "N/A"}</td></tr>`).join("")
+                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">N/A</td></tr>`;
               })()}
               
               ${(() => {
@@ -908,15 +908,18 @@ export default function App() {
                 const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Observações e apontamentos importantes:</td>`;
                 return parsed.observations.length > 0 
                   ? parsed.observations.map((obs, i) => {
-                      const cleaned = obs.trim();
+                      const cleaned = (obs || "").trim();
+                      if (!cleaned) {
+                        return `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• N/A</td></tr>`;
+                      }
                       let content = `• ${cleaned}`;
                       if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { 
                           const text = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); 
-                          content = `<strong style="color: #000;">Não conformidade:</strong><br/>${text}`; 
+                          content = `<strong style="color: #000;">Não conformidade:</strong><br/>${text || "N/A"}`; 
                       }
                       return `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">${content}</td></tr>`;
                   }).join("")
-                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">Nenhum apontamento crítico.</td></tr>`;
+                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">N/A</td></tr>`;
               })()}
             </tbody>
           </table>

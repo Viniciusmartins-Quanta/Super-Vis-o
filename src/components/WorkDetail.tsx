@@ -899,12 +899,15 @@ export default function WorkDetail({
               <td style="font-weight: bold; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
               <td style="vertical-align: top; padding: 4px 8px;">
                 <ul style="list-style-type: none; margin: 0; padding: 0;">
-                  ${parsed.weeklyActivities.map(act => `
+                  ${parsed.weeklyActivities.length > 0 
+                    ? parsed.weeklyActivities.map(act => `
                     <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
                       <span style="position: absolute; left: 0; top: 0;">•</span>
-                      ${act}
+                      ${act || "N/A"}
                     </li>
-                  `).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade descrita para a semana registrada.</li>`}
+                    `).join("")
+                    : `<li style="margin-top: 4px; font-style: italic; color: #777;">N/A</li>`
+                  }
                 </ul>
               </td>
             </tr>
@@ -912,12 +915,15 @@ export default function WorkDetail({
               <td style="font-weight: bold; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
               <td style="vertical-align: top; padding: 4px 8px;">
                 <ul style="list-style-type: none; margin: 0; padding: 0;">
-                  ${parsed.nextWeekActivities.map(act => `
+                  ${parsed.nextWeekActivities.length > 0
+                    ? parsed.nextWeekActivities.map(act => `
                     <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
                       <span style="position: absolute; left: 0; top: 0;">•</span>
-                      ${act}
+                      ${act || "N/A"}
                     </li>
-                  `).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhuma atividade programada de frentes futuras.</li>`}
+                    `).join("")
+                    : `<li style="margin-top: 4px; font-style: italic; color: #777;">N/A</li>`
+                  }
                 </ul>
               </td>
             </tr>
@@ -925,14 +931,23 @@ export default function WorkDetail({
               <td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td>
               <td style="vertical-align: top; padding: 4px 8px;">
                 <ul style="list-style-type: none; margin: 0; padding: 0;">
-                  ${parsed.observations.map(obs => {
-                    const cleaned = obs.trim();
+                  ${parsed.observations.length > 0
+                    ? parsed.observations.map(obs => {
+                    const cleaned = (obs || "").trim();
+                    if (!cleaned) {
+                      return `
+                        <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                          <span style="position: absolute; left: 0; top: 0;">•</span>
+                          N/A
+                        </li>
+                      `;
+                    }
                     if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) {
                       const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim();
                       return `
                         <li style="margin-top: 4px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt;">
                           <strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>
-                          ${content}
+                          ${content || "N/A"}
                         </li>
                       `;
                     }
@@ -942,7 +957,8 @@ export default function WorkDetail({
                         ${cleaned}
                       </li>
                     `;
-                  }).join("") || `<li style="margin-top: 4px; font-style: italic; color: #777;">Nenhum apontamento crítico de fiscalização registrado no período semanal.</li>`}
+                  }).join("")
+                  : `<li style="margin-top: 4px; font-style: italic; color: #777;">N/A</li>`}
                 </ul>
               </td>
             </tr>
@@ -1947,38 +1963,44 @@ export default function WorkDetail({
                             )}
 
                             {/* Bullet Lists */}
-                            {parsed.weeklyActivities && parsed.weeklyActivities.length > 0 && (
-                              <div>
-                                <span className="font-bold text-slate-700 block mb-1">Atividades da Semana:</span>
+                            <div>
+                              <span className="font-bold text-slate-700 block mb-1">Atividades da Semana:</span>
+                              {parsed.weeklyActivities && parsed.weeklyActivities.length > 0 ? (
                                 <ul className="list-disc list-inside space-y-0.5 pl-1.5">
                                   {parsed.weeklyActivities.map((act, i) => (
-                                    <li key={i}>{act}</li>
+                                    <li key={i}>{act || "N/A"}</li>
                                   ))}
                                 </ul>
-                              </div>
-                            )}
+                              ) : (
+                                <p className="text-slate-500 pl-1.5 text-xs">N/A</p>
+                              )}
+                            </div>
 
-                            {parsed.nextWeekActivities && parsed.nextWeekActivities.length > 0 && (
-                              <div>
-                                <span className="font-bold text-slate-700 block mb-1">Próxima Semana:</span>
+                            <div>
+                              <span className="font-bold text-slate-700 block mb-1">Próxima Semana:</span>
+                              {parsed.nextWeekActivities && parsed.nextWeekActivities.length > 0 ? (
                                 <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-slate-500">
                                   {parsed.nextWeekActivities.map((act, i) => (
-                                    <li key={i}>{act}</li>
+                                    <li key={i}>{act || "N/A"}</li>
                                   ))}
                                 </ul>
-                              </div>
-                            )}
+                              ) : (
+                                <p className="text-slate-500 pl-1.5 text-xs">N/A</p>
+                              )}
+                            </div>
 
-                            {parsed.observations && parsed.observations.length > 0 && (
-                              <div>
-                                <span className="font-bold text-rose-700 block mb-1">Observações / Apontamentos:</span>
+                            <div>
+                              <span className="font-bold text-rose-700 block mb-1">Observações / Apontamentos:</span>
+                              {parsed.observations && parsed.observations.length > 0 ? (
                                 <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-rose-600">
                                   {parsed.observations.map((act, i) => (
-                                    <li key={i}>{act}</li>
+                                    <li key={i}>{act || "N/A"}</li>
                                   ))}
                                 </ul>
-                              </div>
-                            )}
+                              ) : (
+                                <p className="text-rose-500 pl-1.5 text-xs">N/A</p>
+                              )}
+                            </div>
                           </div>
                         )}
                       </div>
@@ -2638,55 +2660,61 @@ export default function WorkDetail({
                   <div className="space-y-5 pt-2">
                     {selectedParsed.isStandardReport ? (
                       <div className="space-y-5">
-                        {selectedParsed.weeklyActivities && selectedParsed.weeklyActivities.length > 0 && (
-                          <div className="space-y-2">
-                            <span className="font-extrabold text-slate-800 block text-xs tracking-wider uppercase font-sans">
-                              Atividades Desenvolvidas na Semana:
-                            </span>
+                        <div className="space-y-2">
+                          <span className="font-extrabold text-slate-800 block text-xs tracking-wider uppercase font-sans">
+                            Atividades Desenvolvidas na Semana:
+                          </span>
+                          {selectedParsed.weeklyActivities && selectedParsed.weeklyActivities.length > 0 ? (
                             <ul className="space-y-1.5 pl-0.5 text-slate-700 leading-relaxed text-xs">
                               {selectedParsed.weeklyActivities.map((act, i) => (
                                 <li key={i} className="flex items-start gap-2">
                                   <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                  <span>{act}</span>
+                                  <span>{act || "N/A"}</span>
                                 </li>
                               ))}
                             </ul>
-                          </div>
-                        )}
+                          ) : (
+                            <p className="text-slate-500 text-xs pl-0.5">N/A</p>
+                          )}
+                        </div>
                         
-                        {selectedParsed.nextWeekActivities && selectedParsed.nextWeekActivities.length > 0 && (
-                          <div className="space-y-2">
-                            <span className="font-extrabold text-slate-800 block text-xs tracking-wide uppercase font-sans">
-                              Atividades Programadas para Próxima Semana:
-                            </span>
+                        <div className="space-y-2">
+                          <span className="font-extrabold text-slate-800 block text-xs tracking-wide uppercase font-sans">
+                            Atividades Programadas para Próxima Semana:
+                          </span>
+                          {selectedParsed.nextWeekActivities && selectedParsed.nextWeekActivities.length > 0 ? (
                             <ul className="space-y-1.5 pl-0.5 text-slate-600 leading-relaxed text-xs">
                               {selectedParsed.nextWeekActivities.map((act, i) => (
                                 <li key={i} className="flex items-start gap-2">
                                   <ArrowUpRight className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                                  <span>{act}</span>
+                                  <span>{act || "N/A"}</span>
                                 </li>
                               ))}
                             </ul>
-                          </div>
-                        )}
+                          ) : (
+                            <p className="text-slate-500 text-xs pl-0.5">N/A</p>
+                          )}
+                        </div>
 
-                        {selectedParsed.observations && selectedParsed.observations.length > 0 && (
-                          <div className="space-y-2">
-                            <span className="font-extrabold text-rose-700 block text-xs tracking-wide uppercase font-sans">
-                              Observações, Não Conformidades & Alertas de Fiscalização:
-                            </span>
+                        <div className="space-y-2">
+                          <span className="font-extrabold text-rose-700 block text-xs tracking-wide uppercase font-sans">
+                            Observações, Não Conformidades & Alertas de Fiscalização:
+                          </span>
+                          {selectedParsed.observations && selectedParsed.observations.length > 0 ? (
                             <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-4">
                               <ul className="space-y-1.5 text-rose-800 leading-relaxed font-semibold text-xs pl-0.5">
                                 {selectedParsed.observations.map((act, i) => (
                                   <li key={i} className="flex items-start gap-2">
                                     <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                                    <span>{act}</span>
+                                    <span>{act || "N/A"}</span>
                                   </li>
                                 ))}
                               </ul>
                             </div>
-                          </div>
-                        )}
+                          ) : (
+                            <p className="text-slate-500 text-xs pl-0.5">N/A</p>
+                          )}
+                        </div>
                       </div>
                     ) : (
                       <div className="space-y-2">
