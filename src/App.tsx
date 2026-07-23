@@ -821,8 +821,19 @@ export default function App() {
       if (work.additives && work.additives.length > 0) {
         additivesTableRows = work.additives.map((add:any, idx:number) => {
           const orderWord = `${idx + 1}º ADITIVO`;
-          const publishJomDate = add.publicationDateJom ? formatDate(add.publicationDateJom) : "N/A";
-          const lines = [`Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`, `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`];
+          const addNotesText = (add.description || add.reason || add.notes || "").trim();
+          
+          const hasSigDate = add.signatureDate && add.signatureDate.trim() && add.signatureDate !== "-" && add.signatureDate !== "N/A";
+          const displaySignatureDate = hasSigDate ? formatDate(add.signatureDate) : (addNotesText || "N/A");
+
+          const pubDateValue = add.publicationDateJom || add.publicationDate;
+          const hasPubDate = pubDateValue && pubDateValue.trim() && pubDateValue !== "-" && pubDateValue !== "N/A";
+          const displayPubJomDate = hasPubDate ? formatDate(pubDateValue) : (addNotesText || "N/A");
+
+          const lines = [
+            `Data assinatura: <span style="font-weight: bold;">${displaySignatureDate}</span>`,
+            `Data publicação JOM: <span style="font-weight: bold;">${displayPubJomDate}</span>`
+          ];
           if (add.days) lines.push(`Prazo Aditivado: <span style="font-weight: bold;">${add.days} ${add.days == 1 ? 'mês' : 'meses'}</span>`); else if (add.type === "prazo" || add.type === "misto") lines.push(`Prazo Aditivado: <span style="font-weight: bold;">N/A</span>`);
           if (add.value !== undefined && add.value !== null) { lines.push(`Valor Aditivado: <span style="font-weight: bold;">${formatCurrency(add.value)}</span>`); if (add.type === "financeiro" || add.type === "misto") lines.push(`Novo Valor Contratual: <span style="font-weight: bold;">${formatCurrency(work.biddedValue + add.value)}</span>`); }
           if (add.newVigenciaDate) lines.push(`Novo Prazo Contratual: <span style="font-weight: bold; color: black;">${formatDate(add.newVigenciaDate)}</span>`);

@@ -475,11 +475,19 @@ export default function WorkDetail({
     if (work.additives && work.additives.length > 0) {
       additivesTableRows = work.additives.map((add, idx) => {
         const orderWord = `${idx + 1}º ADITIVO`;
-        const publishJomDate = add.publicationDateJom ? formatDate(add.publicationDateJom) : "N/A";
+        const additive = add as any;
+        const addNotesText = (additive.description || additive.reason || additive.notes || "").trim();
+        
+        const hasSigDate = additive.signatureDate && additive.signatureDate.trim() && additive.signatureDate !== "-" && additive.signatureDate !== "N/A";
+        const displaySignatureDate = hasSigDate ? formatDate(additive.signatureDate) : (addNotesText || "N/A");
+
+        const pubDateValue = additive.publicationDateJom || additive.publicationDate;
+        const hasPubDate = pubDateValue && pubDateValue.trim() && pubDateValue !== "-" && pubDateValue !== "N/A";
+        const displayPubJomDate = hasPubDate ? formatDate(pubDateValue) : (addNotesText || "N/A");
         
         const lines = [
-          `Data assinatura: <span style="font-weight: bold;">${formatDate(add.signatureDate)}</span>`,
-          `Data publicação JOM: <span style="font-weight: bold;">${publishJomDate}</span>`
+          `Data assinatura: <span style="font-weight: bold;">${displaySignatureDate}</span>`,
+          `Data publicação JOM: <span style="font-weight: bold;">${displayPubJomDate}</span>`
         ];
         
         if (add.days) {
