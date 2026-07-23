@@ -28,6 +28,7 @@ export default function App() {
   const [authPassword, setAuthPassword] = useState("");
   const [isInitializing, setIsInitializing] = useState(true);
   const [isAuthLoading, setIsAuthLoading] = useState(true); 
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [authError, setAuthError] = useState("");
   const [errorHeader, setErrorHeader] = useState("");
   const [isSyncing, setIsSyncing] = useState(false);
@@ -196,6 +197,7 @@ export default function App() {
     } finally {
       setLoading(false);
       setIsSyncing(false);
+      setIsInitialLoad(false);
     }
   };
 
@@ -233,6 +235,7 @@ export default function App() {
         if (active) {
           setIsInitializing(false);
           setIsAuthLoading(false);
+          setIsInitialLoad(false);
         }
       }
     };
@@ -251,10 +254,10 @@ export default function App() {
       if (active) {
         setSession(currentSession);
         
-        // Se for renovação de token (TOKEN_REFRESHED) ou o app já concluiu a inicialização principal (!isInitializing),
+        // Se for renovação de token (TOKEN_REFRESHED) ou o app já concluiu a inicialização principal (!isInitializing ou !isInitialLoad),
         // o recarregamento dos dados de acesso e obras deve ser feito silenciosamente em segundo plano,
         // mantendo a interface e a obra atual sempre visíveis, sem NUNCA acionar telas de carregamento ou spinners em tela cheia.
-        if (event === "TOKEN_REFRESHED" || !isInitializing) {
+        if (event === "TOKEN_REFRESHED" || !isInitializing || !isInitialLoad) {
           try {
             await loadDirectSupabaseState();
           } catch (err) {
@@ -262,6 +265,7 @@ export default function App() {
           } finally {
             if (active) {
               setIsAuthLoading(false);
+              setIsInitialLoad(false);
             }
           }
           return;
@@ -277,6 +281,7 @@ export default function App() {
           } finally {
             if (active) {
               setIsAuthLoading(false);
+              setIsInitialLoad(false);
             }
           }
         } else {
@@ -1091,7 +1096,7 @@ export default function App() {
   
   // =========================================================================
 
-  if (isInitializing) {
+  if (isInitialLoad && isInitializing) {
     return (
       <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-slate-300">
         <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mb-3" />
@@ -1100,7 +1105,15 @@ export default function App() {
     );
   }
 
-  if (isAuthLoading) {
+  if (isInitialLoad && isAuthLoading) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
+      </div>
+    );
+  }
+
+  if (!session && isAuthLoading) {
     return (
       <div className="min-h-screen bg-slate-900 flex items-center justify-center">
         <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
@@ -1245,7 +1258,7 @@ export default function App() {
         </div>
       )}
 
-      {loading ? (
+      {isInitialLoad && loading ? (
         <main className="flex-grow flex flex-col items-center justify-center p-8 text-slate-500">
           <RefreshCw className="w-8 h-8 text-amber-500 animate-spin mb-3" />
           <p className="text-sm font-semibold">Carregando painel de supervisão...</p>
