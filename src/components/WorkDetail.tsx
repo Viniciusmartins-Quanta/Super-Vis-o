@@ -131,6 +131,7 @@ export default function WorkDetail({
       weeklyActivities: [] as string[],
       nextWeekActivities: [] as string[],
       observations: [] as string[],
+      observationsRaw: "N/A",
       isStandardReport: false
     };
 
@@ -220,6 +221,31 @@ export default function WorkDetail({
     result.weeklyActivities = extractSectionBullets("Atividades da Semana");
     result.nextWeekActivities = extractSectionBullets("Atividades da Próxima Semana");
     result.observations = extractSectionBullets("Observações & Apontamentos importantes");
+
+    // Extract raw observations preserving original text and natural newlines
+    const lines = notesText.split("\n");
+    let obsStartIdx = -1;
+    for (let i = 0; i < lines.length; i++) {
+      const lineLower = lines[i].toLowerCase();
+      if (lineLower.includes("observações & apontamentos") || lineLower.includes("observações") || lineLower.includes("apontamentos importantes")) {
+        obsStartIdx = i;
+        break;
+      }
+    }
+    if (obsStartIdx !== -1) {
+      const obsLines = lines.slice(obsStartIdx + 1);
+      const processedLines = obsLines.map(line => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*")) {
+          return line.replace(/^\s*[•\-\*]\s*/, "");
+        }
+        return line;
+      });
+      const rawText = processedLines.join("\n").trim();
+      result.observationsRaw = rawText === "Nenhum apontamento cadastrado" || rawText === "" ? "N/A" : rawText;
+    } else {
+      result.observationsRaw = "N/A";
+    }
 
     // Fallbacks if not formatted standard:
     if (!result.isStandardReport || result.weeklyActivities.length === 0) {
@@ -937,38 +963,7 @@ export default function WorkDetail({
             </tr>
             <tr>
               <td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td>
-              <td style="vertical-align: top; padding: 4px 8px;">
-                <ul style="list-style-type: none; margin: 0; padding: 0;">
-                  ${parsed.observations.length > 0
-                    ? parsed.observations.map(obs => {
-                    const cleaned = (obs || "").trim();
-                    if (!cleaned) {
-                      return `
-                        <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                          <span style="position: absolute; left: 0; top: 0;">•</span>
-                          N/A
-                        </li>
-                      `;
-                    }
-                    if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) {
-                      const content = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim();
-                      return `
-                        <li style="margin-top: 4px; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt;">
-                          <strong style="color: #000000; font-family: 'Arial', sans-serif; font-size: 9.2pt;">Não conformidade</strong><br/>
-                          ${content || "N/A"}
-                        </li>
-                      `;
-                    }
-                    return `
-                      <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                        <span style="position: absolute; left: 0; top: 0;">•</span>
-                        ${cleaned}
-                      </li>
-                    `;
-                  }).join("")
-                  : `<li style="margin-top: 4px; font-style: italic; color: #777;">N/A</li>`}
-                </ul>
-              </td>
+              <td style="vertical-align: top; padding: 4px 8px; text-align: left; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">${parsed.observationsRaw || "N/A"}</td>
             </tr>
           </tbody>
         </table>

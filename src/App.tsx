@@ -682,7 +682,7 @@ export default function App() {
     }
 
     const parseWeeklyReport = (notesText: string) => {
-      const result = { period: "Semana não especificada", sitacaoAditivo: "N/A", infraDados: "N/A", enelStatus: "N/A", substationStatus: "N/A", relevantInfo: "N/A", weeklyActivities: [] as string[], nextWeekActivities: [] as string[], observations: [] as string[], isStandardReport: false };
+      const result = { period: "Semana não especificada", sitacaoAditivo: "N/A", infraDados: "N/A", enelStatus: "N/A", substationStatus: "N/A", relevantInfo: "N/A", weeklyActivities: [] as string[], nextWeekActivities: [] as string[], observations: [] as string[], observationsRaw: "N/A", isStandardReport: false };
       if (!notesText) return result;
       if (notesText.includes("RELATÓRIO DE ATIVIDADES") || notesText.includes("Período:")) result.isStandardReport = true;
       const pm = notesText.match(/(?:Período|Period):\s*\*?([^\n\r*]+)/i); if (pm) result.period = pm[1].trim();
@@ -709,6 +709,31 @@ export default function App() {
       result.weeklyActivities = extractSectionBullets("Atividades da Semana");
       result.nextWeekActivities = extractSectionBullets("Atividades da Próxima Semana");
       result.observations = extractSectionBullets("Observações & Apontamentos importantes");
+
+      // Extract raw observations preserving original text and natural newlines
+      const lines = notesText.split("\n");
+      let obsStartIdx = -1;
+      for (let i = 0; i < lines.length; i++) {
+        const lineLower = lines[i].toLowerCase();
+        if (lineLower.includes("observações & apontamentos") || lineLower.includes("observações") || lineLower.includes("apontamentos importantes")) {
+          obsStartIdx = i;
+          break;
+        }
+      }
+      if (obsStartIdx !== -1) {
+        const obsLines = lines.slice(obsStartIdx + 1);
+        const processedLines = obsLines.map(line => {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*")) {
+            return line.replace(/^\s*[•\-\*]\s*/, "");
+          }
+          return line;
+        });
+        const rawText = processedLines.join("\n").trim();
+        result.observationsRaw = rawText === "Nenhum apontamento cadastrado" || rawText === "" ? "N/A" : rawText;
+      } else {
+        result.observationsRaw = "N/A";
+      }
 
       if (!result.isStandardReport || result.weeklyActivities.length === 0) {
         if (result.weeklyActivities.length === 0 && notesText) {
@@ -919,24 +944,10 @@ export default function App() {
                   : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">N/A</td></tr>`;
               })()}
               
-              ${(() => {
-                const rowspan = Math.max(1, parsed.observations.length);
-                const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Observações e apontamentos importantes:</td>`;
-                return parsed.observations.length > 0 
-                  ? parsed.observations.map((obs, i) => {
-                      const cleaned = (obs || "").trim();
-                      if (!cleaned) {
-                        return `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• N/A</td></tr>`;
-                      }
-                      let content = `• ${cleaned}`;
-                      if (cleaned.toLowerCase().startsWith("não conformidade") || cleaned.toLowerCase().startsWith("nao conformidade")) { 
-                          const text = cleaned.replace(/^não conformidade:?/i, "").replace(/^nao conformidade:?/i, "").trim(); 
-                          content = `<strong style="color: #000;">Não conformidade:</strong><br/>${text || "N/A"}`; 
-                      }
-                      return `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">${content}</td></tr>`;
-                  }).join("")
-                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">N/A</td></tr>`;
-              })()}
+              <tr>
+                <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Observações e apontamentos importantes:</td>
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">${parsed.observationsRaw || "N/A"}</td>
+              </tr>
             </tbody>
           </table>
         `;
