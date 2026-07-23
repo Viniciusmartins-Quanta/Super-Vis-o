@@ -251,8 +251,23 @@ export default function App() {
       if (active) {
         setSession(currentSession);
         
-        // Se houver uma sessão, manter/definir isAuthLoading como true para evitar flash ou race condition
-        // enquanto consulta as permissões no banco, mudando para false apenas após a conclusão definitiva (sucesso ou falha real)
+        // Se for renovação de token (TOKEN_REFRESHED) ou o app já concluiu a inicialização principal (!isInitializing),
+        // o recarregamento dos dados de acesso e obras deve ser feito silenciosamente em segundo plano,
+        // mantendo a interface e a obra atual sempre visíveis, sem NUNCA acionar telas de carregamento ou spinners em tela cheia.
+        if (event === "TOKEN_REFRESHED" || !isInitializing) {
+          try {
+            await loadDirectSupabaseState();
+          } catch (err) {
+            console.error("Erro ao sincronizar dados silenciosamente após mudança de auth:", err);
+          } finally {
+            if (active) {
+              setIsAuthLoading(false);
+            }
+          }
+          return;
+        }
+
+        // Para os demais eventos na montagem inicial (onde isInitializing ainda é true e temos sessão):
         if (currentSession) {
           setIsAuthLoading(true);
           try {
