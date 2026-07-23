@@ -351,6 +351,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none transition font-medium"
                 />
               </div>
@@ -366,6 +370,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none transition font-medium"
                 />
               </div>
@@ -384,6 +392,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                   value={physicalProgress}
                   onChange={(e) => setPhysicalProgress(Math.min(100, Math.max(0, Number(e.target.value))))}
                   placeholder="Ex: 79"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-lg pl-3 pr-8 py-2 text-xs text-slate-800 focus:outline-none transition font-mono font-bold"
                 />
                 <span className="absolute right-3.5 text-xs text-slate-400 font-bold">%</span>
@@ -405,6 +417,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                 value={aditivoStatus}
                 onChange={(e) => setAditivoStatus(e.target.value)}
                 placeholder="Ex: Formalizado"
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
                 className="w-full bg-slate-50/70 border border-slate-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-300 transition"
               />
             </div>
@@ -419,6 +435,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                 value={dataInfrastructure}
                 onChange={(e) => setDataInfrastructure(e.target.value)}
                 placeholder="Ex: N/A"
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
                 className="w-full bg-slate-50/70 border border-slate-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-300 transition"
               />
             </div>
@@ -433,6 +453,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                 value={enelStatus}
                 onChange={(e) => setEnelStatus(e.target.value)}
                 placeholder="Ex: N/A"
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
                 className="w-full bg-slate-50/70 border border-slate-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-300 transition"
               />
             </div>
@@ -447,6 +471,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                 value={substationStatus}
                 onChange={(e) => setSubstationStatus(e.target.value)}
                 placeholder="Ex: N/A"
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
                 className="w-full bg-slate-50/70 border border-slate-200 focus:bg-white rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-300 transition"
               />
             </div>
@@ -463,6 +491,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
               value={relevantInfo}
               onChange={(e) => setRelevantInfo(e.target.value)}
               placeholder="Ex: N/A"
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              translate="no"
               className="w-full bg-slate-50/70 border border-slate-200 focus:bg-white rounded-lg px-3.5 py-2.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-amber-300 transition"
             />
           </div>
@@ -472,7 +504,7 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
             
             {/* 9. ATIVIDADES DA SEMANA */}
             <div className="space-y-2">
-              <label className="block text-xs font-bold text-slate-750 font-sans">
+              <label className="block text-xs font-bold text-slate-755 font-sans">
                 ATIVIDADES DA SEMANA:
               </label>
               <textarea
@@ -480,6 +512,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                 onChange={(e) => setWeeklyActivities(e.target.value)}
                 placeholder="Alocação de forma e armadura nos trechos..."
                 rows={5}
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
                 className="w-full bg-slate-50 border border-slate-300 focus:border-indigo-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />
             </div>
@@ -494,6 +530,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                 onChange={(e) => setNextWeekActivities(e.target.value)}
                 placeholder="Concretagem integral dos blocos da viga de coroamento..."
                 rows={5}
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
                 className="w-full bg-slate-50 border border-slate-300 focus:border-emerald-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />
             </div>
@@ -508,6 +548,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                 onChange={(e) => setImportantNotes(e.target.value)}
                 placeholder="Identificadas trincas superficiais na passarela..."
                 rows={5}
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
                 className="w-full bg-slate-50 border border-slate-300 focus:border-rose-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />
             </div>
@@ -539,6 +583,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                     type="file" 
                     accept="image/*" 
                     onChange={handleCoverChange} 
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    translate="no"
                     className="hidden" 
                   />
                 </label>
@@ -610,6 +658,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
                           type="file" 
                           accept="image/*" 
                           onChange={(e) => handleProgressSlotChange(slotIdx, e)} 
+                          spellCheck={false}
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          translate="no"
                           className="hidden" 
                         />
                       </label>

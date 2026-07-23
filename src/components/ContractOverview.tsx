@@ -175,6 +175,10 @@ export default function ContractOverview({
                       type="text"
                       value={tempName}
                       onChange={(e) => setTempName(e.target.value)}
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      translate="no"
                       className="w-full bg-slate-900 text-white border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs focus:outline-none font-mono"
                       placeholder="Nome do Contrato"
                       required
@@ -186,6 +190,10 @@ export default function ContractOverview({
                       type="text"
                       value={tempCompany}
                       onChange={(e) => setTempCompany(e.target.value)}
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      translate="no"
                       className="w-full bg-slate-900 text-white border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs focus:outline-none"
                       placeholder="Empresa Supervisora"
                       required
@@ -201,6 +209,10 @@ export default function ContractOverview({
                         type="number"
                         value={tempValue}
                         onChange={(e) => setTempValue(Number(e.target.value))}
+                        spellCheck={false}
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        translate="no"
                         className="w-full bg-slate-900 text-white border border-slate-700 focus:border-amber-400 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none font-mono font-bold"
                         placeholder="Ex: 3450000"
                         required
@@ -215,6 +227,10 @@ export default function ContractOverview({
                         type="date"
                         value={tempStartDate}
                         onChange={(e) => setTempStartDate(e.target.value)}
+                        spellCheck={false}
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        translate="no"
                         className="w-full bg-slate-900 text-white border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs focus:outline-none"
                         required
                       />
@@ -225,6 +241,10 @@ export default function ContractOverview({
                         type="date"
                         value={tempEndDate}
                         onChange={(e) => setTempEndDate(e.target.value)}
+                        spellCheck={false}
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        translate="no"
                         className="w-full bg-slate-900 text-white border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-2 text-xs focus:outline-none"
                         required
                       />
@@ -273,6 +293,10 @@ export default function ContractOverview({
                                 type="text"
                                 value={add.number}
                                 onChange={(e) => handleUpdateAdditiveField(add.id, "number", e.target.value)}
+                                spellCheck={false}
+                                autoCorrect="off"
+                                autoCapitalize="off"
+                                translate="no"
                                 className="w-full bg-slate-950 text-white border border-slate-700 focus:border-amber-400 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none"
                                 required
                               />
@@ -295,6 +319,10 @@ export default function ContractOverview({
                                 type="date"
                                 value={add.signatureDate}
                                 onChange={(e) => handleUpdateAdditiveField(add.id, "signatureDate", e.target.value)}
+                                spellCheck={false}
+                                autoCorrect="off"
+                                autoCapitalize="off"
+                                translate="no"
                                 className="w-full bg-slate-950 text-white border border-slate-700 focus:border-amber-400 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none"
                                 required
                               />
@@ -312,6 +340,10 @@ export default function ContractOverview({
                                     type="number"
                                     value={add.value || 0}
                                     onChange={(e) => handleUpdateAdditiveField(add.id, "value", Number(e.target.value))}
+                                    spellCheck={false}
+                                    autoCorrect="off"
+                                    autoCapitalize="off"
+                                    translate="no"
                                     className="w-full bg-slate-950 text-white border border-slate-700 focus:border-amber-400 rounded-lg pl-8 pr-2 py-1.5 text-xs focus:outline-none font-mono"
                                     placeholder="Ex: 150000"
                                     required
@@ -329,11 +361,15 @@ export default function ContractOverview({
                                     type="number"
                                     value={add.days || 0}
                                     onChange={(e) => handleUpdateAdditiveField(add.id, "days", Number(e.target.value))}
+                                    spellCheck={false}
+                                    autoCorrect="off"
+                                    autoCapitalize="off"
+                                    translate="no"
                                     className="w-full bg-slate-950 text-white border border-slate-700 focus:border-amber-400 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none font-mono"
                                     placeholder="Ex: 90"
                                     required
                                   />
-                                  <span className="absolute right-3.5 text-slate-500 text-xs font-semibold">dias</span>
+                                  <span className="absolute right-3.5 text-slate-550 text-xs font-semibold">dias</span>
                                 </div>
                               </div>
                             )}
@@ -346,6 +382,10 @@ export default function ContractOverview({
                               value={add.description}
                               onChange={(e) => handleUpdateAdditiveField(add.id, "description", e.target.value)}
                               placeholder="Ex: Reforma nos escopos de serviços de pavimentação do lote..."
+                              spellCheck={false}
+                              autoCorrect="off"
+                              autoCapitalize="off"
+                              translate="no"
                               className="w-full bg-slate-950 text-white border border-slate-700 focus:border-amber-400 rounded-lg px-3 py-1.8 text-xs focus:outline-none"
                               required
                             />

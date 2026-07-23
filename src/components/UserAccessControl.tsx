@@ -52,6 +52,10 @@ export default function UserAccessControl({ authorizedUsers, readonlyUsers, onUp
           value={newEmail}
           onChange={(e) => setNewEmail(e.target.value)}
           placeholder="E-mail do usuário"
+          spellCheck={false}
+          autoCorrect="off"
+          autoCapitalize="off"
+          translate="no"
           className="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-xs focus:outline-none focus:border-amber-500"
         />
         <select

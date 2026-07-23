@@ -378,6 +378,10 @@ export default function WorkModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: TC 60/2022 - Península do Samba – Museu Darcy Ribeiro e Praça das Utopias"
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
                 className="w-full bg-white focus:bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
               />
             </div>
@@ -394,6 +398,10 @@ export default function WorkModal({
                   value={contractNumber}
                   onChange={(e) => setContractNumber(e.target.value)}
                   placeholder="Ex: 60/2023"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white focus:bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -408,6 +416,10 @@ export default function WorkModal({
                   value={contractorName}
                   onChange={(e) => setContractorName(e.target.value)}
                   placeholder="Ex: Monobloco Construção Ltda"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white focus:bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -424,6 +436,10 @@ export default function WorkModal({
                   value={biddingNumber}
                   onChange={(e) => setBiddingNumber(e.target.value)}
                   placeholder="Ex: 39/2022"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white focus:bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -437,6 +453,10 @@ export default function WorkModal({
                   value={adminProcess}
                   onChange={(e) => setAdminProcess(e.target.value)}
                   placeholder="Ex: 4200/2022"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white focus:bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -467,6 +487,10 @@ export default function WorkModal({
                     value={biddedValue}
                     onChange={(e) => setBiddedValue(e.target.value)}
                     placeholder="Ex: 4386697.66"
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    translate="no"
                     className="w-full bg-white focus:bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl pl-9 pr-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none font-mono transition"
                   />
                 </div>
@@ -481,6 +505,10 @@ export default function WorkModal({
                   value={termDaysVigencia}
                   onChange={(e) => setTermDaysVigencia(e.target.value)}
                   placeholder="12 meses"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white focus:bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -494,6 +522,10 @@ export default function WorkModal({
                   value={termDaysExecucao}
                   onChange={(e) => setTermDaysExecucao(e.target.value)}
                   placeholder="12 meses"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white focus:bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -509,6 +541,10 @@ export default function WorkModal({
                   type="date"
                   value={signingDate}
                   onChange={(e) => setSigningDate(e.target.value)}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -521,6 +557,10 @@ export default function WorkModal({
                   type="date"
                   value={publicationDateJom}
                   onChange={(e) => setPublicationDateJom(e.target.value)}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -533,6 +573,10 @@ export default function WorkModal({
                   type="date"
                   value={physicalStartDate}
                   onChange={(e) => setPhysicalStartDate(e.target.value)}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -548,6 +592,10 @@ export default function WorkModal({
                   type="date"
                   value={startOrderDate}
                   onChange={(e) => setStartOrderDate(e.target.value)}
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-white border border-slate-200 focus:border-amber-400 focus:ring-1 focus:ring-amber-300 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 focus:outline-none transition shadow-2xs"
                 />
               </div>
@@ -584,6 +632,10 @@ export default function WorkModal({
                     max="100"
                     value={progress}
                     onChange={(e) => setProgress(Number(e.target.value))}
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    translate="no"
                     className="w-full accent-amber-500 cursor-pointer"
                   />
                 </div>

@@ -1120,11 +1120,33 @@ export default function App() {
           <form onSubmit={isRegisterMode ? handleSignUp : handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Email</label>
-              <input type="email" value={authEmail} onChange={(e) => setAuthEmail(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-amber-500" placeholder="seu@email.com" required />
+              <input
+                type="email"
+                value={authEmail}
+                onChange={(e) => setAuthEmail(e.target.value)}
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
+                className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-amber-500"
+                placeholder="seu@email.com"
+                required
+              />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 mb-1">Senha (Mín. 6 caracteres)</label>
-              <input type="password" value={authPassword} onChange={(e) => setAuthPassword(e.target.value)} className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-amber-500" placeholder="••••••••" required />
+              <input
+                type="password"
+                value={authPassword}
+                onChange={(e) => setAuthPassword(e.target.value)}
+                spellCheck={false}
+                autoCorrect="off"
+                autoCapitalize="off"
+                translate="no"
+                className="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-amber-500"
+                placeholder="••••••••"
+                required
+              />
             </div>
 
             {authError && (

@@ -2084,7 +2084,7 @@ export default function WorkDetail({
                 
                 {/* Image upload for chronology */}
                 <div className="border border-slate-300 border-dashed rounded-lg p-3 w-64 text-center cursor-pointer hover:bg-slate-50 transition" onClick={() => document.getElementById('timeline-image-input')?.click()}>
-                  <input id="timeline-image-input" type="file" accept="image/*" className="hidden" onChange={handleTimelineImageChange} />
+                  <input id="timeline-image-input" type="file" accept="image/*" spellCheck={false} autoCorrect="off" autoCapitalize="off" translate="no" className="hidden" onChange={handleTimelineImageChange} />
                   {work.timelineImage ? (
                     <img src={work.timelineImage} alt="Cronograma da Obra" className="max-h-24 mx-auto" />
                   ) : (
@@ -2236,6 +2236,10 @@ export default function WorkDetail({
                     value={addNo}
                     onChange={(e) => setAddNo(e.target.value)}
                     placeholder="Ex: Aditivo 01/2026"
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    translate="no"
                     className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:font-mono transition shadow-2xs"
                   />
                 </div>
@@ -2256,7 +2260,7 @@ export default function WorkDetail({
                   </select>
                 </div>
 
-                {/* Value - conditional */}
+                 {/* Value - conditional */}
                 {(addType === "financeiro" || addType === "misto") && (
                   <div className="space-y-1">
                     <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
@@ -2270,6 +2274,10 @@ export default function WorkDetail({
                       value={addValue}
                       onChange={(e) => setAddValue(e.target.value)}
                       placeholder="Ex: 154000.00"
+                      spellCheck={false}
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      translate="no"
                       className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:font-mono transition shadow-2xs"
                     />
                   </div>
@@ -2304,6 +2312,10 @@ export default function WorkDetail({
                             }
                           }}
                           placeholder="Ex: 3"
+                          spellCheck={false}
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          translate="no"
                           className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:font-mono transition shadow-2xs"
                         />
                       </div>
@@ -2315,6 +2327,10 @@ export default function WorkDetail({
                           type="date"
                           value={addNewVigenciaDate}
                           onChange={(e) => setAddNewVigenciaDate(e.target.value)}
+                          spellCheck={false}
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          translate="no"
                           className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none transition shadow-2xs cursor-pointer"
                         />
                         <p className="text-[9px] text-amber-700 font-medium italic block">
@@ -2345,6 +2361,10 @@ export default function WorkDetail({
                             }
                           }}
                           placeholder="Ex: 3"
+                          spellCheck={false}
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          translate="no"
                           className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:font-mono transition shadow-2xs"
                         />
                       </div>
@@ -2356,6 +2376,10 @@ export default function WorkDetail({
                           type="date"
                           value={addNewExecucaoDate}
                           onChange={(e) => setAddNewExecucaoDate(e.target.value)}
+                          spellCheck={false}
+                          autoCorrect="off"
+                          autoCapitalize="off"
+                          translate="no"
                           className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none transition shadow-2xs cursor-pointer"
                         />
                         <p className="text-[9px] text-amber-700 font-medium italic block">
@@ -2366,7 +2390,7 @@ export default function WorkDetail({
                   </div>
                 )}
 
-                {/* Signature Date */}
+                 {/* Signature Date */}
                 <div className="space-y-1">
                   <label className="block text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                     Data de assinatura
@@ -2376,6 +2400,10 @@ export default function WorkDetail({
                     required
                     value={addDate}
                     onChange={(e) => setAddDate(e.target.value)}
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    translate="no"
                     className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none transition shadow-2xs cursor-pointer"
                   />
                 </div>
@@ -2389,6 +2417,10 @@ export default function WorkDetail({
                     type="date"
                     value={addPublicationDateJom}
                     onChange={(e) => setAddPublicationDateJom(e.target.value)}
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    translate="no"
                     className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none transition shadow-2xs cursor-pointer"
                   />
                 </div>
@@ -2403,6 +2435,10 @@ export default function WorkDetail({
                     value={addDesc}
                     onChange={(e) => setAddDesc(e.target.value)}
                     placeholder="Ex: Remanejamento de adutoras e serviços extraordinários de terraplenagem."
+                    spellCheck={false}
+                    autoCorrect="off"
+                    autoCapitalize="off"
+                    translate="no"
                     className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
                   />
                 </div>
@@ -2852,6 +2888,10 @@ export default function WorkDetail({
                   value={dummyFileText}
                   onChange={(e) => setDummyFileText(e.target.value)}
                   placeholder="Ex: Diário_de_Obras_Ref_Junho.pdf"
+                  spellCheck={false}
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  translate="no"
                   className="w-full bg-slate-50 border border-slate-200 focus:border-amber-400 focus:ring-1 focus:focus:ring-amber-300 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none transition shadow-2xs"
                 />
               </div>
