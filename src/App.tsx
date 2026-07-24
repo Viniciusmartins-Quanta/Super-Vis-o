@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Obra, DatabaseState, UserProfile, USER_PROFILES, ContractAdditive } from "./types";
-import { formatDate, formatCurrency } from "./utils";
+import { formatDate, formatCurrency, renderAsHtml } from "./utils";
 import { supabase } from "./supabase";
 
 import ContractOverview from "./components/ContractOverview";
@@ -682,7 +682,21 @@ export default function App() {
     }
 
     const parseWeeklyReport = (notesText: string) => {
-      const result = { period: "Semana não especificada", sitacaoAditivo: "N/A", infraDados: "N/A", enelStatus: "N/A", substationStatus: "N/A", relevantInfo: "N/A", weeklyActivities: [] as string[], nextWeekActivities: [] as string[], observations: [] as string[], observationsRaw: "N/A", isStandardReport: false };
+      const result = {
+        period: "Semana não especificada",
+        sitacaoAditivo: "N/A",
+        infraDados: "N/A",
+        enelStatus: "N/A",
+        substationStatus: "N/A",
+        relevantInfo: "N/A",
+        weeklyActivities: [] as string[],
+        nextWeekActivities: [] as string[],
+        observations: [] as string[],
+        weeklyActivitiesRaw: "N/A",
+        nextWeekActivitiesRaw: "N/A",
+        observationsRaw: "N/A",
+        isStandardReport: false
+      };
       if (!notesText) return result;
       if (notesText.includes("RELATÓRIO DE ATIVIDADES") || notesText.includes("Período:")) result.isStandardReport = true;
       const pm = notesText.match(/(?:Período|Period):\s*\*?([^\n\r*]+)/i); if (pm) result.period = pm[1].trim();
@@ -706,34 +720,46 @@ export default function App() {
         return bullets;
       };
 
+      const extractSectionRaw = (headerKeyword: string) => {
+        const lines = notesText.split("\n");
+        let startIdx = -1;
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase().includes(headerKeyword.toLowerCase())) {
+            startIdx = i;
+            break;
+          }
+        }
+        if (startIdx === -1) return "N/A";
+        const sectionLines: string[] = [];
+        for (let i = startIdx + 1; i < lines.length; i++) {
+          const line = lines[i];
+          const trimmed = line.trim();
+          if (
+            (trimmed.includes("**") || trimmed.startsWith("📋") || trimmed.startsWith("🔹") || trimmed.startsWith("🚧") || trimmed.startsWith("🔮") || trimmed.startsWith("⚠️")) &&
+            !trimmed.startsWith("•") &&
+            !trimmed.startsWith("-") &&
+            !trimmed.startsWith("*") &&
+            !trimmed.startsWith("<") &&
+            (trimmed.includes("Atividades") || trimmed.includes("Observações") || trimmed.includes("Informação") || trimmed.includes("Avanço") || trimmed.includes("Situação"))
+          ) {
+            break;
+          }
+          sectionLines.push(line);
+        }
+        const rawText = sectionLines.join("\n").trim();
+        if (rawText === "Nenhuma cadastrada" || rawText === "Nenhum apontamento cadastrado" || !rawText) {
+          return "N/A";
+        }
+        return rawText;
+      };
+
       result.weeklyActivities = extractSectionBullets("Atividades da Semana");
       result.nextWeekActivities = extractSectionBullets("Atividades da Próxima Semana");
       result.observations = extractSectionBullets("Observações & Apontamentos importantes");
 
-      // Extract raw observations preserving original text and natural newlines
-      const lines = notesText.split("\n");
-      let obsStartIdx = -1;
-      for (let i = 0; i < lines.length; i++) {
-        const lineLower = lines[i].toLowerCase();
-        if (lineLower.includes("observações & apontamentos") || lineLower.includes("observações") || lineLower.includes("apontamentos importantes")) {
-          obsStartIdx = i;
-          break;
-        }
-      }
-      if (obsStartIdx !== -1) {
-        const obsLines = lines.slice(obsStartIdx + 1);
-        const processedLines = obsLines.map(line => {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*")) {
-            return line.replace(/^\s*[•\-\*]\s*/, "");
-          }
-          return line;
-        });
-        const rawText = processedLines.join("\n").trim();
-        result.observationsRaw = rawText === "Nenhum apontamento cadastrado" || rawText === "" ? "N/A" : rawText;
-      } else {
-        result.observationsRaw = "N/A";
-      }
+      result.weeklyActivitiesRaw = extractSectionRaw("Atividades da Semana");
+      result.nextWeekActivitiesRaw = extractSectionRaw("Atividades da Próxima Semana");
+      result.observationsRaw = extractSectionRaw("Observações & Apontamentos importantes");
 
       if (!result.isStandardReport || result.weeklyActivities.length === 0) {
         if (result.weeklyActivities.length === 0 && notesText) {
@@ -928,25 +954,23 @@ export default function App() {
           
           <table class="tabela-dados" style="margin-top: 0; border-top: none;">
             <tbody>
-              ${(() => {
-                const rowspan = Math.max(1, parsed.weeklyActivities.length);
-                const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da semana:<br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>`;
-                return parsed.weeklyActivities.length > 0 
-                  ? parsed.weeklyActivities.map((act, i) => `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act || "N/A"}</td></tr>`).join("")
-                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">N/A</td></tr>`;
-              })()}
-              
-              ${(() => {
-                const rowspan = Math.max(1, parsed.nextWeekActivities.length);
-                const titleTd = `<td rowspan="${rowspan}" style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da próxima semana:<br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>`;
-                return parsed.nextWeekActivities.length > 0 
-                  ? parsed.nextWeekActivities.map((act, i) => `<tr>${i === 0 ? titleTd : ''}<td style="padding-left: 15px; padding-top: 6px; padding-bottom: 6px;">• ${act || "N/A"}</td></tr>`).join("")
-                  : `<tr>${titleTd}<td style="padding-left: 15px; font-style: italic; color: #777;">N/A</td></tr>`;
-              })()}
-              
+              <tr>
+                <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da semana:<br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                  ${renderAsHtml(parsed.weeklyActivitiesRaw)}
+                </td>
+              </tr>
+              <tr>
+                <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da próxima semana:<br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                  ${renderAsHtml(parsed.nextWeekActivitiesRaw)}
+                </td>
+              </tr>
               <tr>
                 <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Observações e apontamentos importantes:</td>
-                <td style="padding: 6px 15px; text-align: left; vertical-align: top; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">${parsed.observationsRaw || "N/A"}</td>
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                  ${renderAsHtml(parsed.observationsRaw)}
+                </td>
               </tr>
             </tbody>
           </table>

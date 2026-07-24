@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Obra, UserProfile, UpdateLog } from "../types";
 import { X, Plus, Trash2, Save, HelpCircle, Calendar, Sparkles, Upload, Image as ImageIcon, Camera } from "lucide-react";
 import { uploadFotoParaStorage } from "../uploadService";
+import RichTextEditor from "./RichTextEditor";
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -158,14 +159,60 @@ export default function ActivityModal({
         return bullets;
       };
 
-      const wActs = extractSectionBullets("Atividades da Semana");
-      setWeeklyActivities(wActs.join("\n"));
+      const extractSectionRaw = (headerKeyword: string) => {
+        const lines = notesText.split("\n");
+        let startIdx = -1;
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].toLowerCase().includes(headerKeyword.toLowerCase())) {
+            startIdx = i;
+            break;
+          }
+        }
+        if (startIdx === -1) return "";
+        const sectionLines: string[] = [];
+        for (let i = startIdx + 1; i < lines.length; i++) {
+          const line = lines[i];
+          const trimmed = line.trim();
+          if (
+            (trimmed.includes("**") || trimmed.startsWith("📋") || trimmed.startsWith("🔹") || trimmed.startsWith("🚧") || trimmed.startsWith("🔮") || trimmed.startsWith("⚠️")) &&
+            !trimmed.startsWith("•") &&
+            !trimmed.startsWith("-") &&
+            !trimmed.startsWith("*") &&
+            !trimmed.startsWith("<") &&
+            (trimmed.includes("Atividades") || trimmed.includes("Observações") || trimmed.includes("Informação") || trimmed.includes("Avanço") || trimmed.includes("Situação"))
+          ) {
+            break;
+          }
+          sectionLines.push(line);
+        }
+        const rawText = sectionLines.join("\n").trim();
+        if (rawText === "Nenhuma cadastrada" || rawText === "Nenhum apontamento cadastrado" || rawText === "• Nenhuma cadastrada" || rawText === "• Nenhum apontamento cadastrado") {
+          return "";
+        }
+        return rawText;
+      };
 
-      const nActs = extractSectionBullets("Atividades da Próxima Semana");
-      setNextWeekActivities(nActs.join("\n"));
+      const formatToEditorValue = (rawText: string) => {
+        if (!rawText) return "";
+        if (/<[a-z][\s\S]*>/i.test(rawText)) {
+          return rawText;
+        }
+        return rawText
+          .split("\n")
+          .map(line => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*")) {
+              return `• ${trimmed.replace(/^[•\-\*]\s*/, "")}`;
+            }
+            return trimmed;
+          })
+          .filter(Boolean)
+          .join("\n");
+      };
 
-      const obs = extractSectionBullets("Observações & Apontamentos importantes");
-      setImportantNotes(obs.join("\n"));
+      setWeeklyActivities(formatToEditorValue(extractSectionRaw("Atividades da Semana")));
+      setNextWeekActivities(formatToEditorValue(extractSectionRaw("Atividades da Próxima Semana")));
+      setImportantNotes(formatToEditorValue(extractSectionRaw("Observações & Apontamentos importantes")));
 
       setCoverImage(existingLog.coverImage || "");
       
@@ -264,13 +311,13 @@ export default function ActivityModal({
 🔹 **Informação Relevante:** ${relevantInfo || "N/A"}
 
 🚧 **Atividades da Semana:**
-${weeklyActivities.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${a}`).join("\n") || "• Nenhuma cadastrada"}
+${weeklyActivities.trim() || "• Nenhuma cadastrada"}
 
 🔮 **Atividades da Próxima Semana:**
-${nextWeekActivities.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${a}`).join("\n") || "• Nenhuma cadastrada"}
+${nextWeekActivities.trim() || "• Nenhuma cadastrada"}
 
 ⚠️ **Observações & Apontamentos importantes:**
-${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${a}`).join("\n") || "• Nenhum apontamento cadastrado"}
+${importantNotes.trim() || "• Nenhum apontamento cadastrado"}
       `.trim();
 
       const finalProgressImages = progressImages.filter(img => img !== "");
@@ -499,7 +546,7 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
             />
           </div>
 
-          {/* Dynamic Item list structures from the image changed to spacious textareas */}
+          {/* Dynamic Item list structures from the image changed to spacious rich text editors */}
           <div className="border-t border-slate-100 pt-5 space-y-6">
             
             {/* 9. ATIVIDADES DA SEMANA */}
@@ -507,16 +554,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
               <label className="block text-xs font-bold text-slate-755 font-sans">
                 ATIVIDADES DA SEMANA:
               </label>
-              <textarea
+              <RichTextEditor
                 value={weeklyActivities}
-                onChange={(e) => setWeeklyActivities(e.target.value)}
+                onChange={setWeeklyActivities}
                 placeholder="Alocação de forma e armadura nos trechos..."
-                rows={5}
-                spellCheck={false}
-                autoCorrect="off"
-                autoCapitalize="off"
-                translate="no"
-                className="w-full bg-slate-50 border border-slate-300 focus:border-indigo-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />
             </div>
 
@@ -525,16 +566,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
               <label className="block text-xs font-bold text-slate-755 font-sans">
                 ATIVIDADES DA PRÓXIMA SEMANA:
               </label>
-              <textarea
+              <RichTextEditor
                 value={nextWeekActivities}
-                onChange={(e) => setNextWeekActivities(e.target.value)}
+                onChange={setNextWeekActivities}
                 placeholder="Concretagem integral dos blocos da viga de coroamento..."
-                rows={5}
-                spellCheck={false}
-                autoCorrect="off"
-                autoCapitalize="off"
-                translate="no"
-                className="w-full bg-slate-50 border border-slate-300 focus:border-emerald-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />
             </div>
 
@@ -543,16 +578,10 @@ ${importantNotes.split("\n").map(a => a.trim()).filter(Boolean).map(a => `• ${
               <label className="block text-xs font-bold text-slate-755 font-sans">
                 OBSERVAÇÕES E APONTAMENTOS IMPORTANTES:
               </label>
-              <textarea
+              <RichTextEditor
                 value={importantNotes}
-                onChange={(e) => setImportantNotes(e.target.value)}
+                onChange={setImportantNotes}
                 placeholder="Identificadas trincas superficiais na passarela..."
-                rows={5}
-                spellCheck={false}
-                autoCorrect="off"
-                autoCapitalize="off"
-                translate="no"
-                className="w-full bg-slate-50 border border-slate-300 focus:border-rose-400 focus:bg-white focus:outline-none rounded-lg px-3.5 py-2.5 text-xs text-slate-800 transition"
               />
             </div>
 

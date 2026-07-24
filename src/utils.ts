@@ -67,3 +67,21 @@ export function getStatusColor(status: string): { bg: string; text: string; dot:
       };
   }
 }
+
+export function renderAsHtml(text: string): string {
+  if (!text || text === "N/A") return "N/A";
+  if (/<[a-z][\s\S]*>/i.test(text)) {
+    return text;
+  }
+  return text
+    .split("\n")
+    .map(line => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*")) {
+        return `• ${trimmed.replace(/^[•\-\*]\s*/, "")}`;
+      }
+      return trimmed;
+    })
+    .filter(Boolean)
+    .join("<br/>");
+}

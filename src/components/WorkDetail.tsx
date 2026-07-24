@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Obra, UpdateLog, ContractAdditive, UserProfile } from "../types";
-import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from "../utils";
+import { formatCurrency, formatDate, getStatusColor, getStatusLabel, renderAsHtml } from "../utils";
 import { uploadFotoParaStorage } from "../uploadService";
 import {
   ArrowLeft,
@@ -131,6 +131,8 @@ export default function WorkDetail({
       weeklyActivities: [] as string[],
       nextWeekActivities: [] as string[],
       observations: [] as string[],
+      weeklyActivitiesRaw: "N/A",
+      nextWeekActivitiesRaw: "N/A",
       observationsRaw: "N/A",
       isStandardReport: false
     };
@@ -218,34 +220,46 @@ export default function WorkDetail({
       return bullets;
     };
 
+    const extractSectionRaw = (headerKeyword: string) => {
+      const lines = notesText.split("\n");
+      let startIdx = -1;
+      for (let i = 0; i < lines.length; i++) {
+        if (lines[i].toLowerCase().includes(headerKeyword.toLowerCase())) {
+          startIdx = i;
+          break;
+        }
+      }
+      if (startIdx === -1) return "N/A";
+      const sectionLines: string[] = [];
+      for (let i = startIdx + 1; i < lines.length; i++) {
+        const line = lines[i];
+        const trimmed = line.trim();
+        if (
+          (trimmed.includes("**") || trimmed.startsWith("📋") || trimmed.startsWith("🔹") || trimmed.startsWith("🚧") || trimmed.startsWith("🔮") || trimmed.startsWith("⚠️")) &&
+          !trimmed.startsWith("•") &&
+          !trimmed.startsWith("-") &&
+          !trimmed.startsWith("*") &&
+          !trimmed.startsWith("<") &&
+          (trimmed.includes("Atividades") || trimmed.includes("Observações") || trimmed.includes("Informação") || trimmed.includes("Avanço") || trimmed.includes("Situação"))
+        ) {
+          break;
+        }
+        sectionLines.push(line);
+      }
+      const rawText = sectionLines.join("\n").trim();
+      if (rawText === "Nenhuma cadastrada" || rawText === "Nenhum apontamento cadastrado" || !rawText) {
+        return "N/A";
+      }
+      return rawText;
+    };
+
     result.weeklyActivities = extractSectionBullets("Atividades da Semana");
     result.nextWeekActivities = extractSectionBullets("Atividades da Próxima Semana");
     result.observations = extractSectionBullets("Observações & Apontamentos importantes");
 
-    // Extract raw observations preserving original text and natural newlines
-    const lines = notesText.split("\n");
-    let obsStartIdx = -1;
-    for (let i = 0; i < lines.length; i++) {
-      const lineLower = lines[i].toLowerCase();
-      if (lineLower.includes("observações & apontamentos") || lineLower.includes("observações") || lineLower.includes("apontamentos importantes")) {
-        obsStartIdx = i;
-        break;
-      }
-    }
-    if (obsStartIdx !== -1) {
-      const obsLines = lines.slice(obsStartIdx + 1);
-      const processedLines = obsLines.map(line => {
-        const trimmed = line.trim();
-        if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*")) {
-          return line.replace(/^\s*[•\-\*]\s*/, "");
-        }
-        return line;
-      });
-      const rawText = processedLines.join("\n").trim();
-      result.observationsRaw = rawText === "Nenhum apontamento cadastrado" || rawText === "" ? "N/A" : rawText;
-    } else {
-      result.observationsRaw = "N/A";
-    }
+    result.weeklyActivitiesRaw = extractSectionRaw("Atividades da Semana");
+    result.nextWeekActivitiesRaw = extractSectionRaw("Atividades da Próxima Semana");
+    result.observationsRaw = extractSectionRaw("Observações & Apontamentos importantes");
 
     // Fallbacks if not formatted standard:
     if (!result.isStandardReport || result.weeklyActivities.length === 0) {
@@ -931,39 +945,19 @@ export default function WorkDetail({
             </tr>
             <tr>
               <td style="font-weight: bold; vertical-align: top;">Atividades da semana: <br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
-              <td style="vertical-align: top; padding: 4px 8px;">
-                <ul style="list-style-type: none; margin: 0; padding: 0;">
-                  ${parsed.weeklyActivities.length > 0 
-                    ? parsed.weeklyActivities.map(act => `
-                    <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                      <span style="position: absolute; left: 0; top: 0;">•</span>
-                      ${act || "N/A"}
-                    </li>
-                    `).join("")
-                    : `<li style="margin-top: 4px; font-style: italic; color: #777;">N/A</li>`
-                  }
-                </ul>
+              <td style="vertical-align: top; padding: 4px 8px; text-align: left; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                ${renderAsHtml(parsed.weeklyActivitiesRaw)}
               </td>
             </tr>
             <tr>
               <td style="font-weight: bold; vertical-align: top;">Atividades da próxima semana: <br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
-              <td style="vertical-align: top; padding: 4px 8px;">
-                <ul style="list-style-type: none; margin: 0; padding: 0;">
-                  ${parsed.nextWeekActivities.length > 0
-                    ? parsed.nextWeekActivities.map(act => `
-                    <li style="margin-top: 4px; padding-left: 12px; position: relative; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                      <span style="position: absolute; left: 0; top: 0;">•</span>
-                      ${act || "N/A"}
-                    </li>
-                    `).join("")
-                    : `<li style="margin-top: 4px; font-style: italic; color: #777;">N/A</li>`
-                  }
-                </ul>
+              <td style="vertical-align: top; padding: 4px 8px; text-align: left; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                ${renderAsHtml(parsed.nextWeekActivitiesRaw)}
               </td>
             </tr>
             <tr>
               <td style="font-weight: bold; vertical-align: top;">Observações e apontamentos importantes:</td>
-              <td style="vertical-align: top; padding: 4px 8px; text-align: left; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">${parsed.observationsRaw || "N/A"}</td>
+              <td style="vertical-align: top; padding: 4px 8px; text-align: left; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">${renderAsHtml(parsed.observationsRaw)}</td>
             </tr>
           </tbody>
         </table>
@@ -1968,12 +1962,8 @@ export default function WorkDetail({
                             {/* Bullet Lists */}
                             <div>
                               <span className="font-bold text-slate-700 block mb-1">Atividades da Semana:</span>
-                              {parsed.weeklyActivities && parsed.weeklyActivities.length > 0 ? (
-                                <ul className="list-disc list-inside space-y-0.5 pl-1.5">
-                                  {parsed.weeklyActivities.map((act, i) => (
-                                    <li key={i}>{act || "N/A"}</li>
-                                  ))}
-                                </ul>
+                              {parsed.weeklyActivitiesRaw && parsed.weeklyActivitiesRaw !== "N/A" ? (
+                                <div className="text-slate-700 text-xs pl-1.5 leading-relaxed" dangerouslySetInnerHTML={{ __html: renderAsHtml(parsed.weeklyActivitiesRaw) }} />
                               ) : (
                                 <p className="text-slate-500 pl-1.5 text-xs">N/A</p>
                               )}
@@ -1981,12 +1971,8 @@ export default function WorkDetail({
 
                             <div>
                               <span className="font-bold text-slate-700 block mb-1">Próxima Semana:</span>
-                              {parsed.nextWeekActivities && parsed.nextWeekActivities.length > 0 ? (
-                                <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-slate-500">
-                                  {parsed.nextWeekActivities.map((act, i) => (
-                                    <li key={i}>{act || "N/A"}</li>
-                                  ))}
-                                </ul>
+                              {parsed.nextWeekActivitiesRaw && parsed.nextWeekActivitiesRaw !== "N/A" ? (
+                                <div className="text-slate-700 text-xs pl-1.5 leading-relaxed" dangerouslySetInnerHTML={{ __html: renderAsHtml(parsed.nextWeekActivitiesRaw) }} />
                               ) : (
                                 <p className="text-slate-500 pl-1.5 text-xs">N/A</p>
                               )}
@@ -1994,12 +1980,8 @@ export default function WorkDetail({
 
                             <div>
                               <span className="font-bold text-rose-700 block mb-1">Observações / Apontamentos:</span>
-                              {parsed.observations && parsed.observations.length > 0 ? (
-                                <ul className="list-disc list-inside space-y-0.5 pl-1.5 text-rose-600">
-                                  {parsed.observations.map((act, i) => (
-                                    <li key={i}>{act || "N/A"}</li>
-                                  ))}
-                                </ul>
+                              {parsed.observationsRaw && parsed.observationsRaw !== "N/A" ? (
+                                <div className="text-rose-600 text-xs pl-1.5 leading-relaxed" dangerouslySetInnerHTML={{ __html: renderAsHtml(parsed.observationsRaw) }} />
                               ) : (
                                 <p className="text-rose-500 pl-1.5 text-xs">N/A</p>
                               )}
@@ -2703,15 +2685,8 @@ export default function WorkDetail({
                           <span className="font-extrabold text-slate-800 block text-xs tracking-wider uppercase font-sans">
                             Atividades Desenvolvidas na Semana:
                           </span>
-                          {selectedParsed.weeklyActivities && selectedParsed.weeklyActivities.length > 0 ? (
-                            <ul className="space-y-1.5 pl-0.5 text-slate-700 leading-relaxed text-xs">
-                              {selectedParsed.weeklyActivities.map((act, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                  <Check className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
-                                  <span>{act || "N/A"}</span>
-                                </li>
-                              ))}
-                            </ul>
+                          {selectedParsed.weeklyActivitiesRaw && selectedParsed.weeklyActivitiesRaw !== "N/A" ? (
+                            <div className="text-slate-700 leading-relaxed text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: renderAsHtml(selectedParsed.weeklyActivitiesRaw) }} />
                           ) : (
                             <p className="text-slate-500 text-xs pl-0.5">N/A</p>
                           )}
@@ -2721,15 +2696,8 @@ export default function WorkDetail({
                           <span className="font-extrabold text-slate-800 block text-xs tracking-wide uppercase font-sans">
                             Atividades Programadas para Próxima Semana:
                           </span>
-                          {selectedParsed.nextWeekActivities && selectedParsed.nextWeekActivities.length > 0 ? (
-                            <ul className="space-y-1.5 pl-0.5 text-slate-600 leading-relaxed text-xs">
-                              {selectedParsed.nextWeekActivities.map((act, i) => (
-                                <li key={i} className="flex items-start gap-2">
-                                  <ArrowUpRight className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                                  <span>{act || "N/A"}</span>
-                                </li>
-                              ))}
-                            </ul>
+                          {selectedParsed.nextWeekActivitiesRaw && selectedParsed.nextWeekActivitiesRaw !== "N/A" ? (
+                            <div className="text-slate-600 leading-relaxed text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: renderAsHtml(selectedParsed.nextWeekActivitiesRaw) }} />
                           ) : (
                             <p className="text-slate-500 text-xs pl-0.5">N/A</p>
                           )}
@@ -2739,16 +2707,9 @@ export default function WorkDetail({
                           <span className="font-extrabold text-rose-700 block text-xs tracking-wide uppercase font-sans">
                             Observações, Não Conformidades & Alertas de Fiscalização:
                           </span>
-                          {selectedParsed.observations && selectedParsed.observations.length > 0 ? (
+                          {selectedParsed.observationsRaw && selectedParsed.observationsRaw !== "N/A" ? (
                             <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-4">
-                              <ul className="space-y-1.5 text-rose-800 leading-relaxed font-semibold text-xs pl-0.5">
-                                {selectedParsed.observations.map((act, i) => (
-                                  <li key={i} className="flex items-start gap-2">
-                                    <AlertTriangle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
-                                    <span>{act || "N/A"}</span>
-                                  </li>
-                                ))}
-                              </ul>
+                              <div className="text-rose-800 leading-relaxed font-semibold text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: renderAsHtml(selectedParsed.observationsRaw) }} />
                             </div>
                           ) : (
                             <p className="text-slate-500 text-xs pl-0.5">N/A</p>
