@@ -837,7 +837,7 @@ export default function App() {
             <tr><td style="font-weight: bold;">Empresa Supervisora:</td><td>${state.supervisorCompany}</td></tr>
             <tr><td style="font-weight: bold;">Início do Contrato:</td><td>${formatDate(state.contractStartDate)}</td></tr>
             <tr><td style="font-weight: bold;">Término do Contrato:</td><td>${formatDate(state.contractEndDate)}</td></tr>
-            <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.contractUpdatedValue || state.contractValue || 0)}</td></tr>
+            <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.contractValue)}</td></tr>
           </tbody>
         </table>
         <div style="font-family: Arial, sans-serif; font-size: 10pt; font-weight: bold; color: black; margin-bottom: 6px; text-transform: uppercase; border-left: 3px solid #f97316; padding-left: 8px;">RESUMO DAS OBRAS ATIVAS NA SEMANA</div>
