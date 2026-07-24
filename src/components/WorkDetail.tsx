@@ -900,7 +900,7 @@ export default function WorkDetail({
       <tr><td>
         <div style="background-color: #f97316; border: 0.3mm solid black; padding: 6px 10px; text-align: center; margin-bottom: 8px;">
           <h2 style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin: 0; text-transform: uppercase;">
-            ATIVIDADES DE FISCALIZAÇÃO — ${work.name}
+            ${work.name.toUpperCase()}
           </h2>
         </div>
         <table class="black-grid-table">
