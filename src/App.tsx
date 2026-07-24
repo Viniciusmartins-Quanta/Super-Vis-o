@@ -176,10 +176,17 @@ export default function App() {
           });
         }
 
+        const valorInicial = Number(configSegura.contract_value) || 0;
+        const totalAditivos = (aditivosFormatados || [])
+          .filter((a: any) => a.type === "financeiro" || a.type === "misto")
+          .reduce((sum: number, a: any) => sum + (Number(a.value) || 0), 0);
+        const totalUpdatedValue = valorInicial + totalAditivos;
+
         return {
           contractName: configSegura.contract_name, 
           supervisorCompany: configSegura.supervisor_company, 
           contractValue: configSegura.contract_value, 
+          totalUpdatedValue: totalUpdatedValue,
           contractStartDate: configSegura.contract_start_date || "", 
           contractEndDate: configSegura.contract_end_date || "", 
           contractAdditives: aditivosFormatados, 
@@ -837,7 +844,7 @@ export default function App() {
             <tr><td style="font-weight: bold;">Empresa Supervisora:</td><td>${state.supervisorCompany}</td></tr>
             <tr><td style="font-weight: bold;">Início do Contrato:</td><td>${formatDate(state.contractStartDate)}</td></tr>
             <tr><td style="font-weight: bold;">Término do Contrato:</td><td>${formatDate(state.contractEndDate)}</td></tr>
-            <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.contractValue)}</td></tr>
+            <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.totalUpdatedValue || state.contractValue || 0)}</td></tr>
           </tbody>
         </table>
         <div style="font-family: Arial, sans-serif; font-size: 10pt; font-weight: bold; color: black; margin-bottom: 6px; text-transform: uppercase; border-left: 3px solid #f97316; padding-left: 8px;">RESUMO DAS OBRAS ATIVAS NA SEMANA</div>
