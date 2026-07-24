@@ -179,6 +179,65 @@ export default function WorkDetail({
       result.relevantInfo = relevantMatch[1].trim().replace(/\*/g, '');
     }
 
+    const isHeaderLine = (line: string): boolean => {
+      const trimmed = line.trim();
+      const lower = trimmed.toLowerCase();
+      if (trimmed.startsWith("•") || trimmed.startsWith("-") || trimmed.startsWith("*") || trimmed.startsWith("<")) {
+        return false;
+      }
+      const hasKeyword = 
+        lower.includes("atividades da") ||
+        lower.includes("observações") ||
+        lower.includes("informação relevante") ||
+        lower.includes("situação do aditivo") ||
+        lower.includes("avanço físico") ||
+        lower.includes("status do") ||
+        lower.includes("status da") ||
+        lower.includes("relatório de atividades") ||
+        lower.includes("atividades de supervisão") ||
+        lower.includes("infraestrutura de dados") ||
+        lower.includes("aumento de carga") ||
+        lower.includes("subestação elétrica");
+        
+      if (!hasKeyword) return false;
+      return (
+        trimmed.includes("**") ||
+        trimmed.endsWith(":") ||
+        /^[📋📅🔹🚧🔮⚠️]/.test(trimmed) ||
+        trimmed.startsWith("Atividades") ||
+        trimmed.startsWith("Observações") ||
+        trimmed.startsWith("Informação") ||
+        trimmed.startsWith("Avanço") ||
+        trimmed.startsWith("Situação") ||
+        trimmed.startsWith("Status")
+      );
+    };
+
+    const cleanRawText = (text: string): string => {
+      if (!text || text === "N/A") return "N/A";
+      let cleaned = text.trim();
+      const emptyFallbacks = [
+        "• Nenhum apontamento cadastrado",
+        "• Nenhuma cadastrada",
+        "Nenhum apontamento cadastrado",
+        "Nenhuma cadastrada",
+        "• nenhum apontamento cadastrado",
+        "• nenhuma cadastrada"
+      ];
+      if (emptyFallbacks.includes(cleaned)) {
+        return "N/A";
+      }
+      if (cleaned.startsWith("•") || cleaned.startsWith("-") || cleaned.startsWith("*")) {
+        cleaned = cleaned.replace(/^[•\-\*]\s*/, "");
+      }
+      // Strip emojis
+      cleaned = cleaned.replace(/[\u1F600-\u1F64F\u1F300-\u1F5FF\u1F680-\u1F6FF\u1F1E0-\u1F1FF\u2700-\u27BF\u1F900-\u1F9FF\u1F100-\u1F1FF\u2600-\u26FF\u1F700-\u1F77F\u1F780-\u1F7FF\u1F800-\u1F8FF\u1F900-\u1F9FF\u1FA00-\u1FA6F\u1FA70-\u1FAFF\u2300-\u23FF\u2B50\u2B06\u2194\u21aa\u2b1b\u2b1c\u2b07\u2b05\u3030\u303d\u00a9\u00ae\u2122\u2139\u2195\u2196\u2197\u2198\u2199\u21ae\u2190\u2191\u2192\u2193\u231b\u23f0\u23f3\u23e9\u23ea\u23eb\u23ec\u23ed\u23ee\u23ef\u23f1\u23f2\u23f8\u23f9\u23fa\u24c2\u25b6\u25c0\u25fb\u25fc\u25fd\u25fe\u260e\u2611\u2615\u261d\u263a\u2648\u2649\u264a\u264b\u264c\u264d\u264e\u264f\u2650\u2651\u2652\u2653\u2660\u2663\u2665\u2666\u2668\u267b\u267f\u2692\u2693\u2694\u2696\u2697\u2699\u269b\u269c\u26a0\u26a1\u26aa\u26ab\u26b0\u26b1\u26bd\u26be\u26c4\u26c5\u26c8\u26cf\u26d1\u26d3\u26d4\u26e9\u26ea\u26f2\u26f3\u26f5\u26f9\u26fa\u26fd\u2702\u2705\u2708\u2709\u270a\u270b\u270c\u270d\u270f\u2712\u2714\u2716\u271d\u2721\u2728\u2733\u2734\u2744\u2747\u274c\u274e\u2753\u2754\u2755\u2757\u2763\u2764\u2795\u2796\u2797\u27a1\u27b0\u27bf\u2934\u2935\u2b05\u2b06\u2b07\u2b1b\u2b1c\u2b50\u2b55\u3030\u303d\u3297\u3299]|\ufe0f/g, "");
+      // Strip markdown bold markers **
+      cleaned = cleaned.replace(/\*\*/g, "");
+      cleaned = cleaned.trim();
+      return cleaned || "N/A";
+    };
+
     // Helper to extract bulleted items:
     const extractSectionBullets = (headerKeyword: string) => {
       const lines = notesText.split("\n");
@@ -196,25 +255,15 @@ export default function WorkDetail({
       const bullets: string[] = [];
       for (let i = startIdx + 1; i < lines.length; i++) {
         const line = lines[i].trim();
-        
-        // If we reach a new major section header, stop
-        if (line.includes("**") && !line.startsWith("•") && !line.startsWith("-") && !line.startsWith("*")) {
-          // Check if it's just bold bullet list item
-          if (!line.startsWith("•") && !line.startsWith("-") && !line.startsWith("*")) {
-            break;
-          }
+        if (isHeaderLine(line)) {
+          break;
         }
 
         if (line.startsWith("•") || line.startsWith("-") || line.startsWith("*")) {
           const content = line.replace(/^[•\-\*]\s*/, "").trim();
           if (content) bullets.push(content);
-        } else if (line !== "" && !line.includes("**") && bullets.length > 0) {
-          // If plain line after bullet, maybe it's multi-line bullet content, append or ignore
-        } else if (line !== "" && !line.includes("**") && bullets.length === 0) {
-          // First line without bullet in section
+        } else if (line !== "" && !isHeaderLine(line) && bullets.length === 0) {
           bullets.push(line);
-        } else if (bullets.length > 0 && line === "") {
-          // empty line in the middle of bullets, keep going or stop
         }
       }
       return bullets;
@@ -233,24 +282,13 @@ export default function WorkDetail({
       const sectionLines: string[] = [];
       for (let i = startIdx + 1; i < lines.length; i++) {
         const line = lines[i];
-        const trimmed = line.trim();
-        if (
-          (trimmed.includes("**") || trimmed.startsWith("📋") || trimmed.startsWith("🔹") || trimmed.startsWith("🚧") || trimmed.startsWith("🔮") || trimmed.startsWith("⚠️")) &&
-          !trimmed.startsWith("•") &&
-          !trimmed.startsWith("-") &&
-          !trimmed.startsWith("*") &&
-          !trimmed.startsWith("<") &&
-          (trimmed.includes("Atividades") || trimmed.includes("Observações") || trimmed.includes("Informação") || trimmed.includes("Avanço") || trimmed.includes("Situação"))
-        ) {
+        if (isHeaderLine(line)) {
           break;
         }
         sectionLines.push(line);
       }
       const rawText = sectionLines.join("\n").trim();
-      if (rawText === "Nenhuma cadastrada" || rawText === "Nenhum apontamento cadastrado" || !rawText) {
-        return "N/A";
-      }
-      return rawText;
+      return cleanRawText(rawText);
     };
 
     result.weeklyActivities = extractSectionBullets("Atividades da Semana");
@@ -967,6 +1005,7 @@ export default function WorkDetail({
   </table>
 
 
+  ${log.progressImages && log.progressImages.length > 0 ? `
   <!-- PAGE 5: REGISTRO FOTOGRÁFICO DE MARCOS (FOTOS DA OBRA) -->
   <div class="page-break"></div>
   <table class="main-print-table">
@@ -981,7 +1020,7 @@ export default function WorkDetail({
         <div style="border: 0.3mm solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
           <!-- PHOTO 1 -->
           <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
-            ${log.progressImages && log.progressImages[0] ? `
+            ${log.progressImages[0] ? `
               <img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 1" />
             ` : `
               <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
@@ -993,7 +1032,7 @@ export default function WorkDetail({
 
           <!-- PHOTO 2 -->
           <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
-            ${log.progressImages && log.progressImages[1] ? `
+            ${log.progressImages[1] ? `
               <img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 2" />
             ` : `
               <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
@@ -1005,7 +1044,7 @@ export default function WorkDetail({
 
           <!-- PHOTO 3 -->
           <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
-            ${log.progressImages && log.progressImages[2] ? `
+            ${log.progressImages[2] ? `
               <img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 3" />
             ` : `
               <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
@@ -1017,7 +1056,7 @@ export default function WorkDetail({
 
           <!-- PHOTO 4 -->
           <div style="border: 1px solid #000000; aspect-ratio: 1.34; overflow: hidden; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6; position: relative;">
-            ${log.progressImages && log.progressImages[3] ? `
+            ${log.progressImages[3] ? `
               <img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" alt="Registro Foto 4" />
             ` : `
               <div style="text-align: center; font-family: monospace; font-size: 9px; color: #a0a0a0;">
@@ -1031,6 +1070,7 @@ export default function WorkDetail({
     </tbody>
     <tfoot><tr><td></td></tr></tfoot>
   </table>
+` : ''}
 
   <script>
     window.addEventListener('DOMContentLoaded', () => {
