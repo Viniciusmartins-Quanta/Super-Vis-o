@@ -842,6 +842,24 @@ export default function App() {
             <tr><td style="font-weight: bold;">Início do Contrato:</td><td>${formatDate(state.contractStartDate)}</td></tr>
             <tr><td style="font-weight: bold;">Término do Contrato:</td><td>${formatDate(state.contractEndDate)}</td></tr>
             <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.totalUpdatedValue || state.contractValue || 0)}</td></tr>
+            <tr>
+              <td style="font-weight: bold; vertical-align: top; padding-top: 8px;">Termos Aditivos:</td>
+              <td style="padding-top: 8px; font-weight: normal;">
+                ${state.contractAdditives && state.contractAdditives.length > 0 ? `
+                  <ul style="margin: 0; padding-left: 16px; font-size: 9.5pt;">
+                    ${state.contractAdditives.map((aditivo: any) => `
+                      <li style="margin-bottom: 4px;">
+                        <strong>${aditivo.number || "Aditivo"}:</strong> 
+                        ${aditivo.value ? `+ ${formatCurrency(aditivo.value)}` : ""} 
+                        ${aditivo.days ? `(+ ${aditivo.days} dias)` : ""}
+                      </li>
+                    `).join("")}
+                  </ul>
+                ` : `
+                  <span style="font-style: italic; color: #64748b;">Nenhum aditivo registrado</span>
+                `}
+              </td>
+            </tr>
           </tbody>
         </table>
         <div style="font-family: Arial, sans-serif; font-size: 10pt; font-weight: bold; color: black; margin-bottom: 6px; text-transform: uppercase; border-left: 3px solid #f97316; padding-left: 8px;">RESUMO DAS OBRAS ATIVAS NA SEMANA</div>
