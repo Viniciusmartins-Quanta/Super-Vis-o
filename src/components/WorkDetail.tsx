@@ -2726,7 +2726,7 @@ export default function WorkDetail({
                             Atividades Desenvolvidas na Semana:
                           </span>
                           {selectedParsed.weeklyActivitiesRaw && selectedParsed.weeklyActivitiesRaw !== "N/A" ? (
-                            <div className="text-slate-700 leading-relaxed text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: renderAsHtml(selectedParsed.weeklyActivitiesRaw) }} />
+                            <div className="text-slate-700 leading-relaxed text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: selectedParsed.weeklyActivitiesRaw }} />
                           ) : (
                             <p className="text-slate-500 text-xs pl-0.5">N/A</p>
                           )}
@@ -2737,7 +2737,7 @@ export default function WorkDetail({
                             Atividades Programadas para Próxima Semana:
                           </span>
                           {selectedParsed.nextWeekActivitiesRaw && selectedParsed.nextWeekActivitiesRaw !== "N/A" ? (
-                            <div className="text-slate-600 leading-relaxed text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: renderAsHtml(selectedParsed.nextWeekActivitiesRaw) }} />
+                            <div className="text-slate-600 leading-relaxed text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: selectedParsed.nextWeekActivitiesRaw }} />
                           ) : (
                             <p className="text-slate-500 text-xs pl-0.5">N/A</p>
                           )}
@@ -2749,7 +2749,7 @@ export default function WorkDetail({
                           </span>
                           {selectedParsed.observationsRaw && selectedParsed.observationsRaw !== "N/A" ? (
                             <div className="bg-rose-50/50 border border-rose-100 rounded-2xl p-4">
-                              <div className="text-rose-800 leading-relaxed font-semibold text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: renderAsHtml(selectedParsed.observationsRaw) }} />
+                              <div className="text-rose-800 leading-relaxed font-semibold text-xs pl-0.5" dangerouslySetInnerHTML={{ __html: selectedParsed.observationsRaw }} />
                             </div>
                           ) : (
                             <p className="text-slate-500 text-xs pl-0.5">N/A</p>
