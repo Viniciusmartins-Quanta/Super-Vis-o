@@ -834,9 +834,10 @@ export default function App() {
     // -- Apenas Adiciona o Resumo se NÃO for o relatório de uma obra só --
     if (!isSingle) {
       contentHtml += `
-        <div class="titulo-secao">FICHA TÉCNICA DO CONTRATO DE ASSESSORAMENTO, GERENCIAMENTO, SUPERVISÃO,<br/>
+        <div class="titulo-secao" style="line-height: 1.3;">
+          FICHA TÉCNICA DO CONTRATO DE ASSESSORAMENTO, GERENCIAMENTO, SUPERVISÃO,<br/>
           FISCALIZAÇÃO TÉCNICA E CONTROLE TECNOLÓGICO.
-          </div>
+        </div>
         <table class="tabela-dados" style="margin-bottom: 20px;">
           <tbody>
             <tr><td style="font-weight: bold; width: 45%;">Contrato de Supervisão:</td><td style="font-weight: bold;">${state.contractName}</td></tr>
