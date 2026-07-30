@@ -49,6 +49,19 @@ export default function RichTextEditor({ value, onChange, placeholder, className
       }
     }
   };
+  const handlePaste = (e: React.ClipboardEvent) => {
+    // 1. Impede o navegador de colar o texto com a formatação original
+    e.preventDefault();
+    
+    // 2. Pega apenas o texto puro da área de transferência (ignorando HTML, fontes e cores)
+    const text = e.clipboardData.getData("text/plain");
+    
+    // 3. Insere o texto limpo na posição exata onde o cursor está piscando
+    document.execCommand("insertText", false, text);
+    
+    // 4. Atualiza o estado para salvar
+    handleInput();
+  };
 
   const executeCommand = (command: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -89,6 +102,7 @@ export default function RichTextEditor({ value, onChange, placeholder, className
         onInput={handleInput}
         onBlur={handleInput}
         onKeyDown={handleKeyDown}
+        onPaste={handlePaste}
         {...({ placeholder } as any)}
         className="w-full min-h-[120px] max-h-[250px] overflow-y-auto px-3.5 py-2.5 text-xs text-slate-800 outline-none focus:outline-none focus:ring-0 empty:before:content-[attr(placeholder)] empty:before:text-slate-400 empty:before:pointer-events-none"
         style={{ whiteSpace: "pre-wrap" }}
