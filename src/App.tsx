@@ -840,11 +840,11 @@ export default function App() {
         </div>
         <table class="tabela-dados" style="margin-bottom: 20px;">
           <tbody>
-            <tr><td style="font-weight: bold; width: 45%;">Contrato de Supervisão:</td><td style="font-weight: bold;">${state.contractName}</td></tr>
-            <tr><td style="font-weight: bold;">Empresa Supervisora:</td><td>${state.supervisorCompany}</td></tr>
+            <tr><td style="font-weight: bold; width: 45%;">Contrato:</td><td style="font-weight: bold;">${state.contractName}</td></tr>
+            <tr><td style="font-weight: bold;">Empresa:</td><td>${state.supervisorCompany}</td></tr>
             <tr><td style="font-weight: bold;">Início do Contrato:</td><td>${formatDate(state.contractStartDate)}</td></tr>
             <tr><td style="font-weight: bold;">Término do Contrato:</td><td>${formatDate(state.contractEndDate)}</td></tr>
-            <tr><td style="font-weight: bold;">Valor do Contrato de Supervisão:</td><td style="font-weight: bold;">${formatCurrency(state.totalUpdatedValue || state.contractValue || 0)}</td></tr>
+            <tr><td style="font-weight: bold;">Valor do Contrato:</td><td style="font-weight: bold;">${formatCurrency(state.contractValue)}</td></tr>
             <tr>
               <td style="font-weight: bold; vertical-align: top; padding-top: 8px;">Termos Aditivos:</td>
               <td style="padding-top: 8px; font-weight: normal;">
@@ -862,6 +862,7 @@ export default function App() {
                   <span style="font-style: italic; color: #64748b;">Nenhum aditivo registrado</span>
                 `}
               </td>
+              <tr><td style="font-weight: bold;">Valor do Contrato:</td><td style="font-weight: bold;">${formatCurrency(state.totalUpdatedValue || state.contractValue || 0)}</td></tr>
             </tr>
           </tbody>
         </table>
