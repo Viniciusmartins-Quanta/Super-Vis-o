@@ -1018,7 +1018,7 @@ export default function App() {
         // Atividades (A TABELA QUE PODE FICAR GIGANTE. Cada item é uma linha <TR> isolada para o Chrome quebrar direito)
         contentHtml += `<div class="quebra-pagina"></div>`;
         contentHtml += `
-          <div class="titulo-secao">ATIVIDADES DE FISCALIZAÇÃO — ${work.name}</div>
+          <div class="titulo-secao">BOLETIM SEMANAL DE EXECUÇÃO — ${work.name}</div>
           
           <table class="tabela-dados" style="margin-bottom: 0; border-bottom: none;">
             <tbody>
