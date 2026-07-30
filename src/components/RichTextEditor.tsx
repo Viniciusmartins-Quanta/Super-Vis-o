@@ -50,16 +50,19 @@ export default function RichTextEditor({ value, onChange, placeholder, className
     }
   };
   const handlePaste = (e: React.ClipboardEvent) => {
-    // 1. Impede o navegador de colar o texto com a formatação original
     e.preventDefault();
     
-    // 2. Pega apenas o texto puro da área de transferência (ignorando HTML, fontes e cores)
-    const text = e.clipboardData.getData("text/plain");
+    // 1. Pega apenas o texto puro da área de transferência (ignora fontes, cores, negritos antigos)
+    let text = e.clipboardData.getData("text/plain");
     
-    // 3. Insere o texto limpo na posição exata onde o cursor está piscando
-    document.execCommand("insertText", false, text);
+    // 2. Converte as quebras de linha do sistema/PDF para tags <br> do HTML
+    // Isso evita que o texto fique todo grudado na mesma linha ao colar
+    const textWithBreaks = text.replace(/\r?\n/g, '<br>');
     
-    // 4. Atualiza o estado para salvar
+    // 3. Insere o conteúdo limpo no editor
+    document.execCommand("insertHTML", false, textWithBreaks);
+    
+    // 4. Salva o estado
     handleInput();
   };
 
