@@ -1035,20 +1035,20 @@ export default function App() {
             <tbody>
               <tr>
                 <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da semana:<br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
-                <td style="padding: 6px 15px; text-align: left; vertical-align: top; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                  ${renderAsHtml(parsed.weeklyActivitiesRaw)}
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                  ${parsed.weeklyActivitiesRaw}
                 </td>
               </tr>
               <tr>
                 <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da próxima semana:<br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
-                <td style="padding: 6px 15px; text-align: left; vertical-align: top; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                  ${renderAsHtml(parsed.nextWeekActivitiesRaw)}
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                  ${parsed.nextWeekActivitiesRaw}
                 </td>
               </tr>
               <tr>
                 <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Observações e apontamentos importantes:</td>
-                <td style="padding: 6px 15px; text-align: left; vertical-align: top; white-space: pre-wrap; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
-                  ${renderAsHtml(parsed.observationsRaw)}
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                  ${parsed.observationsRaw}
                 </td>
               </tr>
             </tbody>
@@ -1056,16 +1056,19 @@ export default function App() {
         `;
 
         // Fotos da Semana (Nova página garantida)
-        contentHtml += `<div class="quebra-pagina"></div>`;
-        contentHtml += `
-          <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">FOTOS DA SEMANA — ${work.name}:</div>
-          <div style="border: 1px solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
-            <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[0] ? `<img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-01 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[1] ? `<img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-02 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[2] ? `<img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-03 (Vazio)</span>`}</div>
-            <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages && log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-04 (Vazio)</span>`}</div>
-          </div>
-        `;
+        const hasProgressImages = log.progressImages && log.progressImages.some((img: string) => img && img.trim() !== "");
+        if (hasProgressImages) {
+          contentHtml += `<div class="quebra-pagina"></div>`;
+          contentHtml += `
+            <div style="font-family: Arial, sans-serif; font-size: 11pt; font-weight: bold; color: black; margin-bottom: 4mm; text-transform: uppercase;">FOTOS DA SEMANA — ${work.name}:</div>
+            <div style="border: 1px solid black; padding: 10px; background-color: #ffffff; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start;">
+              <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages[0] ? `<img src="${log.progressImages[0]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-01 (Vazio)</span>`}</div>
+              <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages[1] ? `<img src="${log.progressImages[1]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-02 (Vazio)</span>`}</div>
+              <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages[2] ? `<img src="${log.progressImages[2]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-03 (Vazio)</span>`}</div>
+              <div style="border: 1px solid #000; height: 60mm; display: flex; align-items: center; justify-content: center; background-color: #f3f4f6;">${log.progressImages[3] ? `<img src="${log.progressImages[3]}" style="width: 100%; height: 100%; object-fit: cover;" />` : `<span style="font-family: monospace; font-size: 9px; color: #a0a0a0;">📷 F-04 (Vazio)</span>`}</div>
+            </div>
+          `;
+        }
 
       } else {
         contentHtml += `<div class="quebra-pagina"></div>`;
