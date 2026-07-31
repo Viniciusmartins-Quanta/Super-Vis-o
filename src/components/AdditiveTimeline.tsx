@@ -24,18 +24,10 @@ export default function AdditiveTimeline({ additives, contractStartDate }: Addit
 
   return (
     <div className="bg-slate-950 rounded-2xl border border-slate-850 shadow-sm p-6 space-y-6">
-      {/* Header */}
+      {/* Header (Legenda removida) */}
       <div className="space-y-1">
         <h2 className="text-lg font-bold text-white">Linha do Tempo de Termos Aditivos</h2>
         <p className="text-sm text-slate-400">Marcos temporais escalonados desde a assinatura de início</p>
-        
-        {/* Legend */}
-        <div className="flex gap-4 text-xs text-slate-400 pt-2">
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-white" /> Início</div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-amber-400" /> Aditivo Prazo</div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-emerald-500" /> Aditivo Financ.</div>
-          <div className="flex items-center gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-blue-500" /> Ambos</div>
-        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -66,7 +58,8 @@ export default function AdditiveTimeline({ additives, contractStartDate }: Addit
               <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-blue-400 font-bold">Data de Assinatura: {formatDate(add.signatureDate)}</span>
-                  <span className="text-slate-500 font-bold uppercase">Prazo</span>
+                  {/* Tipo agora é renderizado dinamicamente */}
+                  <span className="text-slate-500 font-bold uppercase">{add.type}</span>
                 </div>
                 <h3 className="font-bold text-white">{add.number}</h3>
                 <p className="text-xs text-slate-400">{add.description}</p>
