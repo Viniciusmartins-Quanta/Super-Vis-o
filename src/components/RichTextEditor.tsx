@@ -52,17 +52,20 @@ export default function RichTextEditor({ value, onChange, placeholder, className
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
     
-    // 1. Pega apenas o texto puro da área de transferência (ignora fontes, cores, negritos antigos)
+    // 1. Pega apenas o texto puro (isso por si só já arranca fontes, cores e tamanhos do Word/PDF)
     let text = e.clipboardData.getData("text/plain");
     
-    // 2. Converte as quebras de linha do sistema/PDF para tags <br> do HTML
-    // Isso evita que o texto fique todo grudado na mesma linha ao colar
+    // 2. FILTRO RESTRITO (Alfanumérico + Pontuação Básica)
+    // Mantém: Letras (com acentos), Números, Espaços e Pontuações de texto (.,;:!?()-).
+    // Destrói: Emojis, símbolos gráficos, caracteres invisíveis e códigos maliciosos.
+    text = text.replace(/[^a-zA-Z0-9\s.,;:\-!?()áàãâéèêíïóôõöúçÁÀÃÂÉÈÊÍÏÓÔÕÖÚÇ]/g, "");
+    
+    // 3. Converte quebras de linha preservando os parágrafos corretamente
     const textWithBreaks = text.replace(/\r?\n/g, '<br>');
     
-    // 3. Insere o conteúdo limpo no editor
+    // 4. Insere o conteúdo 100% limpo no editor
     document.execCommand("insertHTML", false, textWithBreaks);
     
-    // 4. Salva o estado
     handleInput();
   };
 

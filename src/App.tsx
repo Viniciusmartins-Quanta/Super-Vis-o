@@ -1036,19 +1036,19 @@ export default function App() {
             <tbody>
               <tr>
                 <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da semana:<br/><span style="font-weight: normal; font-size: 8pt;">${parsed.period}</span></td>
-                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal; line-height: 1.4 !important;">
                   ${parsed.weeklyActivitiesRaw}
                 </td>
               </tr>
               <tr>
                 <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Atividades da próxima semana:<br/><span style="font-weight: normal; font-size: 8pt;">${getNextWeekPeriod(parsed.period)}</span></td>
-                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal; line-height: 1.4 !important;">
                   ${parsed.nextWeekActivitiesRaw}
                 </td>
               </tr>
               <tr>
                 <td style="text-align: center; vertical-align: middle; font-weight: bold; width: 40%;">Observações e apontamentos importantes:</td>
-                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal;">
+                <td style="padding: 6px 15px; text-align: left; vertical-align: top; font-family: 'Calibri', 'Arial', sans-serif; font-size: 9.2pt; font-weight: normal; line-height: 1.4 !important;">
                   ${parsed.observationsRaw}
                 </td>
               </tr>
