@@ -981,7 +981,7 @@ export default function App() {
         contentHtml += `
           <div class="titulo-secao" style="margin-bottom: 4px;">${work.name}</div>
           <div class="my-1 py-0.5" style="border: 1px solid black; height: 70mm; margin-bottom: 4px; display: flex; align-items: center; justify-content: center; background-color: #f8fafc; overflow: hidden;">
-            ${log.coverImage ? `<img src="${log.coverImage}" style="width: 100%; height: 100%; object-fit: contain;" />` : `<div style="text-align: center; color: #64748b; font-family: monospace;">📷<br/>SEM FOTO DE CAPA</div>`}
+            ${log.coverImage ? `<img src="${log.coverImage}" style="width: 12.3cm; height: 100%; object-fit: cover;" />` : `<div style="text-align: center; color: #64748b; font-family: monospace;">📷<br/>SEM FOTO DE CAPA</div>`}
           </div>
           <table class="tabela-dados" style="margin-top: 0px;">
             <tbody>
