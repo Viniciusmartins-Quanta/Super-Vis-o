@@ -42,9 +42,8 @@ export default function AdditiveTimeline({ additives, contractStartDate }: Addit
               <Clock className="w-3.5 h-3.5 text-white" />
             </div>
             <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-2">
-              <div className="flex justify-between text-xs">
+              <div className="flex text-xs">
                 <span className="text-blue-400 font-bold">Data de Assinatura: {formatDate(contractStartDate)}</span>
-                <span className="text-slate-500 font-bold uppercase">Início</span>
               </div>
               <h3 className="font-bold text-white">Assinatura do Contrato de Início</h3>
               <p className="text-xs text-slate-400">Início do cronograma original com execução e vigência definidas.</p>
@@ -56,10 +55,8 @@ export default function AdditiveTimeline({ additives, contractStartDate }: Addit
             <div key={add.id} className="relative pl-10">
               <div className={`absolute left-0 top-1 w-7 h-7 rounded-full border-4 border-slate-950 ${getMarkerColor(add.type)}`} />
               <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 space-y-2">
-                <div className="flex justify-between text-xs">
+                <div className="flex text-xs">
                   <span className="text-blue-400 font-bold">Data de Assinatura: {formatDate(add.signatureDate)}</span>
-                  {/* Tipo agora é renderizado dinamicamente */}
-                  <span className="text-slate-500 font-bold uppercase">{add.type}</span>
                 </div>
                 <h3 className="font-bold text-white">{add.number}</h3>
                 <p className="text-xs text-slate-400">{add.description}</p>

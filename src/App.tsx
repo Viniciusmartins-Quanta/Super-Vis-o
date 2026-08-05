@@ -249,13 +249,6 @@ export default function App() {
 
     initialize();
 
-    // Configurar escuta em tempo real do banco de dados
-    const canalTempoReal = supabase.channel('escuta-banco-inteiro')
-      .on('postgres_changes', { event: '*', schema: 'public' }, () => {
-        loadDirectSupabaseState();
-      })
-      .subscribe();
-
     // Escutar mudanças no estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
       if (active) {
@@ -299,7 +292,6 @@ export default function App() {
 
     return () => {
       active = false;
-      supabase.removeChannel(canalTempoReal);
       subscription.unsubscribe();
     };
   }, []);
