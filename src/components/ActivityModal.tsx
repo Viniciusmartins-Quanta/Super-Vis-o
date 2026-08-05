@@ -3,6 +3,7 @@ import { Obra, UserProfile, UpdateLog } from "../types";
 import { X, Plus, Trash2, Save, HelpCircle, Calendar, Sparkles, Upload, Image as ImageIcon, Camera } from "lucide-react";
 import { uploadFotoParaStorage } from "../uploadService";
 import RichTextEditor from "./RichTextEditor";
+import imageCompression from 'browser-image-compression';
 
 interface ActivityModalProps {
   isOpen: boolean;
@@ -175,8 +176,6 @@ export default function ActivityModal({
           cleaned = cleaned.replace(/^[•\-\*]\s*/, "");
         }
         
-        // AS LINHAS COM O REPLACE GIGANTE DOS EMOJIS E DO "**" FORAM APAGADAS DAQUI!
-        
         cleaned = cleaned.trim();
         return cleaned || "";
       };
@@ -284,14 +283,28 @@ export default function ActivityModal({
 
   if (!isOpen) return null;
 
-
+  // LÓGICA DE COMPRESSÃO APLICADA AQUI ===============================
+  const compressionOptions = {
+    maxSizeMB: 0.15, // Tamanho máximo de 150KB
+    maxWidthOrHeight: 1200, // Excelente resolução para PDF
+    useWebWorker: true,
+  };
 
   const handleCoverChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/capas`);
-      if (urlPublica) {
-        setCoverImage(urlPublica);
+      try {
+        // Comprime a foto no navegador antes de enviar
+        const compressedFile = await imageCompression(file, compressionOptions);
+        const urlPublica = await uploadFotoParaStorage(compressedFile, `obra-${work.id}/capas`);
+        if (urlPublica) {
+          setCoverImage(urlPublica);
+        }
+      } catch (error) {
+        console.error("Erro ao comprimir imagem. Enviando original:", error);
+        // Fallback: se falhar a compressão, tenta enviar a original para não travar o app
+        const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/capas`);
+        if (urlPublica) setCoverImage(urlPublica);
       }
     }
   };
@@ -299,16 +312,32 @@ export default function ActivityModal({
   const handleProgressSlotChange = async (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/progresso`);
-      if (urlPublica) {
-        setProgressImages((prev) => {
-          const copy = [...prev];
-          copy[index] = urlPublica;
-          return copy;
-        });
+      try {
+        // Comprime a foto no navegador antes de enviar
+        const compressedFile = await imageCompression(file, compressionOptions);
+        const urlPublica = await uploadFotoParaStorage(compressedFile, `obra-${work.id}/progresso`);
+        if (urlPublica) {
+          setProgressImages((prev) => {
+            const copy = [...prev];
+            copy[index] = urlPublica;
+            return copy;
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao comprimir imagem. Enviando original:", error);
+        // Fallback: se falhar a compressão, tenta enviar a original para não travar o app
+        const urlPublica = await uploadFotoParaStorage(file, `obra-${work.id}/progresso`);
+        if (urlPublica) {
+          setProgressImages((prev) => {
+            const copy = [...prev];
+            copy[index] = urlPublica;
+            return copy;
+          });
+        }
       }
     }
   };
+  // =================================================================
 
   const handleRemoveProgressSlot = (index: number) => {
     setProgressImages((prev) => {
